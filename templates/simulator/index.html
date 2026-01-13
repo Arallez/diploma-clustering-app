@@ -1,251 +1,679 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>K-Means Тренажер</title>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; padding: 20px; }
-        #app { max-width: 1200px; margin: 0 auto; }
-        h1 { color: #333; margin-bottom: 20px; text-align: center; }
-        .container { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .controls { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
-        .control-group { display: flex; gap: 10px; align-items: center; }
-        label { font-weight: 500; color: #333; }
-        input[type="number"] { padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; width: 80px; font-size: 14px; }
-        button { padding: 10px 20px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; transition: background 0.2s; }
-        button:hover:not(:disabled) { background: #1976D2; }
-        button:disabled { background: #ccc; cursor: not-allowed; }
-        button.danger { background: #f44336; }
-        button.danger:hover:not(:disabled) { background: #da190b; }
-        button.success { background: #4CAF50; }
-        button.success:hover:not(:disabled) { background: #388E3C; }
-        #plot { width: 100%; height: 600px; border: 1px solid #ddd; border-radius: 4px; margin: 20px 0; }
-        .step-controls { display: flex; gap: 10px; align-items: center; justify-content: center; margin: 20px 0; }
-        .step-info { text-align: center; padding: 15px; background: #f9f9f9; border-radius: 4px; margin: 10px 0; }
-        .step-info p { margin: 5px 0; color: #333; }
-        .status { padding: 10px 15px; border-radius: 4px; margin: 10px 0; text-align: center; }
-        .status.success { background: #c8e6c9; color: #2e7d32; }
-        .status.error { background: #ffcdd2; color: #c62828; }
-        .info-text { color: #666; font-size: 13px; margin-top: 10px; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clustering Simulator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+  <style>
+    :root{
+      --bg: #0b1020;
+      --panel: rgba(255,255,255,.06);
+      --panel-2: rgba(255,255,255,.085);
+      --panel-3: rgba(255,255,255,.12);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.66);
+      --muted2: rgba(255,255,255,.5);
+      --accent: #7c5cff;
+      --accent2: #22c55e;
+      --danger: #ef4444;
+      --warn: #f59e0b;
+      --border: rgba(255,255,255,.10);
+      --shadow: 0 18px 60px rgba(0,0,0,.45);
+      --radius: 14px;
+      --radius2: 18px;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(1200px 600px at 15% 20%, rgba(124,92,255,.35), transparent 60%),
+        radial-gradient(900px 500px at 85% 10%, rgba(34,197,94,.22), transparent 65%),
+        radial-gradient(800px 500px at 70% 85%, rgba(59,130,246,.18), transparent 55%),
+        var(--bg);
+      color: var(--text);
+    }
+
+    a{ color: inherit; }
+
+    .app-shell{
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+    }
+
+    .topbar{
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(14px);
+      background: linear-gradient(to bottom, rgba(11,16,32,.9), rgba(11,16,32,.55));
+      border-bottom: 1px solid var(--border);
+    }
+
+    .topbar-inner{
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 14px 18px;
+      display:flex;
+      align-items:center;
+      gap: 12px;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      min-width: 280px;
+    }
+
+    .logo{
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: conic-gradient(from 120deg, var(--accent), #3b82f6, var(--accent2), var(--accent));
+      box-shadow: 0 12px 30px rgba(124,92,255,.35);
+    }
+
+    .brand-title{
+      display:flex;
+      flex-direction:column;
+      line-height:1.1;
+    }
+
+    .brand-title strong{ font-size: 14px; letter-spacing:.2px; }
+    .brand-title span{ font-size: 12px; color: var(--muted); }
+
+    .top-actions{
+      margin-left:auto;
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .chip{
+      display:inline-flex;
+      gap: 8px;
+      align-items:center;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 12px;
+      user-select:none;
+    }
+
+    .chip b{ color: var(--text); font-weight:600; }
+
+    .layout{
+      width: 100%;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 18px;
+      display:grid;
+      grid-template-columns: 360px 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 1100px){
+      .layout{ grid-template-columns: 1fr; }
+      .brand{ min-width: unset; }
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.045));
+      border: 1px solid var(--border);
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow);
+    }
+
+    .card-inner{ padding: 14px; }
+
+    .card h3{
+      margin:0 0 10px 0;
+      font-size: 13px;
+      letter-spacing:.25px;
+      color: rgba(255,255,255,.86);
+      font-weight: 600;
+    }
+
+    .muted{ color: var(--muted); }
+
+    .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap: 6px;
+    }
+
+    .field label{
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .input, select{
+      height: 40px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.05);
+      color: var(--text);
+      padding: 0 12px;
+      outline: none;
+      font-size: 13px;
+    }
+
+    .input:focus, select:focus{
+      border-color: rgba(124,92,255,.55);
+      box-shadow: 0 0 0 3px rgba(124,92,255,.18);
+    }
+
+    .btn-row{ display:flex; gap: 10px; flex-wrap:wrap; }
+
+    .btn{
+      height: 40px;
+      padding: 0 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap: 8px;
+      transition: transform .06s ease, background .18s ease, border-color .18s ease;
+      user-select:none;
+    }
+
+    .btn:hover{ background: rgba(255,255,255,.09); }
+    .btn:active{ transform: translateY(1px); }
+    .btn:disabled{ opacity:.55; cursor:not-allowed; }
+
+    .btn.primary{
+      background: linear-gradient(135deg, rgba(124,92,255,.95), rgba(124,92,255,.55));
+      border-color: rgba(124,92,255,.55);
+      box-shadow: 0 14px 32px rgba(124,92,255,.25);
+    }
+
+    .btn.primary:hover{ background: linear-gradient(135deg, rgba(124,92,255,1), rgba(124,92,255,.62)); }
+
+    .btn.success{
+      background: linear-gradient(135deg, rgba(34,197,94,.9), rgba(34,197,94,.45));
+      border-color: rgba(34,197,94,.50);
+    }
+
+    .btn.danger{
+      background: linear-gradient(135deg, rgba(239,68,68,.85), rgba(239,68,68,.42));
+      border-color: rgba(239,68,68,.5);
+    }
+
+    .divider{
+      height: 1px;
+      width: 100%;
+      background: rgba(255,255,255,.10);
+      margin: 12px 0;
+    }
+
+    .hint{
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px dashed rgba(255,255,255,.18);
+      background: rgba(255,255,255,.03);
+      color: rgba(255,255,255,.70);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .stat-grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .stat{
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,.18);
+      padding: 12px;
+    }
+
+    .stat .k{ font-size: 12px; color: var(--muted); }
+    .stat .v{ margin-top: 4px; font-size: 18px; font-weight: 700; letter-spacing: .2px; }
+
+    .toast{
+      border-radius: 14px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,.22);
+      font-size: 12px;
+      line-height:1.35;
+    }
+
+    .toast.ok{ border-color: rgba(34,197,94,.45); background: rgba(34,197,94,.10); }
+    .toast.err{ border-color: rgba(239,68,68,.50); background: rgba(239,68,68,.10); }
+    .toast.info{ border-color: rgba(124,92,255,.45); background: rgba(124,92,255,.10); }
+
+    .plot-card{
+      padding: 12px;
+    }
+
+    #plot{
+      width:100%;
+      height: 680px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.10);
+      overflow:hidden;
+      background: rgba(0,0,0,.15);
+    }
+
+    @media (max-width: 1100px){
+      #plot{ height: 560px; }
+    }
+
+    .stepbar{
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      justify-content: space-between;
+      flex-wrap:wrap;
+      padding: 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      margin-top: 12px;
+    }
+
+    .stepbar .left{
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .stepbar .meta{
+      display:flex;
+      gap: 14px;
+      align-items:center;
+      flex-wrap:wrap;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .pill{
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      color: rgba(255,255,255,.78);
+    }
+
+    /* Plotly overrides for dark theme */
+    .js-plotly-plot .plotly .modebar{
+      background: rgba(0,0,0,.25) !important;
+      border: 1px solid rgba(255,255,255,.10) !important;
+      border-radius: 12px !important;
+    }
+
+    .js-plotly-plot .plotly .modebar-btn path{ fill: rgba(255,255,255,.78) !important; }
+    .js-plotly-plot .plotly .modebar-btn:hover{ background: rgba(255,255,255,.08) !important; }
+
+    /* Make Plotly fonts match */
+    .js-plotly-plot, .js-plotly-plot * { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif !important; }
+  </style>
 </head>
+
 <body>
-<div id="app">
-    <h1>📊 K-Means Тренажер</h1>
+<div id="app" class="app-shell">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div class="brand-title">
+          <strong>Clustering Simulator</strong>
+          <span>K-Means (шаги), подготовка под другие алгоритмы</span>
+        </div>
+      </div>
 
-    <div class="container">
-        <div class="controls">
-            <div class="control-group">
-                <label for="k-input">K (clusters):</label>
-                <input type="number" id="k-input" v-model.number="k" min="1" max="10">
+      <div class="top-actions">
+        <div class="chip"><span class="muted">Points</span> <b>{{ points.length }}</b></div>
+        <div class="chip"><span class="muted">K</span> <b>{{ k }}</b></div>
+        <div class="chip" v-if="history.length"><span class="muted">Steps</span> <b>{{ history.length }}</b></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- Sidebar -->
+    <aside class="card">
+      <div class="card-inner">
+        <h3>Параметры</h3>
+
+        <div class="field">
+          <label>Алгоритм</label>
+          <select v-model="algorithm" class="input">
+            <option value="kmeans">K-Means</option>
+            <option value="dbscan" disabled>DBSCAN (скоро)</option>
+            <option value="aggl" disabled>Agglomerative (скоро)</option>
+          </select>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="grid2">
+          <div class="field">
+            <label>K (кластеры)</label>
+            <input class="input" type="number" v-model.number="k" min="1" max="10" />
+          </div>
+          <div class="field">
+            <label>Seed</label>
+            <input class="input" type="number" v-model.number="seed" min="0" max="999999" />
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="btn-row">
+          <button class="btn success" @click="addRandomPoints">+ 10 точек</button>
+          <button class="btn" @click="addRandomPoints(50)">+ 50</button>
+          <button class="btn danger" @click="clearAll">Очистить</button>
+          <button class="btn primary" @click="runAlgorithm" :disabled="points.length < k || algorithm !== 'kmeans'">
+            Запустить
+          </button>
+        </div>
+
+        <div class="divider"></div>
+
+        <h3>Статистика</h3>
+        <div class="stat-grid">
+          <div class="stat">
+            <div class="k">Точек</div>
+            <div class="v">{{ points.length }}</div>
+          </div>
+          <div class="stat">
+            <div class="k">Шаг</div>
+            <div class="v">{{ history.length ? currentStep : 0 }}</div>
+          </div>
+          <div class="stat">
+            <div class="k">Inertia</div>
+            <div class="v">{{ currentStepData ? currentStepData.inertia.toFixed(3) : '—' }}</div>
+          </div>
+          <div class="stat">
+            <div class="k">Статус</div>
+            <div class="v" style="font-size:14px; font-weight:600; letter-spacing:.2px; margin-top:8px;">
+              <span v-if="!history.length" class="pill">idle</span>
+              <span v-else-if="currentStepData && currentStepData.converged" class="pill" style="border-color: rgba(34,197,94,.5); background: rgba(34,197,94,.12);">converged</span>
+              <span v-else class="pill" style="border-color: rgba(245,158,11,.5); background: rgba(245,158,11,.12);">running</span>
             </div>
-            <button @click="addRandomPoints" class="success">+ 10 точек</button>
-            <button @click="clearPoints" class="danger">Clear</button>
-            <button @click="runAlgorithm" :disabled="points.length < k">Run Algorithm</button>
+          </div>
         </div>
-        <div v-if="errorMsg" class="status error">{{ errorMsg }}</div>
-        <div v-if="successMsg" class="status success">{{ successMsg }}</div>
-    </div>
 
-    <div class="container">
-        <div id="plot"></div>
-        <p class="info-text" style="text-align: center;">🔍 Click to add points | Drag to zoom | Double-click to reset</p>
-    </div>
+        <div class="divider"></div>
 
-    <div v-if="history.length > 0" class="container">
-        <div class="step-controls">
-            <button @click="prevStep" :disabled="currentStep === 0">← Previous</button>
-            <span style="font-weight: bold; min-width: 150px; text-align: center;">Step {{ currentStep }} / {{ history.length - 1 }}</span>
-            <button @click="nextStep" :disabled="currentStep === history.length - 1">Next →</button>
+        <div class="hint">
+          <b>Управление:</b> клик по графику добавляет точку. Перетаскивание — зум, двойной клик — сброс. Можно сначала набросать точки, затем запускать K-Means и листать шаги.
         </div>
-        <div v-if="currentStepData" class="step-info">
-            <p><strong>Inertia (Error):</strong> {{ currentStepData.inertia.toFixed(4) }}</p>
-            <p><strong>Status:</strong>
-                <span v-if="currentStepData.converged" style="color: green;">✓ Converged</span>
-                <span v-else style="color: orange;">⊙ Running</span>
-            </p>
+
+        <div style="height: 10px;"></div>
+
+        <div v-if="errorMsg" class="toast err">{{ errorMsg }}</div>
+        <div v-if="successMsg" class="toast ok">{{ successMsg }}</div>
+      </div>
+    </aside>
+
+    <!-- Plot area -->
+    <section class="card plot-card">
+      <div id="plot"></div>
+
+      <div class="stepbar" v-if="history.length">
+        <div class="left">
+          <button class="btn" @click="prevStep" :disabled="currentStep === 0">← Назад</button>
+          <button class="btn" @click="nextStep" :disabled="currentStep === history.length - 1">Вперёд →</button>
         </div>
-    </div>
+        <div class="meta">
+          <span class="pill">Step {{ currentStep }} / {{ history.length - 1 }}</span>
+          <span class="pill">Inertia: {{ currentStepData.inertia.toFixed(4) }}</span>
+        </div>
+      </div>
+    </section>
+  </main>
 </div>
 
 <script>
 const { createApp } = Vue
 
 createApp({
-    data() {
-        return {
-            points: [],
-            k: 3,
-            history: [],
-            currentStep: 0,
-            errorMsg: '',
-            successMsg: '',
-            plotLayout: null
-        }
-    },
-    computed: {
-        currentStepData() {
-            if (this.history.length === 0) return null
-            return this.history[this.currentStep]
-        }
-    },
-    mounted() {
-        this.initPlot()
-    },
-    methods: {
-        initPlot() {
-            const layout = {
-                title: 'Clustering Space',
-                hovermode: 'closest',
-                xaxis: { range: [-1, 11] },
-                yaxis: { range: [-1, 11] },
-                showlegend: true,
-                legend: { x: 1.05, y: 1, xanchor: 'left', yanchor: 'top' },
-                height: 600,
-                margin: { l: 60, r: 140, t: 60, b: 60 }
-            }
-            this.plotLayout = layout
-            Plotly.newPlot('plot', [], layout)
-
-            const plotDiv = document.getElementById('plot')
-
-            plotDiv.addEventListener('click', (e) => {
-                // В Plotly пиксельные преобразования осей считаются относительно PLOTTING AREA,
-                // поэтому нужно вычесть отступы (margins) и смещение области рисования.
-                const rect = plotDiv.getBoundingClientRect()
-                const fullLayout = plotDiv._fullLayout
-                const xaxis = fullLayout.xaxis
-                const yaxis = fullLayout.yaxis
-
-                // _size: {l,t,w,h} — положение и размер области рисования внутри div
-                const sx = fullLayout._size.l
-                const sy = fullLayout._size.t
-
-                const px = (e.clientX - rect.left) - sx
-                const py = (e.clientY - rect.top) - sy
-
-                // клик строго внутри plotting area
-                if (px < 0 || py < 0 || px > fullLayout._size.w || py > fullLayout._size.h) return
-
-                // В Plotly для осей обычно: p2d = pixel -> data (ожидает пиксели внутри plotting area)
-                const dataX = xaxis.p2d(px)
-                const dataY = yaxis.p2d(py)
-
-                this.points.push([Number(dataX.toFixed(2)), Number(dataY.toFixed(2))])
-                this.draw()
-                this.errorMsg = ''
-            })
-        },
-
-        addRandomPoints() {
-            for (let i = 0; i < 10; i++) {
-                this.points.push([
-                    Number((Math.random() * 10).toFixed(2)),
-                    Number((Math.random() * 10).toFixed(2))
-                ])
-            }
-            this.draw()
-            this.errorMsg = ''
-        },
-
-        clearPoints() {
-            this.points = []
-            this.history = []
-            this.currentStep = 0
-            this.draw()
-            this.errorMsg = ''
-            this.successMsg = ''
-        },
-
-        draw() {
-            const tracePoints = {
-                x: this.points.map(p => p[0]),
-                y: this.points.map(p => p[1]),
-                mode: 'markers',
-                type: 'scatter',
-                name: 'Data Points',
-                marker: { size: 8, color: 'blue' }
-            }
-
-            const data = [tracePoints]
-
-            if (this.history.length > 0 && this.currentStepData) {
-                const stepData = this.currentStepData
-
-                tracePoints.marker.color = stepData.labels
-                tracePoints.marker.colorscale = 'Viridis'
-                tracePoints.marker.showscale = true
-                tracePoints.marker.colorbar = { title: 'Cluster', len: 0.5, x: 1.15 }
-
-                data.push({
-                    x: stepData.centroids.map(c => c[0]),
-                    y: stepData.centroids.map(c => c[1]),
-                    mode: 'markers+text',
-                    type: 'scatter',
-                    name: 'Centroids',
-                    marker: { size: 15, color: 'red', symbol: 'star', line: { width: 2, color: 'darkred' } },
-                    text: stepData.centroids.map((_, i) => 'C' + i),
-                    textposition: 'top center'
-                })
-            }
-
-            Plotly.react('plot', data, this.plotLayout)
-        },
-
-        async runAlgorithm() {
-            if (this.points.length === 0) {
-                this.errorMsg = 'Add points first'
-                return
-            }
-            if (this.k < 1 || this.k > this.points.length) {
-                this.errorMsg = 'K must be less than number of points'
-                return
-            }
-
-            this.errorMsg = ''
-            this.successMsg = 'Processing...'
-
-            try {
-                const response = await fetch('/simulator/api/run-kmeans/', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ points: this.points, k: this.k })
-                })
-
-                if (!response.ok) {
-                    const errData = await response.json()
-                    throw new Error(errData.error || 'API Error')
-                }
-
-                const data = await response.json()
-                this.history = data.history
-                this.currentStep = 0
-                this.draw()
-                this.successMsg = 'Done in ' + this.history.length + ' steps'
-            } catch (err) {
-                this.errorMsg = 'Error: ' + err.message
-                this.successMsg = ''
-            }
-        },
-
-        nextStep() {
-            if (this.currentStep < this.history.length - 1) {
-                this.currentStep++
-                this.draw()
-            }
-        },
-
-        prevStep() {
-            if (this.currentStep > 0) {
-                this.currentStep--
-                this.draw()
-            }
-        }
+  data() {
+    return {
+      algorithm: 'kmeans',
+      points: [],
+      k: 3,
+      seed: 42,
+      history: [],
+      currentStep: 0,
+      errorMsg: '',
+      successMsg: '',
+      plotLayout: null
     }
+  },
+  computed: {
+    currentStepData() {
+      if (!this.history.length) return null
+      return this.history[this.currentStep]
+    }
+  },
+  mounted() {
+    this.initPlot()
+  },
+  methods: {
+    initPlot() {
+      const layout = {
+        title: { text: 'Clustering Space', font: { color: 'rgba(255,255,255,.9)', size: 16 } },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        font: { color: 'rgba(255,255,255,.82)' },
+        hovermode: 'closest',
+        xaxis: {
+          range: [-1, 11],
+          gridcolor: 'rgba(255,255,255,.08)',
+          zerolinecolor: 'rgba(255,255,255,.10)',
+          linecolor: 'rgba(255,255,255,.14)',
+          tickcolor: 'rgba(255,255,255,.18)'
+        },
+        yaxis: {
+          range: [-1, 11],
+          gridcolor: 'rgba(255,255,255,.08)',
+          zerolinecolor: 'rgba(255,255,255,.10)',
+          linecolor: 'rgba(255,255,255,.14)',
+          tickcolor: 'rgba(255,255,255,.18)'
+        },
+        showlegend: true,
+        legend: {
+          x: 1.02,
+          y: 1,
+          xanchor: 'left',
+          yanchor: 'top',
+          bgcolor: 'rgba(0,0,0,.25)',
+          bordercolor: 'rgba(255,255,255,.10)',
+          borderwidth: 1
+        },
+        height: 680,
+        margin: { l: 60, r: 160, t: 60, b: 60 }
+      }
+
+      this.plotLayout = layout
+      Plotly.newPlot('plot', [], layout, { responsive: true, displaylogo: false })
+
+      const plotDiv = document.getElementById('plot')
+
+      plotDiv.addEventListener('click', (e) => {
+        const rect = plotDiv.getBoundingClientRect()
+        const fullLayout = plotDiv._fullLayout
+        if (!fullLayout || !fullLayout._size) return
+
+        const xaxis = fullLayout.xaxis
+        const yaxis = fullLayout.yaxis
+
+        // click position inside plot DIV
+        const clickX = e.clientX - rect.left
+        const clickY = e.clientY - rect.top
+
+        // convert into plotting-area pixels
+        const px = clickX - fullLayout._size.l
+        const py = clickY - fullLayout._size.t
+
+        // only accept clicks inside plotting area
+        if (px < 0 || py < 0 || px > fullLayout._size.w || py > fullLayout._size.h) return
+
+        const dataX = xaxis.p2d(px)
+        const dataY = yaxis.p2d(py)
+
+        this.points.push([Number(dataX.toFixed(2)), Number(dataY.toFixed(2))])
+        this.draw()
+        this.errorMsg = ''
+      })
+
+      this.draw()
+    },
+
+    addRandomPoints(n = 10) {
+      // simple deterministic RNG for repeatability
+      let s = this.seed >>> 0
+      const rnd = () => {
+        s = (1664525 * s + 1013904223) >>> 0
+        return s / 4294967296
+      }
+
+      for (let i = 0; i < n; i++) {
+        this.points.push([
+          Number((rnd() * 10).toFixed(2)),
+          Number((rnd() * 10).toFixed(2))
+        ])
+      }
+      this.seed = s
+      this.draw()
+      this.errorMsg = ''
+    },
+
+    clearAll() {
+      this.points = []
+      this.history = []
+      this.currentStep = 0
+      this.errorMsg = ''
+      this.successMsg = ''
+      this.draw()
+    },
+
+    draw() {
+      const tracePoints = {
+        x: this.points.map(p => p[0]),
+        y: this.points.map(p => p[1]),
+        mode: 'markers',
+        type: 'scatter',
+        name: 'Data Points',
+        marker: { size: 9, color: 'rgba(147,197,253,0.95)', line: { width: 1, color: 'rgba(0,0,0,.25)' } }
+      }
+
+      const data = [tracePoints]
+
+      if (this.history.length && this.currentStepData) {
+        const stepData = this.currentStepData
+
+        tracePoints.marker.color = stepData.labels
+        tracePoints.marker.colorscale = 'Viridis'
+        tracePoints.marker.showscale = true
+        tracePoints.marker.colorbar = {
+          title: { text: 'Cluster', side: 'right', font: { color: 'rgba(255,255,255,.75)', size: 12 } },
+          tickfont: { color: 'rgba(255,255,255,.65)' },
+          len: 0.6,
+          x: 1.12,
+          bgcolor: 'rgba(0,0,0,0)'
+        }
+
+        data.push({
+          x: stepData.centroids.map(c => c[0]),
+          y: stepData.centroids.map(c => c[1]),
+          mode: 'markers+text',
+          type: 'scatter',
+          name: 'Centroids',
+          marker: { size: 16, color: 'rgba(239,68,68,.95)', symbol: 'star', line: { width: 2, color: 'rgba(0,0,0,.45)' } },
+          text: stepData.centroids.map((_, i) => 'C' + i),
+          textfont: { color: 'rgba(255,255,255,.85)' },
+          textposition: 'top center'
+        })
+      }
+
+      Plotly.react('plot', data, this.plotLayout)
+    },
+
+    async runAlgorithm() {
+      if (this.algorithm !== 'kmeans') {
+        this.errorMsg = 'Этот алгоритм пока не подключён.'
+        return
+      }
+
+      if (!this.points.length) {
+        this.errorMsg = 'Сначала добавьте точки.'
+        return
+      }
+
+      if (this.k < 1 || this.k > this.points.length) {
+        this.errorMsg = 'K должен быть меньше либо равен количеству точек.'
+        return
+      }
+
+      this.errorMsg = ''
+      this.successMsg = 'Запуск…'
+
+      try {
+        const response = await fetch('/simulator/api/run-kmeans/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ points: this.points, k: this.k })
+        })
+
+        if (!response.ok) {
+          const errData = await response.json()
+          throw new Error(errData.error || 'API Error')
+        }
+
+        const data = await response.json()
+        this.history = data.history
+        this.currentStep = 0
+        this.draw()
+        this.successMsg = 'Готово: ' + this.history.length + ' шаг(ов)'
+      } catch (err) {
+        this.errorMsg = 'Ошибка: ' + err.message
+        this.successMsg = ''
+      }
+    },
+
+    nextStep() {
+      if (this.currentStep < this.history.length - 1) {
+        this.currentStep++
+        this.draw()
+      }
+    },
+
+    prevStep() {
+      if (this.currentStep > 0) {
+        this.currentStep--
+        this.draw()
+      }
+    }
+  }
 }).mount('#app')
 </script>
 </body>

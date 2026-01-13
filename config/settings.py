@@ -23,8 +23,8 @@ INSTALLED_APPS = [
     
     # Local apps
     'apps.simulator',
-    'apps.encyclopedia',
-    'apps.users',
+    # 'apps.encyclopedia',  # Временно закомментировано
+    # 'apps.users',         # Временно закомментировано
 ]
 
 MIDDLEWARE = [

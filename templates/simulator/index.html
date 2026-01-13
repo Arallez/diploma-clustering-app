@@ -7,399 +7,246 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f5f5;
-            padding: 20px;
-        }
-
-        #app {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        h1 {
-            color: #333;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .container {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-
-        .controls {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
-
-        .control-group {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        label {
-            font-weight: 500;
-            color: #333;
-        }
-
-        input[type="number"] {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            width: 80px;
-            font-size: 14px;
-        }
-
-        button {
-            padding: 10px 20px;
-            background: #2196F3;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: background 0.2s;
-        }
-
-        button:hover:not(:disabled) {
-            background: #1976D2;
-        }
-
-        button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-
-        button.danger {
-            background: #f44336;
-        }
-
-        button.danger:hover:not(:disabled) {
-            background: #da190b;
-        }
-
-        button.success {
-            background: #4CAF50;
-        }
-
-        button.success:hover:not(:disabled) {
-            background: #388E3C;
-        }
-
-        #plot {
-            width: 100%;
-            height: 600px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            margin: 20px 0;
-        }
-
-        .step-controls {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            justify-content: center;
-            margin: 20px 0;
-        }
-
-        .step-info {
-            text-align: center;
-            padding: 15px;
-            background: #f9f9f9;
-            border-radius: 4px;
-            margin: 10px 0;
-        }
-
-        .step-info p {
-            margin: 5px 0;
-            color: #333;
-        }
-
-        .status {
-            padding: 10px 15px;
-            border-radius: 4px;
-            margin: 10px 0;
-            text-align: center;
-        }
-
-        .status.success {
-            background: #c8e6c9;
-            color: #2e7d32;
-        }
-
-        .status.error {
-            background: #ffcdd2;
-            color: #c62828;
-        }
-
-        .status.info {
-            background: #bbdefb;
-            color: #1565c0;
-        }
-
-        .info-text {
-            color: #666;
-            font-size: 13px;
-            margin-top: 10px;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; padding: 20px; }
+        #app { max-width: 1200px; margin: 0 auto; }
+        h1 { color: #333; margin-bottom: 20px; text-align: center; }
+        .container { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .controls { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
+        .control-group { display: flex; gap: 10px; align-items: center; }
+        label { font-weight: 500; color: #333; }
+        input[type="number"] { padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; width: 80px; font-size: 14px; }
+        button { padding: 10px 20px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; transition: background 0.2s; }
+        button:hover:not(:disabled) { background: #1976D2; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        button.danger { background: #f44336; }
+        button.danger:hover:not(:disabled) { background: #da190b; }
+        button.success { background: #4CAF50; }
+        button.success:hover:not(:disabled) { background: #388E3C; }
+        #plot { width: 100%; height: 600px; border: 1px solid #ddd; border-radius: 4px; margin: 20px 0; }
+        .step-controls { display: flex; gap: 10px; align-items: center; justify-content: center; margin: 20px 0; }
+        .step-info { text-align: center; padding: 15px; background: #f9f9f9; border-radius: 4px; margin: 10px 0; }
+        .step-info p { margin: 5px 0; color: #333; }
+        .status { padding: 10px 15px; border-radius: 4px; margin: 10px 0; text-align: center; }
+        .status.success { background: #c8e6c9; color: #2e7d32; }
+        .status.error { background: #ffcdd2; color: #c62828; }
+        .info-text { color: #666; font-size: 13px; margin-top: 10px; }
     </style>
 </head>
 <body>
-    <div id="app">
-        <h1>📊 K-Means Тренажер</h1>
+<div id="app">
+    <h1>📊 K-Means Тренажер</h1>
 
-        <div class="container">
-            <div class="controls">
-                <div class="control-group">
-                    <label for="k-input">K (clusters):</label>
-                    <input type="number" id="k-input" v-model.number="k" min="1" max="10">
-                </div>
-
-                <button @click="addRandomPoints" class="success">+ 10 точек</button>
-                <button @click="clearPoints" class="danger">Clear</button>
-                <button @click="runAlgorithm" :disabled="points.length < k">Run Algorithm</button>
+    <div class="container">
+        <div class="controls">
+            <div class="control-group">
+                <label for="k-input">K (clusters):</label>
+                <input type="number" id="k-input" v-model.number="k" min="1" max="10">
             </div>
-
-            <div v-if="errorMsg" class="status error">{{ errorMsg }}</div>
-            <div v-if="successMsg" class="status success">{{ successMsg }}</div>
+            <button @click="addRandomPoints" class="success">+ 10 точек</button>
+            <button @click="clearPoints" class="danger">Clear</button>
+            <button @click="runAlgorithm" :disabled="points.length < k">Run Algorithm</button>
         </div>
-
-        <div class="container">
-            <div id="plot"></div>
-            <p class="info-text" style="text-align: center;">🔍 Click to add points | Drag to zoom | Double-click to reset</p>
-        </div>
-
-        {% raw %}
-        <div v-if="history.length > 0" class="container">
-            <div class="step-controls">
-                <button @click="prevStep" :disabled="currentStep === 0">← Previous</button>
-                <span style="font-weight: bold; min-width: 150px; text-align: center;">
-                    Step {{ currentStep }} / {{ history.length - 1 }}
-                </span>
-                <button @click="nextStep" :disabled="currentStep === history.length - 1">Next →</button>
-            </div>
-
-            <div v-if="currentStepData" class="step-info">
-                <p><strong>Inertia (Error):</strong> {{ currentStepData.inertia.toFixed(4) }}</p>
-                <p><strong>Status:</strong> 
-                    <span v-if="currentStepData.converged" style="color: green;">✓ Converged</span>
-                    <span v-else style="color: orange;">⊙ Running</span>
-                </p>
-            </div>
-        </div>
-        {% endraw %}
+        <div v-if="errorMsg" class="status error">{{ errorMsg }}</div>
+        <div v-if="successMsg" class="status success">{{ successMsg }}</div>
     </div>
 
-    <script>
-        const { createApp } = Vue
+    <div class="container">
+        <div id="plot"></div>
+        <p class="info-text" style="text-align: center;">🔍 Click to add points | Drag to zoom | Double-click to reset</p>
+    </div>
 
-        createApp({
-            data() {
-                return {
-                    points: [],
-                    k: 3,
-                    history: [],
-                    currentStep: 0,
-                    errorMsg: '',
-                    successMsg: '',
-                    plotLayout: null
-                }
-            },
-            computed: {
-                currentStepData() {
-                    if (this.history.length === 0) return null;
-                    return this.history[this.currentStep];
-                }
-            },
-            mounted() {
-                this.initPlot();
-            },
-            methods: {
-                initPlot() {
-                    const layout = {
-                        title: 'Clustering Space',
-                        hovermode: 'closest',
-                        xaxis: { range: [-1, 11] },
-                        yaxis: { range: [-1, 11] },
-                        showlegend: true,
-                        legend: {
-                            x: 1.05,
-                            y: 1,
-                            xanchor: 'left',
-                            yanchor: 'top'
-                        },
-                        height: 600
-                    };
-                    this.plotLayout = layout;
-                    Plotly.newPlot('plot', [], layout);
-                    
-                    const plotDiv = document.getElementById('plot');
-                    
-                    // Используем событие plotly_click для правильного получения координат
-                    plotDiv.on('plotly_click', (data) => {
-                        if (data.points && data.points.length > 0) {
-                            // Если кликнули по точке - игнорируем
-                            return;
-                        }
-                    });
-                    
-                    // Обрабатываем клики по пустому месту
-                    plotDiv.addEventListener('click', (e) => {
-                        const rect = plotDiv.getBoundingClientRect();
-                        const fullLayout = plotDiv._fullLayout;
-                        const xaxis = fullLayout.xaxis;
-                        const yaxis = fullLayout.yaxis;
-                        
-                        // Координаты клика относительно окна браузера
-                        const clickX = e.clientX - rect.left;
-                        const clickY = e.clientY - rect.top;
-                        
-                        // Преобразуем пиксельные координаты в координаты данных
-                        // l2p преобразует из координат layout в пиксели, p2l - обратно
-                        const dataX = xaxis.p2d(clickX);
-                        const dataY = yaxis.p2d(clickY);
-                        
-                        // Проверяем, что координаты в пределах графика
-                        if (dataX >= xaxis.range[0] && dataX <= xaxis.range[1] && 
-                            dataY >= yaxis.range[0] && dataY <= yaxis.range[1]) {
-                            this.points.push([
-                                parseFloat(dataX.toFixed(2)), 
-                                parseFloat(dataY.toFixed(2))
-                            ]);
-                            this.draw();
-                            this.errorMsg = '';
-                        }
-                    });
-                },
+    <div v-if="history.length > 0" class="container">
+        <div class="step-controls">
+            <button @click="prevStep" :disabled="currentStep === 0">← Previous</button>
+            <span style="font-weight: bold; min-width: 150px; text-align: center;">Step {{ currentStep }} / {{ history.length - 1 }}</span>
+            <button @click="nextStep" :disabled="currentStep === history.length - 1">Next →</button>
+        </div>
+        <div v-if="currentStepData" class="step-info">
+            <p><strong>Inertia (Error):</strong> {{ currentStepData.inertia.toFixed(4) }}</p>
+            <p><strong>Status:</strong>
+                <span v-if="currentStepData.converged" style="color: green;">✓ Converged</span>
+                <span v-else style="color: orange;">⊙ Running</span>
+            </p>
+        </div>
+    </div>
+</div>
 
-                addRandomPoints() {
-                    for (let i = 0; i < 10; i++) {
-                        this.points.push([
-                            parseFloat((Math.random() * 10).toFixed(2)),
-                            parseFloat((Math.random() * 10).toFixed(2))
-                        ]);
-                    }
-                    this.draw();
-                    this.errorMsg = '';
-                },
+<script>
+const { createApp } = Vue
 
-                clearPoints() {
-                    this.points = [];
-                    this.history = [];
-                    this.currentStep = 0;
-                    this.draw();
-                    this.errorMsg = '';
-                    this.successMsg = '';
-                },
-
-                draw() {
-                    const tracePoints = {
-                        x: this.points.map(p => p[0]),
-                        y: this.points.map(p => p[1]),
-                        mode: 'markers',
-                        type: 'scatter',
-                        name: 'Data Points',
-                        marker: { size: 8, color: 'blue' }
-                    };
-                    
-                    const data = [tracePoints];
-
-                    if (this.history.length > 0 && this.currentStepData) {
-                        const stepData = this.currentStepData;
-                        
-                        tracePoints.marker.color = stepData.labels;
-                        tracePoints.marker.colorscale = 'Viridis';
-                        tracePoints.marker.showscale = true;
-                        tracePoints.marker.colorbar = {
-                            title: 'Cluster',
-                            len: 0.5,
-                            x: 1.15
-                        };
-                        
-                        const traceCentroids = {
-                            x: stepData.centroids.map(c => c[0]),
-                            y: stepData.centroids.map(c => c[1]),
-                            mode: 'markers+text',
-                            type: 'scatter',
-                            name: 'Centroids',
-                            marker: { size: 15, color: 'red', symbol: 'star', line: { width: 2, color: 'darkred' } },
-                            text: stepData.centroids.map((_, i) => 'C'+i),
-                            textposition: 'top center'
-                        };
-                        data.push(traceCentroids);
-                    }
-
-                    Plotly.react('plot', data, this.plotLayout);
-                },
-
-                async runAlgorithm() {
-                    if (this.points.length === 0) {
-                        this.errorMsg = 'Add points first';
-                        return;
-                    }
-
-                    if (this.k < 1 || this.k > this.points.length) {
-                        this.errorMsg = 'K must be less than number of points';
-                        return;
-                    }
-
-                    this.errorMsg = '';
-                    this.successMsg = 'Processing...';
-
-                    try {
-                        const response = await fetch('/simulator/api/run-kmeans/', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ points: this.points, k: this.k })
-                        });
-
-                        if (!response.ok) {
-                            const errData = await response.json();
-                            throw new Error(errData.error || 'API Error');
-                        }
-
-                        const data = await response.json();
-                        this.history = data.history;
-                        this.currentStep = 0;
-                        this.draw();
-                        this.successMsg = 'Done in ' + this.history.length + ' steps';
-                    } catch (err) {
-                        this.errorMsg = 'Error: ' + err.message;
-                        this.successMsg = '';
-                    }
-                },
-
-                nextStep() {
-                    if (this.currentStep < this.history.length - 1) {
-                        this.currentStep++;
-                        this.draw();
-                    }
-                },
-
-                prevStep() {
-                    if (this.currentStep > 0) {
-                        this.currentStep--;
-                        this.draw();
-                    }
-                }
+createApp({
+    data() {
+        return {
+            points: [],
+            k: 3,
+            history: [],
+            currentStep: 0,
+            errorMsg: '',
+            successMsg: '',
+            plotLayout: null
+        }
+    },
+    computed: {
+        currentStepData() {
+            if (this.history.length === 0) return null
+            return this.history[this.currentStep]
+        }
+    },
+    mounted() {
+        this.initPlot()
+    },
+    methods: {
+        initPlot() {
+            const layout = {
+                title: 'Clustering Space',
+                hovermode: 'closest',
+                xaxis: { range: [-1, 11] },
+                yaxis: { range: [-1, 11] },
+                showlegend: true,
+                legend: { x: 1.05, y: 1, xanchor: 'left', yanchor: 'top' },
+                height: 600,
+                margin: { l: 60, r: 140, t: 60, b: 60 }
             }
-        }).mount('#app')
-    </script>
+            this.plotLayout = layout
+            Plotly.newPlot('plot', [], layout)
+
+            const plotDiv = document.getElementById('plot')
+
+            plotDiv.addEventListener('click', (e) => {
+                // В Plotly пиксельные преобразования осей считаются относительно PLOTTING AREA,
+                // поэтому нужно вычесть отступы (margins) и смещение области рисования.
+                const rect = plotDiv.getBoundingClientRect()
+                const fullLayout = plotDiv._fullLayout
+                const xaxis = fullLayout.xaxis
+                const yaxis = fullLayout.yaxis
+
+                // _size: {l,t,w,h} — положение и размер области рисования внутри div
+                const sx = fullLayout._size.l
+                const sy = fullLayout._size.t
+
+                const px = (e.clientX - rect.left) - sx
+                const py = (e.clientY - rect.top) - sy
+
+                // клик строго внутри plotting area
+                if (px < 0 || py < 0 || px > fullLayout._size.w || py > fullLayout._size.h) return
+
+                // В Plotly для осей обычно: p2d = pixel -> data (ожидает пиксели внутри plotting area)
+                const dataX = xaxis.p2d(px)
+                const dataY = yaxis.p2d(py)
+
+                this.points.push([Number(dataX.toFixed(2)), Number(dataY.toFixed(2))])
+                this.draw()
+                this.errorMsg = ''
+            })
+        },
+
+        addRandomPoints() {
+            for (let i = 0; i < 10; i++) {
+                this.points.push([
+                    Number((Math.random() * 10).toFixed(2)),
+                    Number((Math.random() * 10).toFixed(2))
+                ])
+            }
+            this.draw()
+            this.errorMsg = ''
+        },
+
+        clearPoints() {
+            this.points = []
+            this.history = []
+            this.currentStep = 0
+            this.draw()
+            this.errorMsg = ''
+            this.successMsg = ''
+        },
+
+        draw() {
+            const tracePoints = {
+                x: this.points.map(p => p[0]),
+                y: this.points.map(p => p[1]),
+                mode: 'markers',
+                type: 'scatter',
+                name: 'Data Points',
+                marker: { size: 8, color: 'blue' }
+            }
+
+            const data = [tracePoints]
+
+            if (this.history.length > 0 && this.currentStepData) {
+                const stepData = this.currentStepData
+
+                tracePoints.marker.color = stepData.labels
+                tracePoints.marker.colorscale = 'Viridis'
+                tracePoints.marker.showscale = true
+                tracePoints.marker.colorbar = { title: 'Cluster', len: 0.5, x: 1.15 }
+
+                data.push({
+                    x: stepData.centroids.map(c => c[0]),
+                    y: stepData.centroids.map(c => c[1]),
+                    mode: 'markers+text',
+                    type: 'scatter',
+                    name: 'Centroids',
+                    marker: { size: 15, color: 'red', symbol: 'star', line: { width: 2, color: 'darkred' } },
+                    text: stepData.centroids.map((_, i) => 'C' + i),
+                    textposition: 'top center'
+                })
+            }
+
+            Plotly.react('plot', data, this.plotLayout)
+        },
+
+        async runAlgorithm() {
+            if (this.points.length === 0) {
+                this.errorMsg = 'Add points first'
+                return
+            }
+            if (this.k < 1 || this.k > this.points.length) {
+                this.errorMsg = 'K must be less than number of points'
+                return
+            }
+
+            this.errorMsg = ''
+            this.successMsg = 'Processing...'
+
+            try {
+                const response = await fetch('/simulator/api/run-kmeans/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ points: this.points, k: this.k })
+                })
+
+                if (!response.ok) {
+                    const errData = await response.json()
+                    throw new Error(errData.error || 'API Error')
+                }
+
+                const data = await response.json()
+                this.history = data.history
+                this.currentStep = 0
+                this.draw()
+                this.successMsg = 'Done in ' + this.history.length + ' steps'
+            } catch (err) {
+                this.errorMsg = 'Error: ' + err.message
+                this.successMsg = ''
+            }
+        },
+
+        nextStep() {
+            if (this.currentStep < this.history.length - 1) {
+                this.currentStep++
+                this.draw()
+            }
+        },
+
+        prevStep() {
+            if (this.currentStep > 0) {
+                this.currentStep--
+                this.draw()
+            }
+        }
+    }
+}).mount('#app')
+</script>
 </body>
 </html>

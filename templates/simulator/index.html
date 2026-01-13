@@ -185,6 +185,7 @@
             <p class="info-text" style="text-align: center;">🔍 Drag to zoom | Double-click to reset</p>
         </div>
 
+        {% raw %}
         <div v-if="history.length > 0" class="container">
             <div class="step-controls">
                 <button @click="prevStep" :disabled="currentStep === 0">← Previous</button>
@@ -202,6 +203,7 @@
                 </p>
             </div>
         </div>
+        {% endraw %}
     </div>
 
     <script>
@@ -241,7 +243,6 @@
                     this.plotLayout = layout;
                     Plotly.newPlot('plot', [], layout);
                     
-                    // Перехват клика для добавления точек
                     document.getElementById('plot').addEventListener('click', (e) => {
                         const plotDiv = document.getElementById('plot');
                         const rect = plotDiv.getBoundingClientRect();
@@ -294,12 +295,10 @@
                     if (this.history.length > 0 && this.currentStepData) {
                         const stepData = this.currentStepData;
                         
-                        // Окрашиваем точки по кластерам
                         tracePoints.marker.color = stepData.labels;
                         tracePoints.marker.colorscale = 'Viridis';
                         tracePoints.marker.showscale = true;
                         
-                        // Центроиды
                         const traceCentroids = {
                             x: stepData.centroids.map(c => c[0]),
                             y: stepData.centroids.map(c => c[1]),
@@ -307,7 +306,7 @@
                             type: 'scatter',
                             name: 'Centroids',
                             marker: { size: 15, color: 'red', symbol: 'star', line: { width: 2, color: 'darkred' } },
-                            text: stepData.centroids.map((_, i) => `C${i}`),
+                            text: stepData.centroids.map((_, i) => 'C'+i),
                             textposition: 'top center'
                         };
                         data.push(traceCentroids);
@@ -318,17 +317,17 @@
 
                 async runAlgorithm() {
                     if (this.points.length === 0) {
-                        this.errorMsg = 'Загружаются';
+                        this.errorMsg = 'Add points first';
                         return;
                     }
 
                     if (this.k < 1 || this.k > this.points.length) {
-                        this.errorMsg = `K должно быть меньше числа точек (${this.points.length})`;
+                        this.errorMsg = 'K must be less than number of points';
                         return;
                     }
 
                     this.errorMsg = '';
-                    this.successMsg = 'Обработка...';
+                    this.successMsg = 'Processing...';
 
                     try {
                         const response = await fetch('/simulator/api/run-kmeans/', {
@@ -346,9 +345,9 @@
                         this.history = data.history;
                         this.currentStep = 0;
                         this.draw();
-                        this.successMsg = `Алгоритм мв ${this.history.length} шагов`;
+                        this.successMsg = 'Done in ' + this.history.length + ' steps';
                     } catch (err) {
-                        this.errorMsg = `Ошибка: ${err.message}`;
+                        this.errorMsg = 'Error: ' + err.message;
                         this.successMsg = '';
                     }
                 },

@@ -200,7 +200,7 @@
                 <p><strong>Inertia (Error):</strong> {{ currentStepData.inertia.toFixed(4) }}</p>
                 <p><strong>Status:</strong> 
                     <span v-if="currentStepData.converged" style="color: green;">✓ Converged</span>
-                    <span v-else style="color: orange;">⬬ Running</span>
+                    <span v-else style="color: orange;">⊙ Running</span>
                 </p>
             </div>
         </div>
@@ -253,14 +253,30 @@
                     document.getElementById('plot').addEventListener('click', (e) => {
                         const plotDiv = document.getElementById('plot');
                         const rect = plotDiv.getBoundingClientRect();
-                        const xaxis = plotDiv._fullLayout.xaxis;
-                        const yaxis = plotDiv._fullLayout.yaxis;
                         
-                        const x = xaxis.p2c((e.clientX - rect.left));
-                        const y = yaxis.p2c((e.clientY - rect.top));
+                        // Получаем положение клика относительно окна
+                        const clientX = e.clientX;
+                        const clientY = e.clientY;
                         
-                        if (x >= -1 && x <= 11 && y >= -1 && y <= 11) {
-                            this.points.push([parseFloat(x.toFixed(2)), parseFloat(y.toFixed(2))]);
+                        // Переводим в координаты внутри контейнера plot
+                        const x = clientX - rect.left;
+                        const y = clientY - rect.top;
+                        
+                        // Получаем данные об осях
+                        const fullLayout = plotDiv._fullLayout;
+                        const xaxis = fullLayout.xaxis;
+                        const yaxis = fullLayout.yaxis;
+                        
+                        // Используем встроенную функцию Plotly для преобразования пиксельных координат в данные
+                        const dataX = xaxis.p2c(x);
+                        const dataY = yaxis.p2c(y);
+                        
+                        // Проверяем, что точка в пределах области графика
+                        if (x > 0 && x < xaxis._length && y > 0 && y < yaxis._length) {
+                            this.points.push([
+                                parseFloat(dataX.toFixed(2)), 
+                                parseFloat(dataY.toFixed(2))
+                            ]);
                             this.draw();
                             this.errorMsg = '';
                         }

@@ -242,42 +242,43 @@ def calculate_centroid(points):
         resultStatus.value = '';
         
         const userCode = editor.getValue();
-        
-        // Тестовые данные (Скрыты от пользователя в UI, но есть в JS - для демо ок)
-        // В продакшене лучше генерировать случайные данные
         const testPoints = [[0,0], [4,4], [2,2]]; 
         
-        // Скрипт-обертка
+        // Надежная обертка: результат конвертируем в JSON строку прямо внутри Python
         const wrapper = `
+import json
+import numpy as np
+
 ${userCode}
 
-# Тестовый запуск
 try:
     pts = ${JSON.stringify(testPoints)}
     result = calculate_centroid(pts)
-    result
+    
+    # Конвертация numpy типов в стандартные для JSON
+    if hasattr(result, 'tolist'):
+        result = result.tolist()
+        
+    # Возвращаем JSON строку, чтобы избежать проблем с типами JS/Python Proxy
+    json.dumps(result)
 except Exception as e:
-    "ERROR: " + str(e)
+    json.dumps({"ERROR_IN_PY": str(e)})
 `;
 
         try {
-            // 1. Выполняем код в браузере
-            let output = await pyodide.runPythonAsync(wrapper);
+            // 1. Выполняем код в браузере, получаем строку JSON
+            let jsonOutput = await pyodide.runPythonAsync(wrapper);
+            let output = JSON.parse(jsonOutput);
             
-            // Если вернулась ошибка строкой
-            if (typeof output === 'string' && output.startsWith("ERROR:")) {
+            // Если вернулась ошибка из Python
+            if (output && output.ERROR_IN_PY) {
                 resultStatus.value = 'error';
-                resultMessage.value = output;
+                resultMessage.value = "Ошибка в коде: " + output.ERROR_IN_PY;
                 isRunning.value = false;
                 return;
             }
 
-            // Преобразуем Proxy (Pyodide object) в JS array
-            if (output && output.toJs) {
-                output = output.toJs();
-            }
-
-            // 2. Отправляем ответ на сервер для проверки ("Оракул")
+            // 2. Отправляем чистый массив/число на сервер
             const response = await fetch('/simulator/api/check-solution/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -298,8 +299,9 @@ except Exception as e:
             }
 
         } catch (e) {
+            console.error(e);
             resultStatus.value = 'error';
-            resultMessage.value = "Ошибка выполнения: " + e.message;
+            resultMessage.value = "Системная ошибка: " + e.message;
         } finally {
             isRunning.value = false;
         }

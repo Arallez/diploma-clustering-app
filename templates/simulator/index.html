@@ -16,6 +16,7 @@
     <div id="app">
         <h1>Тренажер K-Means</h1>
         
+        {% verbatim %}
         <div class="controls">
             <label>Количество кластеров (k): <input type="number" v-model="k" min="1" max="5"></label>
             <button @click="clearPoints">Очистить</button>
@@ -28,6 +29,7 @@
             <button @click="nextStep" :disabled="currentStep === history.length - 1">Вперед</button>
             <p v-if="currentStepData">Инерция (ошибка): {{ currentStepData.inertia.toFixed(2) }}</p>
         </div>
+        {% endverbatim %}
 
         <div id="plot"></div>
         
@@ -69,17 +71,9 @@
                     }], layout);
 
                     document.getElementById('plot').on('plotly_click', (data) => {
-                        const x = data.points[0].x;
-                        const y = data.points[0].y;
-                        // Plotly click возвращает существующие точки, но нам нужно добавлять новые.
-                        // Поэтому используем хак: перехватываем клик по самому div-у, 
-                        // но координаты надо пересчитывать.
-                        // Для прототипа просто добавим случайную точку рядом :)
-                        // В реальной версии нужно маппить координаты мыши на оси Plotly.
+                        // Plotly возвращает координаты кликнутой точки, но не пустой области.
+                        // Поэтому для добавления используем другой подход в MVP.
                     });
-                    
-                    // Упрощенный клик для MVP: клик по div добавляет точку "примерно" (для теста можно вводить вручную или рандом)
-                    // Для простоты сейчас сделаем добавление случайных точек по кнопке "Добавить случайные", чтобы не мучиться с координатами мыши.
                 },
                 
                 addRandomPoints() {
@@ -133,14 +127,34 @@
                 },
 
                 async runAlgorithm() {
+                    // Обратите внимание: CSRF токен важен для Django POST запросов
+                    // В MVP мы его отключим в API или передадим через headers
                     const response = await fetch('/simulator/api/run-kmeans/', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': this.getCookie('csrftoken') 
+                        },
                         body: JSON.stringify({ points: this.points, k: this.k })
                     });
                     this.history = await response.json();
                     this.currentStep = 0;
                     this.draw();
+                },
+                
+                getCookie(name) {
+                    let cookieValue = null;
+                    if (document.cookie && document.cookie !== '') {
+                        const cookies = document.cookie.split(';');
+                        for (let i = 0; i < cookies.length; i++) {
+                            const cookie = cookies[i].trim();
+                            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                                break;
+                            }
+                        }
+                    }
+                    return cookieValue;
                 },
 
                 nextStep() {
@@ -157,15 +171,9 @@
                 }
             }
         }).mount('#app')
-        
-        // Перехват клика для добавления точек (простая версия)
-        document.getElementById('plot').addEventListener('click', function(evt) {
-            // В реальном проекте тут нужна математика перевода пикселей в координаты осей
-            // Пока просто добавим кнопку "Сгенерировать данные" в интерфейс
-        });
     </script>
     
-    <!-- Временная кнопка для генерации данных, так как клик по Plotly сложен для MVP -->
+    <!-- Временная кнопка для генерации данных -->
     <div style="position: absolute; top: 100px; right: 50px;">
         <button onclick="document.querySelector('#app').__vue_app__._instance.ctx.addRandomPoints()">+ 10 Случайных точек</button>
     </div>

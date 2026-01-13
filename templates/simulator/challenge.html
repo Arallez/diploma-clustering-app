@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Code Challenge: Centroids</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Pyodide (Python in Browser) -->
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+
+  <!-- Vue.js -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+  <!-- Monaco Editor Loader -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #0b1020;
+      --card-bg: rgba(255,255,255,0.05);
+      --border: rgba(255,255,255,0.1);
+      --accent: #7c5cff;
+      --success: #22c55e;
+      --error: #ef4444;
+      --text: #e2e8f0;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      height: 50px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      background: rgba(0,0,0,0.2);
+    }
+
+    .main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 400px 1fr;
+      height: calc(100vh - 50px);
+    }
+
+    /* Left Panel: Task Info */
+    .task-panel {
+      border-right: 1px solid var(--border);
+      padding: 20px;
+      overflow-y: auto;
+      background: rgba(0,0,0,0.1);
+    }
+
+    .task-title { font-size: 18px; font-weight: 700; margin-bottom: 10px; color: #fff; }
+    .task-desc { font-size: 14px; line-height: 1.6; color: #94a3b8; margin-bottom: 20px; }
+    
+    .example-box {
+      background: rgba(255,255,255,0.03);
+      padding: 10px;
+      border-radius: 6px;
+      font-family: 'Fira Code', monospace;
+      font-size: 12px;
+      margin: 10px 0;
+      border: 1px solid var(--border);
+    }
+
+    /* Right Panel: Editor */
+    .editor-panel {
+      display: flex;
+      flex-direction: column;
+      background: #1e1e1e; 
+    }
+
+    #editor-container {
+      flex: 1;
+      width: 100%;
+    }
+
+    .toolbar {
+      height: 50px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 0 20px;
+      background: #18181b;
+      gap: 10px;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .btn-run { background: var(--success); color: #000; }
+    .btn-run:hover { opacity: 0.9; }
+    
+    .btn-reset { background: rgba(255,255,255,0.1); color: #fff; }
+    
+    .status-msg {
+      margin-right: auto;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .loading { color: #facc15; }
+    .success { color: #4ade80; }
+    .error { color: #f87171; }
+
+  </style>
+</head>
+<body>
+
+<div id="app" style="height: 100%;">
+  <header class="header">
+    <strong>🎓 Code Challenge:</strong> &nbsp; <span style="color: #94a3b8;">K-Means Part 1</span>
+    <a href="/simulator/" style="margin-left: auto; color: #fff; text-decoration: none; font-size: 13px;">Back to Simulator →</a>
+  </header>
+
+  <div class="main">
+    <!-- Task Description -->
+    <div class="task-panel">
+      <div class="task-title">Задача 1: Пересчет центроида</div>
+      <div class="task-desc">
+        <p>В алгоритме K-Means ключевой шаг — пересчет положения центроидов.</p>
+        <p>Центроид кластера — это просто <b>среднее арифметическое</b> координат всех точек, принадлежащих этому кластеру.</p>
+        
+        <p><b>Ваша задача:</b><br>
+        Реализуйте функцию <code>calculate_centroid(points)</code>, которая принимает список точек и возвращает их центр масс [x, y].</p>
+      </div>
+
+      <div class="example-box">
+        INPUT:<br>
+        points = [[0, 0], [4, 4], [2, 2]]<br><br>
+        OUTPUT:<br>
+        [2.0, 2.0]<br>
+        <span style="color: #64748b;">// (0+4+2)/3 = 2</span>
+      </div>
+      
+      <div class="task-desc" style="margin-top: 20px;">
+        <p><i>Подсказка: Вы можете использовать встроенную библиотеку <code>numpy</code> как <code>np</code>, если хотите.</i></p>
+      </div>
+    </div>
+
+    <!-- Code Editor -->
+    <div class="editor-panel">
+      <div id="editor-container"></div>
+      
+      <div class="toolbar">
+        <div class="status-msg">
+            <span v-if="isRunning" class="loading">⏳ Выполняем код...</span>
+            <span v-if="resultStatus === 'success'" class="success">✅ {{ resultMessage }}</span>
+            <span v-if="resultStatus === 'error'" class="error">❌ {{ resultMessage }}</span>
+        </div>
+        
+        <button class="btn btn-reset" @click="resetCode">Сброс</button>
+        <button class="btn btn-run" @click="runCode" :disabled="!isPyodideReady || isRunning">
+          {{ isPyodideReady ? '▶ Проверить решение' : 'Загрузка Python...' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const { createApp, onMounted, ref } = Vue
+
+createApp({
+  setup() {
+    const isPyodideReady = ref(false)
+    const isRunning = ref(false)
+    const resultStatus = ref('') // 'success', 'error', ''
+    const resultMessage = ref('')
+    let pyodide = null
+    let editor = null
+
+    const defaultCode = `# Напишите функцию для поиска центра масс
+import numpy as np
+
+def calculate_centroid(points):
+    """
+    points: список списков [[x1, y1], [x2, y2], ...]
+    Return: [x_avg, y_avg]
+    """
+    # ВАШ КОД ЗДЕСЬ:
+    x_sum = 0
+    y_sum = 0
+    
+    # ...
+    
+    return [0, 0] # Заглушка
+`
+
+    // Init Monaco Editor
+    const initEditor = () => {
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' }});
+        require(['vs/editor/editor.main'], function() {
+            editor = monaco.editor.create(document.getElementById('editor-container'), {
+                value: defaultCode,
+                language: 'python',
+                theme: 'vs-dark',
+                minimap: { enabled: false },
+                fontSize: 14,
+                automaticLayout: true
+            });
+        });
+    }
+
+    // Init Pyodide
+    const initPyodide = async () => {
+        try {
+            pyodide = await loadPyodide();
+            await pyodide.loadPackage("numpy");
+            isPyodideReady.value = true;
+            console.log("Python ready");
+        } catch(e) {
+            console.error("Pyodide failed", e);
+        }
+    }
+
+    const runCode = async () => {
+        if (!pyodide) return;
+        isRunning.value = true;
+        resultStatus.value = '';
+        
+        const userCode = editor.getValue();
+        
+        // Тестовые данные (Скрыты от пользователя в UI, но есть в JS - для демо ок)
+        // В продакшене лучше генерировать случайные данные
+        const testPoints = [[0,0], [4,4], [2,2]]; 
+        
+        // Скрипт-обертка
+        const wrapper = `
+${userCode}
+
+# Тестовый запуск
+try:
+    pts = ${JSON.stringify(testPoints)}
+    result = calculate_centroid(pts)
+    result
+except Exception as e:
+    "ERROR: " + str(e)
+`;
+
+        try {
+            // 1. Выполняем код в браузере
+            let output = await pyodide.runPythonAsync(wrapper);
+            
+            // Если вернулась ошибка строкой
+            if (typeof output === 'string' && output.startsWith("ERROR:")) {
+                resultStatus.value = 'error';
+                resultMessage.value = output;
+                isRunning.value = false;
+                return;
+            }
+
+            // Преобразуем Proxy (Pyodide object) в JS array
+            if (output && output.toJs) {
+                output = output.toJs();
+            }
+
+            // 2. Отправляем ответ на сервер для проверки ("Оракул")
+            const response = await fetch('/simulator/api/check-solution/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    task_id: 'centroid_calc', 
+                    result: output 
+                })
+            });
+            
+            const serverResp = await response.json();
+            
+            if (serverResp.correct) {
+                resultStatus.value = 'success';
+                resultMessage.value = serverResp.message;
+            } else {
+                resultStatus.value = 'error';
+                resultMessage.value = serverResp.message || 'Неверный ответ';
+            }
+
+        } catch (e) {
+            resultStatus.value = 'error';
+            resultMessage.value = "Ошибка выполнения: " + e.message;
+        } finally {
+            isRunning.value = false;
+        }
+    }
+
+    const resetCode = () => {
+        if (editor) editor.setValue(defaultCode);
+        resultStatus.value = '';
+    }
+
+    onMounted(() => {
+        initEditor();
+        initPyodide();
+    })
+
+    return {
+        isPyodideReady,
+        isRunning,
+        runCode,
+        resetCode,
+        resultStatus,
+        resultMessage
+    }
+  }
+}).mount('#app')
+</script>
+
+</body>
+</html>

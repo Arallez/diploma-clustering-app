@@ -249,29 +249,35 @@
                     this.plotLayout = layout;
                     Plotly.newPlot('plot', [], layout);
                     
-                    document.getElementById('plot').addEventListener('click', (e) => {
-                        const plotDiv = document.getElementById('plot');
+                    const plotDiv = document.getElementById('plot');
+                    
+                    // Используем событие plotly_click для правильного получения координат
+                    plotDiv.on('plotly_click', (data) => {
+                        if (data.points && data.points.length > 0) {
+                            // Если кликнули по точке - игнорируем
+                            return;
+                        }
+                    });
+                    
+                    // Обрабатываем клики по пустому месту
+                    plotDiv.addEventListener('click', (e) => {
                         const rect = plotDiv.getBoundingClientRect();
-                        
-                        // Получаем положение клика относительно окна
-                        const clientX = e.clientX;
-                        const clientY = e.clientY;
-                        
-                        // Переводим в координаты внутри контейнера plot
-                        const x = clientX - rect.left;
-                        const y = clientY - rect.top;
-                        
-                        // Получаем данные об осях
                         const fullLayout = plotDiv._fullLayout;
                         const xaxis = fullLayout.xaxis;
                         const yaxis = fullLayout.yaxis;
                         
-                        // Используем встроенную функцию Plotly для преобразования пиксельных координат в данные
-                        const dataX = xaxis.p2c(x);
-                        const dataY = yaxis.p2c(y);
+                        // Координаты клика относительно окна браузера
+                        const clickX = e.clientX - rect.left;
+                        const clickY = e.clientY - rect.top;
                         
-                        // Проверяем, что точка в пределах области графика
-                        if (x > 0 && x < xaxis._length && y > 0 && y < yaxis._length) {
+                        // Преобразуем пиксельные координаты в координаты данных
+                        // l2p преобразует из координат layout в пиксели, p2l - обратно
+                        const dataX = xaxis.p2d(clickX);
+                        const dataY = yaxis.p2d(clickY);
+                        
+                        // Проверяем, что координаты в пределах графика
+                        if (dataX >= xaxis.range[0] && dataX <= xaxis.range[1] && 
+                            dataY >= yaxis.range[0] && dataY <= yaxis.range[1]) {
                             this.points.push([
                                 parseFloat(dataX.toFixed(2)), 
                                 parseFloat(dataY.toFixed(2))

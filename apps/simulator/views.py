@@ -1,11 +1,12 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.shortcuts import render
+from django.http import FileResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from .engine import KMeansEngine
 import json
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -40,5 +41,6 @@ class RunKMeans(APIView):
             return Response({"error": str(e)}, status=500)
 
 def simulator_view(request):
-    """Главная страница тренажера"""
-    return render(request, 'simulator/index.html')
+    """Главная страница тренажера - отдаём статический HTML"""
+    template_path = os.path.join(os.path.dirname(__file__), '..', '..', 'templates', 'simulator', 'index.html')
+    return FileResponse(open(template_path, 'rb'), content_type='text/html')

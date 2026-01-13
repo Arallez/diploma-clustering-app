@@ -249,18 +249,25 @@ def calculate_centroid(points):
 import json
 import numpy as np
 
+# 1. Сначала определяем функцию пользователя
 ${userCode}
 
+# 2. Вызываем её и пакуем результат
 try:
     pts = ${JSON.stringify(testPoints)}
-    result = calculate_centroid(pts)
     
-    # Конвертация numpy типов в стандартные для JSON
-    if hasattr(result, 'tolist'):
-        result = result.tolist()
+    # Проверяем, определил ли пользователь функцию
+    if 'calculate_centroid' not in locals():
+        json.dumps({"ERROR_IN_PY": "Функция calculate_centroid не найдена!"})
+    else:
+        result = calculate_centroid(pts)
         
-    # Возвращаем JSON строку, чтобы избежать проблем с типами JS/Python Proxy
-    json.dumps(result)
+        # Конвертация numpy типов в стандартные для JSON
+        if hasattr(result, 'tolist'):
+            result = result.tolist()
+            
+        # Возвращаем JSON строку
+        json.dumps(result)
 except Exception as e:
     json.dumps({"ERROR_IN_PY": str(e)})
 `;
@@ -268,6 +275,12 @@ except Exception as e:
         try {
             // 1. Выполняем код в браузере, получаем строку JSON
             let jsonOutput = await pyodide.runPythonAsync(wrapper);
+            
+            // Если pyodide вернул undefined (редко, но бывает при синтаксической ошибке в wrapper), страхуемся
+            if (!jsonOutput) {
+                 throw new Error("Pyodide вернул пустой результат. Проверьте синтаксис.");
+            }
+
             let output = JSON.parse(jsonOutput);
             
             // Если вернулась ошибка из Python
@@ -301,7 +314,12 @@ except Exception as e:
         } catch (e) {
             console.error(e);
             resultStatus.value = 'error';
-            resultMessage.value = "Системная ошибка: " + e.message;
+            // Если ошибка парсинга JSON - значит Pyodide вывел traceback текстом
+            if (e.message.includes("JSON")) {
+                 resultMessage.value = "Ошибка синтаксиса (проверьте отступы и скобки)";
+            } else {
+                 resultMessage.value = "Системная ошибка: " + e.message;
+            }
         } finally {
             isRunning.value = false;
         }

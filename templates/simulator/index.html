@@ -108,6 +108,7 @@
             border: 1px solid #ddd;
             border-radius: 4px;
             margin: 20px 0;
+            cursor: crosshair;
         }
 
         .step-controls {
@@ -182,7 +183,7 @@
 
         <div class="container">
             <div id="plot"></div>
-            <p class="info-text" style="text-align: center;">🔍 Drag to zoom | Double-click to reset</p>
+            <p class="info-text" style="text-align: center;">🔍 Click to add points | Drag to zoom | Double-click to reset</p>
         </div>
 
         {% raw %}
@@ -199,7 +200,7 @@
                 <p><strong>Inertia (Error):</strong> {{ currentStepData.inertia.toFixed(4) }}</p>
                 <p><strong>Status:</strong> 
                     <span v-if="currentStepData.converged" style="color: green;">✓ Converged</span>
-                    <span v-else style="color: orange;">⚬ Running</span>
+                    <span v-else style="color: orange;">⬬ Running</span>
                 </p>
             </div>
         </div>
@@ -238,6 +239,12 @@
                         xaxis: { range: [-1, 11] },
                         yaxis: { range: [-1, 11] },
                         showlegend: true,
+                        legend: {
+                            x: 1.05,
+                            y: 1,
+                            xanchor: 'left',
+                            yanchor: 'top'
+                        },
                         height: 600
                     };
                     this.plotLayout = layout;
@@ -298,6 +305,11 @@
                         tracePoints.marker.color = stepData.labels;
                         tracePoints.marker.colorscale = 'Viridis';
                         tracePoints.marker.showscale = true;
+                        tracePoints.marker.colorbar = {
+                            title: 'Cluster',
+                            len: 0.5,
+                            x: 1.15
+                        };
                         
                         const traceCentroids = {
                             x: stepData.centroids.map(c => c[0]),

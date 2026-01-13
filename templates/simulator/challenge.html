@@ -2,19 +2,12 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Code Challenge: Centroids</title>
+  <title>Challenge: {{ task.title }}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
-  
-  <!-- Pyodide (Python in Browser) -->
   <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
-
-  <!-- Vue.js -->
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-
-  <!-- Monaco Editor Loader -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
 
   <style>
@@ -27,144 +20,63 @@
       --error: #ef4444;
       --text: #e2e8f0;
     }
-
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Inter', sans-serif;
-      height: 100vh;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .header {
-      height: 50px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      padding: 0 20px;
-      background: rgba(0,0,0,0.2);
-    }
-
-    .main {
-      flex: 1;
-      display: grid;
-      grid-template-columns: 400px 1fr;
-      height: calc(100vh - 50px);
-    }
-
-    .task-panel {
-      border-right: 1px solid var(--border);
-      padding: 20px;
-      overflow-y: auto;
-      background: rgba(0,0,0,0.1);
-    }
-
+    body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+    .header { height: 50px; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; background: rgba(0,0,0,0.2); }
+    .main { flex: 1; display: grid; grid-template-columns: 400px 1fr; height: calc(100vh - 50px); }
+    .task-panel { border-right: 1px solid var(--border); padding: 20px; overflow-y: auto; background: rgba(0,0,0,0.1); }
     .task-title { font-size: 18px; font-weight: 700; margin-bottom: 10px; color: #fff; }
     .task-desc { font-size: 14px; line-height: 1.6; color: #94a3b8; margin-bottom: 20px; }
-
-    .example-box {
-      background: rgba(255,255,255,0.03);
-      padding: 10px;
-      border-radius: 6px;
-      font-family: 'Fira Code', monospace;
-      font-size: 12px;
-      margin: 10px 0;
-      border: 1px solid var(--border);
-    }
-
-    .editor-panel {
-      display: flex;
-      flex-direction: column;
-      background: #1e1e1e;
-    }
-
+    .task-desc code { background: rgba(255,255,255,0.1); padding: 2px 4px; border-radius: 4px; font-family: 'Fira Code', monospace; font-size: 0.9em; color: #e2e8f0; }
+    .editor-panel { display: flex; flex-direction: column; background: #1e1e1e; }
     #editor-container { flex: 1; width: 100%; }
-
-    .toolbar {
-      height: 50px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      padding: 0 20px;
-      background: #18181b;
-      gap: 10px;
-    }
-
-    .btn {
-      padding: 8px 16px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 13px;
-    }
-
+    .toolbar { height: 50px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: flex-end; padding: 0 20px; background: #18181b; gap: 10px; }
+    .btn { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; font-size: 13px; }
     .btn-run { background: var(--success); color: #000; }
     .btn-run:hover { opacity: 0.9; }
-
     .btn-reset { background: rgba(255,255,255,0.1); color: #fff; }
-
-    .status-msg {
-      margin-right: auto;
-      font-size: 13px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
+    .status-msg { margin-right: auto; font-size: 13px; display: flex; align-items: center; gap: 8px; }
     .loading { color: #facc15; }
     .success { color: #4ade80; }
     .error { color: #f87171; }
+    a { color: inherit; text-decoration: none; }
   </style>
 </head>
 <body>
 
 <div id="app" style="height: 100%;">
   <header class="header">
-    <strong>🎓 Code Challenge:</strong> &nbsp; <span style="color: #94a3b8;">K-Means Part 1</span>
-    <a href="/simulator/" style="margin-left: auto; color: #fff; text-decoration: none; font-size: 13px;">Back to Simulator →</a>
+    <a href="/simulator/tasks/"><strong>🎓 Tasks</strong></a>
+    <span style="color: #64748b; margin: 0 10px;">/</span>
+    <span style="color: #e2e8f0;">{{ task.title }}</span>
+    <a href="/simulator/" style="margin-left: auto; color: #94a3b8; font-size: 13px;">Simulator →</a>
   </header>
 
   <div class="main">
     <div class="task-panel">
-      <div class="task-title">Задача 1: Пересчет центроида</div>
+      <div class="task-title">{{ task.title }}</div>
       <div class="task-desc">
-        <p>В алгоритме K-Means ключевой шаг — пересчет положения центроидов.</p>
-        <p>Центроид кластера — это просто <b>среднее арифметическое</b> координат всех точек, принадлежащих этому кластеру.</p>
-        <p><b>Ваша задача:</b><br>
-        Реализуйте функцию <code>calculate_centroid(points)</code>, которая принимает список точек и возвращает их центр масс [x, y].</p>
+        <!-- Render HTML description safe -->
+        {% autoescape off %}
+        {{ task.description }}
+        {% endautoescape %}
       </div>
-
-      <div class="example-box">
-        INPUT:<br>
-        points = [[0, 0], [4, 4], [2, 2]]<br><br>
-        OUTPUT:<br>
-        [2.0, 2.0]<br>
-        <span style="color: #64748b;">// (0+4+2)/3 = 2</span>
-      </div>
-
-      <div class="task-desc" style="margin-top: 20px;">
-        <p><i>Подсказка: Вы можете использовать встроенную библиотеку <code>numpy</code> как <code>np</code>, если хотите.</i></p>
+      
+      <div class="task-desc" style="margin-top: 20px; padding-top:20px; border-top: 1px solid var(--border);">
+        <p><i>Среда выполнения: Python 3.11 (Pyodide) + NumPy.</i></p>
       </div>
     </div>
 
     <div class="editor-panel">
       <div id="editor-container"></div>
-
       <div class="toolbar">
         <div class="status-msg">
-            <span v-if="isRunning" class="loading">⏳ Выполняем код...</span>
+            <span v-if="isRunning" class="loading">⏳ Выполняем...</span>
             <span v-if="resultStatus === 'success'" class="success">✅ {{ resultMessage }}</span>
             <span v-if="resultStatus === 'error'" class="error">❌ {{ resultMessage }}</span>
         </div>
-
         <button class="btn btn-reset" @click="resetCode">Сброс</button>
         <button class="btn btn-run" @click="runCode" :disabled="!isPyodideReady || isRunning">
-          {{ isPyodideReady ? '▶ Проверить решение' : 'Загрузка Python...' }}
+          {{ isPyodideReady ? '▶ Проверить' : 'Загрузка...' }}
         </button>
       </div>
     </div>
@@ -173,6 +85,12 @@
 
 <script>
 const { createApp, onMounted, ref } = Vue
+
+// Data from Django
+const TASK_SLUG = "{{ task.slug }}";
+const FUNCTION_NAME = "{{ task.function_name }}";
+const INITIAL_CODE = `{{ task.initial_code|escapejs }}`;
+const TEST_INPUT = {{ task.test_input|safe }};
 
 createApp({
   setup() {
@@ -183,28 +101,11 @@ createApp({
     let pyodide = null
     let editor = null
 
-    const defaultCode = `# Напишите функцию для поиска центра масс
-import numpy as np
-
-def calculate_centroid(points):
-    """
-    points: список списков [[x1, y1], [x2, y2], ...]
-    Return: [x_avg, y_avg]
-    """
-    # ВАШ КОД ЗДЕСЬ:
-    x_sum = 0
-    y_sum = 0
-
-    # ...
-
-    return [0, 0] # Заглушка
-`
-
     const initEditor = () => {
       require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' }})
       require(['vs/editor/editor.main'], function() {
         editor = monaco.editor.create(document.getElementById('editor-container'), {
-          value: defaultCode,
+          value: INITIAL_CODE,
           language: 'python',
           theme: 'vs-dark',
           minimap: { enabled: false },
@@ -231,31 +132,46 @@ def calculate_centroid(points):
       resultMessage.value = ''
 
       const userCode = editor.getValue()
-      const testPoints = [[0,0], [4,4], [2,2]]
-
-      // IMPORTANT: гарантируем, что последняя строка всего скрипта — это выражение `out`
-      // Тогда pyodide.runPythonAsync() всегда вернет строку.
+      
       const wrapper = `
 import json
+import numpy as np
 
 out = None
 
-# 1) Код пользователя (должен определить calculate_centroid)
+# User Code
 ${userCode}
 
-# 2) Тест
+# Test execution
 try:
-    pts = ${JSON.stringify(testPoints)}
-
-    if 'calculate_centroid' not in locals():
-        out = json.dumps({"ERROR_IN_PY": "Функция calculate_centroid не найдена"})
+    # Prepare input arguments
+    test_input = ${JSON.stringify(TEST_INPUT)}
+    
+    # Check if function exists
+    if '${FUNCTION_NAME}' not in locals():
+        out = json.dumps({"ERROR_IN_PY": "Функция ${FUNCTION_NAME} не найдена"})
     else:
-        result = calculate_centroid(pts)
+        # Call the user function with unpacked arguments or single arg
+        # Simplification: we assume test_input is a DICT of args if function expects kwargs, 
+        # or a LIST if args. For now, let's pass test_input as a single argument if it's one object,
+        # or expand it. 
+        # Let's stick to simple: user functions take 1 main argument for now (e.g. points, or p1, p2 packed).
+        # Better: we pass keys as kwargs if input is dict.
+        
+        func = locals()['${FUNCTION_NAME}']
+        
+        # If test_input is a list, pass as *args. If dict, **kwargs
+        if isinstance(test_input, list):
+             result = func(*test_input)
+        elif isinstance(test_input, dict):
+             result = func(**test_input)
+        else:
+             result = func(test_input)
 
-        # numpy -> list
-        if hasattr(result, 'tolist'):
-            result = result.tolist()
-
+        # Convert result
+        if hasattr(result, 'tolist'): result = result.tolist()
+        if hasattr(result, 'item'): result = result.item() # for numpy scalars
+        
         out = json.dumps(result)
 except Exception as e:
     out = json.dumps({"ERROR_IN_PY": str(e)})
@@ -265,47 +181,42 @@ out
 
       try {
         const jsonOutput = await pyodide.runPythonAsync(wrapper)
-
-        if (typeof jsonOutput !== 'string') {
-          throw new Error('Pyodide вернул не строку')
-        }
+        if (typeof jsonOutput !== 'string') throw new Error('Empty result')
 
         const output = JSON.parse(jsonOutput)
-
         if (output && output.ERROR_IN_PY) {
           resultStatus.value = 'error'
-          resultMessage.value = 'Ошибка в коде: ' + output.ERROR_IN_PY
+          resultMessage.value = 'Ошибка: ' + output.ERROR_IN_PY
           return
         }
 
+        // Check with server
         const response = await fetch('/simulator/api/check-solution/', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ task_id: 'centroid_calc', result: output })
+          body: JSON.stringify({ task_id: TASK_SLUG, result: output })
         })
-
         const serverResp = await response.json()
-
+        
         if (serverResp.correct) {
           resultStatus.value = 'success'
           resultMessage.value = serverResp.message
         } else {
           resultStatus.value = 'error'
-          resultMessage.value = serverResp.message || 'Неверный ответ'
+          resultMessage.value = serverResp.message
         }
       } catch (e) {
         console.error(e)
         resultStatus.value = 'error'
-        resultMessage.value = 'Системная ошибка: ' + e.message
+        resultMessage.value = 'Ошибка: ' + e.message
       } finally {
         isRunning.value = false
       }
     }
-
+    
     const resetCode = () => {
-      if (editor) editor.setValue(defaultCode)
-      resultStatus.value = ''
-      resultMessage.value = ''
+        if(editor) editor.setValue(INITIAL_CODE);
+        resultStatus.value = '';
     }
 
     onMounted(() => {
@@ -314,16 +225,11 @@ out
     })
 
     return {
-      isPyodideReady,
-      isRunning,
-      runCode,
-      resetCode,
-      resultStatus,
-      resultMessage
+      isPyodideReady, isRunning, runCode, resetCode, resultStatus, resultMessage,
+      task: { title: "{{ task.title }}" } // simple proxy
     }
   }
 }).mount('#app')
 </script>
-
 </body>
 </html>

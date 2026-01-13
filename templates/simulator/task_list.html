@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Curriculum Map</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; background: #0f172a; color: #fff; margin: 0; padding: 40px; }
+    .container { max-width: 800px; margin: 0 auto; }
+    h1 { text-align: center; margin-bottom: 40px; background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .task-card {
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      transition: transform 0.2s, background 0.2s;
+      text-decoration: none;
+      color: inherit;
+    }
+    .task-card:hover { transform: translateY(-2px); background: rgba(30, 41, 59, 1); border-color: #818cf8; }
+    .badge {
+        background: #334155; color: #94a3b8; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; margin-right: 15px; min-width: 80px; text-align: center;
+    }
+    .title { font-weight: 600; font-size: 16px; flex: 1; }
+    .arrow { color: #64748b; font-weight: bold; }
+    .back-link { display: block; text-align: center; margin-top: 40px; color: #64748b; text-decoration: none; font-size: 14px; }
+    .back-link:hover { color: #fff; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Карта курса: Clustering</h1>
+  
+  {% for task in tasks %}
+  <a href="{% url 'challenge_detail' task.slug %}" class="task-card">
+    <div class="badge">
+        {% if task.difficulty == 1 %}⭐ Novice
+        {% elif task.difficulty == 2 %}⭐⭐ Beginner
+        {% else %}⭐⭐⭐ Hard{% endif %}
+    </div>
+    <div class="title">{{ task.order }}. {{ task.title }}</div>
+    <div class="arrow">Start →</div>
+  </a>
+  {% empty %}
+  <div style="text-align: center; color: #64748b; padding: 40px;">
+    Заданий пока нет. Запустите миграцию данных.
+  </div>
+  {% endfor %}
+  
+  <a href="/simulator/" class="back-link">← Вернуться в песочницу</a>
+</div>
+</body>
+</html>

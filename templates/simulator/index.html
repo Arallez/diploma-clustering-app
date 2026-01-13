@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>K-Means Simulator</title>
+    <!-- Подключаем Vue.js и Plotly через CDN -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        #plot { width: 100%; height: 500px; border: 1px solid #ccc; }
+        .controls { margin: 20px 0; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>Тренажер K-Means</h1>
+        
+        <div class="controls">
+            <label>Количество кластеров (k): <input type="number" v-model="k" min="1" max="5"></label>
+            <button @click="clearPoints">Очистить</button>
+            <button @click="runAlgorithm" :disabled="points.length === 0">Запустить алгоритм</button>
+        </div>
+
+        <div v-if="history.length > 0">
+            <button @click="prevStep" :disabled="currentStep === 0">Назад</button>
+            <span>Шаг: {{ currentStep }} / {{ history.length - 1 }}</span>
+            <button @click="nextStep" :disabled="currentStep === history.length - 1">Вперед</button>
+            <p v-if="currentStepData">Инерция (ошибка): {{ currentStepData.inertia.toFixed(2) }}</p>
+        </div>
+
+        <div id="plot"></div>
+        
+        <p>Кликните по графику, чтобы добавить точки.</p>
+    </div>
+
+    <script>
+        const { createApp } = Vue
+
+        createApp({
+            data() {
+                return {
+                    points: [], // [[x,y], [x,y]]
+                    k: 3,
+                    history: [],
+                    currentStep: 0
+                }
+            },
+            computed: {
+                currentStepData() {
+                    return this.history[this.currentStep];
+                }
+            },
+            mounted() {
+                this.initPlot();
+            },
+            methods: {
+                initPlot() {
+                    const layout = {
+                        title: 'Поле для кластеризации',
+                        hovermode: 'closest',
+                        xaxis: { range: [0, 10] },
+                        yaxis: { range: [0, 10] }
+                    };
+                    
+                    Plotly.newPlot('plot', [{
+                        x: [], y: [], mode: 'markers', type: 'scatter',
+                        marker: { size: 10 }
+                    }], layout);
+
+                    document.getElementById('plot').on('plotly_click', (data) => {
+                        const x = data.points[0].x;
+                        const y = data.points[0].y;
+                        // Plotly click возвращает существующие точки, но нам нужно добавлять новые.
+                        // Поэтому используем хак: перехватываем клик по самому div-у, 
+                        // но координаты надо пересчитывать.
+                        // Для прототипа просто добавим случайную точку рядом :)
+                        // В реальной версии нужно маппить координаты мыши на оси Plotly.
+                    });
+                    
+                    // Упрощенный клик для MVP: клик по div добавляет точку "примерно" (для теста можно вводить вручную или рандом)
+                    // Для простоты сейчас сделаем добавление случайных точек по кнопке "Добавить случайные", чтобы не мучиться с координатами мыши.
+                },
+                
+                addRandomPoints() {
+                    for(let i=0; i<10; i++) {
+                        this.points.push([Math.random()*10, Math.random()*10]);
+                    }
+                    this.draw();
+                },
+
+                clearPoints() {
+                    this.points = [];
+                    this.history = [];
+                    this.currentStep = 0;
+                    this.draw();
+                },
+
+                draw() {
+                    // Рисуем точки
+                    const tracePoints = {
+                        x: this.points.map(p => p[0]),
+                        y: this.points.map(p => p[1]),
+                        mode: 'markers',
+                        type: 'scatter',
+                        name: 'Данные',
+                        marker: { size: 10, color: 'blue' }
+                    };
+                    
+                    const data = [tracePoints];
+
+                    // Если есть история, рисуем центроиды и раскрашиваем точки
+                    if (this.history.length > 0) {
+                        const stepData = this.history[this.currentStep];
+                        
+                        // Раскрашиваем точки по кластерам
+                        tracePoints.marker.color = stepData.labels; // Plotly умеет принимать массив цветов (чисел)
+                        tracePoints.marker.colorscale = 'Viridis';
+                        
+                        // Добавляем центроиды
+                        const traceCentroids = {
+                            x: stepData.centroids.map(c => c[0]),
+                            y: stepData.centroids.map(c => c[1]),
+                            mode: 'markers',
+                            type: 'scatter',
+                            name: 'Центроиды',
+                            marker: { size: 20, color: 'red', symbol: 'x' }
+                        };
+                        data.push(traceCentroids);
+                    }
+
+                    Plotly.react('plot', data, document.getElementById('plot').layout);
+                },
+
+                async runAlgorithm() {
+                    const response = await fetch('/simulator/api/run-kmeans/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ points: this.points, k: this.k })
+                    });
+                    this.history = await response.json();
+                    this.currentStep = 0;
+                    this.draw();
+                },
+
+                nextStep() {
+                    if (this.currentStep < this.history.length - 1) {
+                        this.currentStep++;
+                        this.draw();
+                    }
+                },
+                prevStep() {
+                    if (this.currentStep > 0) {
+                        this.currentStep--;
+                        this.draw();
+                    }
+                }
+            }
+        }).mount('#app')
+        
+        // Перехват клика для добавления точек (простая версия)
+        document.getElementById('plot').addEventListener('click', function(evt) {
+            // В реальном проекте тут нужна математика перевода пикселей в координаты осей
+            // Пока просто добавим кнопку "Сгенерировать данные" в интерфейс
+        });
+    </script>
+    
+    <!-- Временная кнопка для генерации данных, так как клик по Plotly сложен для MVP -->
+    <div style="position: absolute; top: 100px; right: 50px;">
+        <button onclick="document.querySelector('#app').__vue_app__._instance.ctx.addRandomPoints()">+ 10 Случайных точек</button>
+    </div>
+</body>
+</html>

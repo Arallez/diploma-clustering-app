@@ -124,7 +124,8 @@
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
 
-        #plot { width: 100%; height: 100%; }
+        /* Force background to stay dark even if Plotly fails */
+        #plot { width: 100%; height: 100%; background: var(--sidebar-bg); }
 
         /* Step Slider */
         .step-control {
@@ -266,21 +267,29 @@
                 },
                 showlegend: true,
                 legend: { x: 0, y: 1, bgcolor: 'rgba(30,41,59,0.8)' },
-                hovermode: false
+                hovermode: false,
+                dragmode: false // Disable pan/zoom strictly
             });
 
-            // Initialize Plotly
+            // Initialize or Re-Initialize Plotly
             const initPlot = () => {
+                // Ensure the element exists
+                const plotDiv = document.getElementById('plot');
+                if (!plotDiv) return;
+
+                // Create fresh plot
                 Plotly.newPlot('plot', [], getBaseLayout(), { 
                     displayModeBar: false, 
                     responsive: true 
                 });
 
-                // Click event to add points
-                document.getElementById('plot').on('plotly_click', (data) => {
+                // Re-attach click event immediately
+                plotDiv.on('plotly_click', (data) => {
                     if (history.value.length > 0) return; // Freeze if result is shown
+                    
                     const x = data.points[0].x;
                     const y = data.points[0].y;
+                    
                     points.value.push([x, y]);
                     drawPoints();
                 });
@@ -299,7 +308,9 @@
                 
                 // IMPORTANT: Always pass the full layout to ensure styles are kept
                 const layout = getBaseLayout();
-                Plotly.react('plot', [trace], layout);
+                
+                // Use react for updates to keep performance high
+                Plotly.react('plot', [trace], layout, { displayModeBar: false });
             };
 
             // Draw specific step from history
@@ -337,7 +348,7 @@
                 }
 
                 // Reuse layout to keep styles
-                Plotly.react('plot', traces, getBaseLayout());
+                Plotly.react('plot', traces, getBaseLayout(), { displayModeBar: false });
             };
 
             const runAlgorithm = async () => {
@@ -376,12 +387,12 @@
                 currentStep.value = val;
             };
 
+            // FIX: Re-initialize plot completely on clear to restore click handlers and layout
             const clearPoints = () => {
                 points.value = [];
                 history.value = [];
                 currentStep.value = 0;
-                // Force full redraw with empty trace
-                drawPoints(); 
+                initPlot(); 
             };
 
             // Watch step change to update graph

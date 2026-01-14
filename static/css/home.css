@@ -1,0 +1,158 @@
+:root {
+  --home-max-width: 1100px;
+}
+
+.home {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.home-header {
+  max-width: var(--home-max-width);
+  width: 100%;
+  margin: 0 auto;
+  padding: 24px 16px 8px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.brand-title {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.brand-subtitle {
+  margin-top: 6px;
+  font-size: 14px;
+  color: #94a3b8;
+}
+
+.home-nav {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.nav-link {
+  text-decoration: none;
+  color: #e2e8f0;
+  background: rgba(148, 163, 184, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.nav-link:hover {
+  background: rgba(148, 163, 184, 0.18);
+}
+
+.home-main {
+  max-width: var(--home-max-width);
+  width: 100%;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.hero {
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(15, 23, 42, 0.55);
+  border-radius: 16px;
+  padding: 22px;
+}
+
+.hero-title {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.2;
+}
+
+.hero-text {
+  margin: 10px 0 0;
+  color: #cbd5e1;
+  max-width: 70ch;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  border-radius: 12px;
+  text-decoration: none;
+  font-weight: 600;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.btn-primary {
+  background: #2563eb;
+  border-color: rgba(37, 99, 235, 0.6);
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  background: #1d4ed8;
+}
+
+.btn-secondary {
+  background: rgba(148, 163, 184, 0.12);
+  color: #e2e8f0;
+}
+
+.btn-secondary:hover {
+  background: rgba(148, 163, 184, 0.18);
+}
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.feature {
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(15, 23, 42, 0.35);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.feature-title {
+  font-weight: 700;
+}
+
+.feature-text {
+  margin-top: 8px;
+  color: #cbd5e1;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.home-footer {
+  margin-top: auto;
+  padding: 18px 16px 28px;
+  color: #94a3b8;
+}
+
+.footer-text {
+  max-width: var(--home-max-width);
+  margin: 0 auto;
+  font-size: 13px;
+}
+
+@media (max-width: 860px) {
+  .features {
+    grid-template-columns: 1fr;
+  }
+}

@@ -17,11 +17,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+
     # Third party
     'rest_framework',
-    
+
     # Local apps
+    'apps.core.apps.CoreConfig',
     'apps.simulator',
     # 'apps.encyclopedia',  # Временно закомментировано
     # 'apps.users',         # Временно закомментировано
@@ -68,6 +69,7 @@ DATABASES = {
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.context_processors.auth'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
 ]
 

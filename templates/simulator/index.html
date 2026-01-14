@@ -245,32 +245,33 @@
             const currentStep = ref(0);
             const isRunning = ref(false);
 
+            // Constant layout style to reuse
+            const getBaseLayout = () => ({
+                title: false,
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                font: { color: '#94a3b8' },
+                margin: { t: 20, b: 40, l: 40, r: 20 },
+                xaxis: { 
+                    range: [0, 10], 
+                    gridcolor: '#334155', 
+                    zerolinecolor: '#475569',
+                    fixedrange: true
+                },
+                yaxis: { 
+                    range: [0, 10], 
+                    gridcolor: '#334155', 
+                    zerolinecolor: '#475569',
+                    fixedrange: true
+                },
+                showlegend: true,
+                legend: { x: 0, y: 1, bgcolor: 'rgba(30,41,59,0.8)' },
+                hovermode: false
+            });
+
             // Initialize Plotly
             const initPlot = () => {
-                const layout = {
-                    title: false,
-                    paper_bgcolor: 'rgba(0,0,0,0)',
-                    plot_bgcolor: 'rgba(0,0,0,0)',
-                    font: { color: '#94a3b8' },
-                    margin: { t: 20, b: 40, l: 40, r: 20 },
-                    xaxis: { 
-                        range: [0, 10], 
-                        gridcolor: '#334155', 
-                        zerolinecolor: '#475569',
-                        fixedrange: true // Disable zoom for better UX
-                    },
-                    yaxis: { 
-                        range: [0, 10], 
-                        gridcolor: '#334155', 
-                        zerolinecolor: '#475569',
-                        fixedrange: true
-                    },
-                    showlegend: true,
-                    legend: { x: 0, y: 1, bgcolor: 'rgba(30,41,59,0.8)' },
-                    hovermode: false
-                };
-                
-                Plotly.newPlot('plot', [], layout, { 
+                Plotly.newPlot('plot', [], getBaseLayout(), { 
                     displayModeBar: false, 
                     responsive: true 
                 });
@@ -296,13 +297,9 @@
                     name: 'Points'
                 };
                 
-                // Keep axes ranges fixed so they don't jump
-                const layoutUpdate = {
-                   'xaxis.range': [0, 10],
-                   'yaxis.range': [0, 10]
-                };
-
-                Plotly.react('plot', [trace], layoutUpdate);
+                // IMPORTANT: Always pass the full layout to ensure styles are kept
+                const layout = getBaseLayout();
+                Plotly.react('plot', [trace], layout);
             };
 
             // Draw specific step from history
@@ -339,7 +336,8 @@
                     });
                 }
 
-                Plotly.react('plot', traces);
+                // Reuse layout to keep styles
+                Plotly.react('plot', traces, getBaseLayout());
             };
 
             const runAlgorithm = async () => {
@@ -382,7 +380,8 @@
                 points.value = [];
                 history.value = [];
                 currentStep.value = 0;
-                drawPoints();
+                // Force full redraw with empty trace
+                drawPoints(); 
             };
 
             // Watch step change to update graph

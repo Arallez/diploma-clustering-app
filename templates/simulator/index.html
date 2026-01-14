@@ -267,29 +267,32 @@
                 },
                 showlegend: true,
                 legend: { x: 0, y: 1, bgcolor: 'rgba(30,41,59,0.8)' },
-                hovermode: false,
-                dragmode: false // Disable pan/zoom strictly
+                hovermode: 'closest', // Changed from false to enable click detection
+                dragmode: false // Strict dragmode disable
             });
 
-            // Initialize or Re-Initialize Plotly
+            // Initialize Plotly
             const initPlot = () => {
-                // Ensure the element exists
                 const plotDiv = document.getElementById('plot');
                 if (!plotDiv) return;
 
-                // Create fresh plot
-                Plotly.newPlot('plot', [], getBaseLayout(), { 
+                // Create plot with empty data
+                Plotly.newPlot('plot', [{
+                    x: [], y: [], mode: 'markers', type: 'scatter'
+                }], getBaseLayout(), { 
                     displayModeBar: false, 
                     responsive: true 
                 });
 
-                // Re-attach click event immediately
+                // Attach click listener
+                plotDiv.removeAllListeners && plotDiv.removeAllListeners('plotly_click'); // Clear old
                 plotDiv.on('plotly_click', (data) => {
                     if (history.value.length > 0) return; // Freeze if result is shown
                     
                     const x = data.points[0].x;
                     const y = data.points[0].y;
                     
+                    // Add point and redraw
                     points.value.push([x, y]);
                     drawPoints();
                 });
@@ -303,13 +306,11 @@
                     mode: 'markers',
                     type: 'scatter',
                     marker: { size: 10, color: '#e2e8f0', line: { color: '#000', width: 1 } },
-                    name: 'Points'
+                    name: 'Points',
+                    hoverinfo: 'none' // Disable tooltips on points to keep it clean
                 };
                 
-                // IMPORTANT: Always pass the full layout to ensure styles are kept
                 const layout = getBaseLayout();
-                
-                // Use react for updates to keep performance high
                 Plotly.react('plot', [trace], layout, { displayModeBar: false });
             };
 
@@ -347,7 +348,6 @@
                     });
                 }
 
-                // Reuse layout to keep styles
                 Plotly.react('plot', traces, getBaseLayout(), { displayModeBar: false });
             };
 
@@ -387,21 +387,20 @@
                 currentStep.value = val;
             };
 
-            // FIX: Re-initialize plot completely on clear to restore click handlers and layout
             const clearPoints = () => {
                 points.value = [];
                 history.value = [];
                 currentStep.value = 0;
-                initPlot(); 
+                initPlot(); // Completely reset plot to restore click handlers
             };
 
-            // Watch step change to update graph
             watch(currentStep, (newVal) => {
                 if (history.value.length > 0) drawStep(newVal);
             });
 
             onMounted(() => {
-                initPlot();
+                // Short delay to ensure div is rendered
+                setTimeout(initPlot, 100);
             });
 
             return {

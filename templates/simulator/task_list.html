@@ -1,31 +1,33 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Карта курса{% endblock %}
+{% block title %}Задания{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="/static/css/tasks.css">
+<link rel="stylesheet" href="{% static 'css/tasks.css' %}">
 {% endblock %}
 
 {% block content %}
-<div class="tasklist-container">
-  <h1 class="tasklist-title">Карта курса: Clustering</h1>
-  
-  {% for task in tasks %}
-  <a href="{% url 'challenge_detail' task.slug %}" class="task-card">
-    <div class="badge">
-        {% if task.difficulty == 1 %}⭐ Novice
-        {% elif task.difficulty == 2 %}⭐⭐ Beginner
-        {% else %}⭐⭐⭐ Hard{% endif %}
-    </div>
-    <div class="task-title-text">{{ task.order }}. {{ task.title }}</div>
-    <div class="arrow">Start →</div>
-  </a>
-  {% empty %}
-  <div class="empty-msg">
-    Заданий пока нет. Запустите миграцию данных.
+<div class="tasks-page">
+  <header class="tasks-header">
+    <a href="/" class="back-link">🏠 Home</a>
+    <span class="breadcrumb-separator">/</span>
+    <h1 class="tasks-title">🎯 Задания</h1>
+  </header>
+
+  <div class="tasks-grid">
+    {% for task in tasks %}
+    <a href="{% url 'simulator:challenge_detail' task.slug %}" class="task-card">
+      <div class="task-badge difficulty-{{ task.difficulty }}">
+        {% if task.difficulty == 1 %}⭐ Easy
+        {% elif task.difficulty == 2 %}⭐⭐ Medium
+        {% else %}⭐⭐⭐ Hard
+        {% endif %}
+      </div>
+      <div class="task-card-title">{{ task.title }}</div>
+      <div class="task-card-desc">{{ task.description|striptags|truncatewords:15 }}</div>
+    </a>
+    {% endfor %}
   </div>
-  {% endfor %}
-  
-  <a href="/simulator/" class="back-link">← Вернуться в песочницу</a>
 </div>
 {% endblock %}

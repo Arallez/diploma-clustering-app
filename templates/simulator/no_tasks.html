@@ -1,19 +1,24 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}No Tasks{% endblock %}
+{% block title %}Задания{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="/static/css/tasks.css">
+<link rel="stylesheet" href="{% static 'css/tasks.css' %}">
 {% endblock %}
 
 {% block content %}
-<div class="notasks-body">
-  <div class="notasks-box">
-    <h1>Заданий пока нет</h1>
-    <p>В базе данных не найдено ни одного задания (Task).</p>
-    <p>Запустите скрипт наполнения через <code>python manage.py shell</code></p>
-    <br>
-    <a href="/simulator/" class="notasks-link">Вернуться назад</a>
+<div class="tasks-page">
+  <header class="tasks-header">
+    <a href="/" class="back-link">🏠 Home</a>
+    <span class="breadcrumb-separator">/</span>
+    <h1 class="tasks-title">🎯 Задания</h1>
+  </header>
+
+  <div class="empty-state">
+    <div class="empty-icon">📚</div>
+    <div class="empty-text">Заданий пока нет.</div>
+    <div class="empty-hint">Запустите: <code>python init_tasks.py</code></div>
   </div>
 </div>
 {% endblock %}

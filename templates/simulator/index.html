@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}K-Means Simulator{% endblock %}
+{% block title %}Clustering Simulator{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="/static/css/simulator.css">
@@ -14,7 +14,7 @@
     <nav class="navbar">
         <a href="/" class="navbar-brand">
             <div class="logo-icon"></div>
-            <span class="brand-text">K-Means Trainer</span>
+            <span class="brand-text">Clustering Trainer</span>
         </a>
         <div class="nav-links">
             <a href="/simulator/" class="nav-item active">Simulator</a>
@@ -30,6 +30,7 @@
                 <select class="cluster-input full-width">
                     <option>K-Means Clustering</option>
                     <option disabled>DBSCAN (Coming Soon)</option>
+                    <option disabled>Hierarchical (Coming Soon)</option>
                 </select>
             </div>
 

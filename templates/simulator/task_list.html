@@ -13,7 +13,7 @@
   <nav class="navbar">
     <a href="/" class="navbar-brand">
       <div class="logo-icon"></div>
-      <span class="brand-text">K-Means Trainer</span>
+      <span class="brand-text">Clustering Trainer</span>
     </a>
     <div class="nav-links">
       <a href="/simulator/" class="nav-item">Simulator</a>
@@ -23,23 +23,36 @@
 
   <div class="tasks-page">
     <header class="tasks-header">
-      <h1 class="tasks-title">🎯 Задания</h1>
+      <h1 class="tasks-title">🎯 Практические задания</h1>
     </header>
 
-    <div class="tasks-grid">
-      {% for task in tasks %}
-      <a href="{% url 'simulator:challenge_detail' task.slug %}" class="task-card">
-        <div class="task-badge difficulty-{{ task.difficulty }}">
-          {% if task.difficulty == 1 %}⭐ Easy
-          {% elif task.difficulty == 2 %}⭐⭐ Medium
-          {% else %}⭐⭐⭐ Hard
+    {% regroup tasks by algorithm as algorithm_groups %}
+    {% for group in algorithm_groups %}
+      <div class="algorithm-section">
+        <h2 class="algorithm-title">
+          {% if group.grouper == 'general' %}📚 Общие знания
+          {% elif group.grouper == 'kmeans' %}🔵 K-Means
+          {% elif group.grouper == 'dbscan' %}🔴 DBSCAN
+          {% elif group.grouper == 'hierarchical' %}🌳 Иерархическая
+          {% else %}{{ group.grouper }}
           {% endif %}
+        </h2>
+        <div class="tasks-grid">
+          {% for task in group.list %}
+          <a href="{% url 'simulator:challenge_detail' task.slug %}" class="task-card">
+            <div class="task-badge difficulty-{{ task.difficulty }}">
+              {% if task.difficulty == 1 %}⭐ Easy
+              {% elif task.difficulty == 2 %}⭐⭐ Medium
+              {% else %}⭐⭐⭐ Hard
+              {% endif %}
+            </div>
+            <div class="task-card-title">{{ task.title }}</div>
+            <div class="task-card-desc">{{ task.description|striptags|truncatewords:15 }}</div>
+          </a>
+          {% endfor %}
         </div>
-        <div class="task-card-title">{{ task.title }}</div>
-        <div class="task-card-desc">{{ task.description|striptags|truncatewords:15 }}</div>
-      </a>
-      {% endfor %}
-    </div>
+      </div>
+    {% endfor %}
   </div>
 </div>
 {% endblock %}

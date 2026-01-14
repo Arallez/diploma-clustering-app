@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}K-Means Interactive Trainer{% endblock %}
+{% block title %}Clustering Trainer{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/home.css' %}">
@@ -11,8 +11,8 @@
 <div class="home">
   <header class="home-header">
     <div class="brand">
-      <div class="brand-title">🧠 K-Means Interactive Trainer</div>
-      <div class="brand-subtitle">Интерактивный тренажёр по методам кластеризации (Django + Vue Islands)</div>
+      <div class="brand-title">🧠 Clustering Trainer</div>
+      <div class="brand-subtitle">Интерактивный тренажёр по методам кластеризации</div>
     </div>
     <nav class="home-nav">
       <a class="nav-link" href="/simulator/">Симулятор</a>
@@ -25,7 +25,7 @@
     <section class="hero">
       <h1 class="hero-title">Учись кластеризации через практику</h1>
       <p class="hero-text">
-        Добавляй точки кликом, запускай K-Means, смотри шаги пересчёта центроидов и решай задания на Python прямо в браузере.
+        Добавляй точки кликом, запускай алгоритмы кластеризации, смотри шаги работы и решай задания на Python прямо в браузере.
       </p>
       <div class="hero-actions">
         <a class="btn btn-primary" href="/simulator/">Открыть симулятор</a>
@@ -36,11 +36,11 @@
     <section class="features">
       <div class="feature">
         <div class="feature-title">📊 Симулятор</div>
-        <div class="feature-text">Пошаговая визуализация K-Means: центроиды, метки кластеров, inertia.</div>
+        <div class="feature-text">Пошаговая визуализация алгоритмов: K-Means, DBSCAN, иерархическая кластеризация.</div>
       </div>
       <div class="feature">
         <div class="feature-title">💻 Практика</div>
-        <div class="feature-text">Monaco Editor + Pyodide: пиши Python-код и получай автопроверку.</div>
+        <div class="feature-text">Monaco Editor + Pyodide: пиши Python-код и получай автопроверку по алгоритмам.</div>
       </div>
       <div class="feature">
         <div class="feature-title">🏗 Архитектура</div>

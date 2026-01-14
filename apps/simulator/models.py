@@ -8,10 +8,18 @@ class Task(models.Model):
         (3, '⭐⭐⭐ Intermediate (Алгоритмы)'),
     ]
 
+    ALGORITHM_CHOICES = [
+        ('kmeans', 'K-Means'),
+        ('dbscan', 'DBSCAN'),
+        ('hierarchical', 'Иерархическая кластеризация'),
+        ('general', 'Общие знания'),
+    ]
+
     title = models.CharField(max_length=200, verbose_name="Название")
     slug = models.SlugField(unique=True, help_text="URL-имя, например 'euclidean-dist'")
     description = models.TextField(verbose_name="Описание (HTML)")
     difficulty = models.IntegerField(choices=DIFFICULTY_CHOICES, default=1)
+    algorithm = models.CharField(max_length=50, choices=ALGORITHM_CHOICES, default='general', verbose_name="Алгоритм")
     order = models.IntegerField(default=0, verbose_name="Порядок")
     
     # Поля для кода
@@ -24,7 +32,7 @@ class Task(models.Model):
     expected_output = models.JSONField(default=dict, verbose_name="Ожидаемый ответ")
 
     def __str__(self):
-        return f"{self.order}. {self.title}"
+        return f"{self.order}. {self.title} ({self.get_algorithm_display()})"
 
     class Meta:
-        ordering = ['order']
+        ordering = ['algorithm', 'order']

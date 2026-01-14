@@ -6,40 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
-  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
-
-  <style>
-    :root {
-      --bg: #0b1020;
-      --card-bg: rgba(255,255,255,0.05);
-      --border: rgba(255,255,255,0.1);
-      --accent: #7c5cff;
-      --success: #22c55e;
-      --error: #ef4444;
-      --text: #e2e8f0;
-    }
-    body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
-    .header { height: 50px; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; background: rgba(0,0,0,0.2); }
-    .main { flex: 1; display: grid; grid-template-columns: 400px 1fr; height: calc(100vh - 50px); }
-    .task-panel { border-right: 1px solid var(--border); padding: 20px; overflow-y: auto; background: rgba(0,0,0,0.1); }
-    .task-title { font-size: 18px; font-weight: 700; margin-bottom: 10px; color: #fff; }
-    .task-desc { font-size: 14px; line-height: 1.6; color: #94a3b8; margin-bottom: 20px; }
-    .task-desc code { background: rgba(255,255,255,0.1); padding: 2px 4px; border-radius: 4px; font-family: 'Fira Code', monospace; font-size: 0.9em; color: #e2e8f0; }
-    .editor-panel { display: flex; flex-direction: column; background: #1e1e1e; }
-    #editor-container { flex: 1; width: 100%; }
-    .toolbar { height: 50px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: flex-end; padding: 0 20px; background: #18181b; gap: 10px; }
-    .btn { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; font-size: 13px; }
-    .btn-run { background: var(--success); color: #000; }
-    .btn-run:hover { opacity: 0.9; }
-    .btn-reset { background: rgba(255,255,255,0.1); color: #fff; }
-    .status-msg { margin-right: auto; font-size: 13px; display: flex; align-items: center; gap: 8px; }
-    .loading { color: #facc15; }
-    .success { color: #4ade80; }
-    .error { color: #f87171; }
-    a { color: inherit; text-decoration: none; }
-  </style>
+  <link rel="stylesheet" href="/static/css/challenge.css">
 </head>
 <body>
 
@@ -47,15 +14,14 @@
   <header class="header">
     <a href="/simulator/tasks/"><strong>🎓 Tasks</strong></a>
     <span style="color: #64748b; margin: 0 10px;">/</span>
-    <span style="color: #e2e8f0;">{{ task.title }}</span>
+    <span style="color: #e2e8f0;">{% verbatim %}{{ task.title }}{% endverbatim %}</span>
     <a href="/simulator/" style="margin-left: auto; color: #94a3b8; font-size: 13px;">Simulator →</a>
   </header>
 
   <div class="main">
     <div class="task-panel">
-      <div class="task-title">{{ task.title }}</div>
+      <div class="task-title">{% verbatim %}{{ task.title }}{% endverbatim %}</div>
       <div class="task-desc">
-        <!-- Render HTML description safe -->
         {% autoescape off %}
         {{ task.description }}
         {% endautoescape %}
@@ -66,7 +32,6 @@
       </div>
     </div>
 
-    <!-- Vue Template Block Start -->
     {% verbatim %}
     <div class="editor-panel">
       <div id="editor-container"></div>
@@ -83,157 +48,30 @@
       </div>
     </div>
     {% endverbatim %}
-    <!-- Vue Template Block End -->
 
   </div>
 </div>
 
+<!-- Внешние библиотеки -->
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
+
+<!-- Наш код -->
+<script src="/static/js/challenge.js"></script>
 <script>
-const { createApp, onMounted, ref } = Vue
+    // Передаём данные из Django в JavaScript
+    const taskData = {
+        slug: "{{ task.slug }}",
+        title: "{{ task.title }}",
+        function_name: "{{ task.function_name }}",
+        initial_code: `{{ task.initial_code|escapejs }}`,
+        test_input: {{ task.test_input|safe }}
+    };
 
-// Data from Django passed to JS constants
-const TASK_SLUG = "{{ task.slug }}";
-const FUNCTION_NAME = "{{ task.function_name }}";
-const INITIAL_CODE = `{{ task.initial_code|escapejs }}`;
-const TEST_INPUT = {{ task.test_input|safe }};
-
-createApp({
-  setup() {
-    const isPyodideReady = ref(false)
-    const isRunning = ref(false)
-    const resultStatus = ref('')
-    const resultMessage = ref('')
-    let pyodide = null
-    let editor = null
-
-    const initEditor = () => {
-      require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' }})
-      require(['vs/editor/editor.main'], function() {
-        editor = monaco.editor.create(document.getElementById('editor-container'), {
-          value: INITIAL_CODE,
-          language: 'python',
-          theme: 'vs-dark',
-          minimap: { enabled: false },
-          fontSize: 14,
-          automaticLayout: true
-        })
-      })
-    }
-
-    const initPyodide = async () => {
-      try {
-        pyodide = await loadPyodide()
-        await pyodide.loadPackage('numpy')
-        isPyodideReady.value = true
-      } catch(e) {
-        console.error('Pyodide failed', e)
-      }
-    }
-
-    const runCode = async () => {
-      if (!pyodide) return
-      isRunning.value = true
-      resultStatus.value = ''
-      resultMessage.value = ''
-
-      const userCode = editor.getValue()
-      
-      const wrapper = `
-import json
-import numpy as np
-
-out = None
-
-# User Code
-${userCode}
-
-# Test execution
-try:
-    # Prepare input arguments
-    test_input = ${JSON.stringify(TEST_INPUT)}
-    
-    # Check if function exists
-    if '${FUNCTION_NAME}' not in locals():
-        out = json.dumps({"ERROR_IN_PY": "Функция ${FUNCTION_NAME} не найдена"})
-    else:
-        func = locals()['${FUNCTION_NAME}']
-        
-        # Call logic
-        if isinstance(test_input, list):
-             # Try unpacking if it looks like arguments list
-             # Simplistic heuristic: if list of lists and function likely takes one arg 'points', pass as single arg
-             # But if function is dist(a,b), pass as unpacked.
-             # Let's rely on try/except or task definition.
-             # For now: if function_name is 'dist', unpack. Else pass single.
-             if '${FUNCTION_NAME}' == 'dist':
-                 result = func(*test_input)
-             else:
-                 result = func(test_input)
-        elif isinstance(test_input, dict):
-             result = func(**test_input)
-        else:
-             result = func(test_input)
-
-        # Convert result
-        if hasattr(result, 'tolist'): result = result.tolist()
-        if hasattr(result, 'item'): result = result.item() 
-        
-        out = json.dumps(result)
-except Exception as e:
-    out = json.dumps({"ERROR_IN_PY": str(e)})
-
-out
-`;
-
-      try {
-        const jsonOutput = await pyodide.runPythonAsync(wrapper)
-        if (typeof jsonOutput !== 'string') throw new Error('Empty result')
-
-        const output = JSON.parse(jsonOutput)
-        if (output && output.ERROR_IN_PY) {
-          resultStatus.value = 'error'
-          resultMessage.value = 'Ошибка: ' + output.ERROR_IN_PY
-          return
-        }
-
-        const response = await fetch('/simulator/api/check-solution/', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ task_id: TASK_SLUG, result: output })
-        })
-        const serverResp = await response.json()
-        
-        if (serverResp.correct) {
-          resultStatus.value = 'success'
-          resultMessage.value = serverResp.message
-        } else {
-          resultStatus.value = 'error'
-          resultMessage.value = serverResp.message
-        }
-      } catch (e) {
-        console.error(e)
-        resultStatus.value = 'error'
-        resultMessage.value = 'Ошибка: ' + e.message
-      } finally {
-        isRunning.value = false;
-      }
-    }
-    
-    const resetCode = () => {
-        if(editor) editor.setValue(INITIAL_CODE);
-        resultStatus.value = '';
-    }
-
-    onMounted(() => {
-      initEditor()
-      initPyodide()
-    })
-
-    return {
-      isPyodideReady, isRunning, runCode, resetCode, resultStatus, resultMessage
-    }
-  }
-}).mount('#app')
+    // Инициализация Vue-приложения
+    window.initChallengeApp(taskData).mount('#app');
 </script>
+
 </body>
 </html>

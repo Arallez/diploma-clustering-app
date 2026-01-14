@@ -1,21 +1,19 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>No Tasks Found</title>
-    <style>
-        body { background: #0f172a; color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .box { text-align: center; padding: 40px; border: 1px solid #334155; border-radius: 12px; background: rgba(30,41,59,0.5); }
-        h1 { margin-top: 0; color: #f87171; }
-        code { background: #1e293b; padding: 4px 8px; border-radius: 4px; font-family: monospace; }
-    </style>
-</head>
-<body>
-    <div class="box">
-        <h1>Заданий пока нет 🤷‍♂️</h1>
-        <p>В базе данных не найдено ни одного задания (Task).</p>
-        <p>Запустите скрипт наполнения через <code>python manage.py shell</code></p>
-        <br>
-        <a href="/simulator/" style="color: #60a5fa;">Вернуться назад</a>
-    </div>
-</body>
-</html>
+{% extends 'base.html' %}
+
+{% block title %}No Tasks{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/tasks.css">
+{% endblock %}
+
+{% block content %}
+<div class="notasks-body">
+  <div class="notasks-box">
+    <h1>Заданий пока нет</h1>
+    <p>В базе данных не найдено ни одного задания (Task).</p>
+    <p>Запустите скрипт наполнения через <code>python manage.py shell</code></p>
+    <br>
+    <a href="/simulator/" class="notasks-link">Вернуться назад</a>
+  </div>
+</div>
+{% endblock %}

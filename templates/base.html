@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}K-Means Тренажер{% endblock %}</title>
+    
+    <!-- Базовые стили -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/base.css">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Навигация -->
+    <nav class="glass" style="margin: 10px; padding: 15px;">
+        <div style="display: flex; gap: 20px; align-items: center;">
+            <a href="/simulator/" style="font-weight: 700; font-size: 1.2rem;">🧠 K-Means Lab</a>
+            <a href="/simulator/tasks/">Задания</a>
+            <a href="/simulator/">Симулятор</a>
+        </div>
+    </nav>
+
+    <!-- Основной контент -->
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Базовые скрипты -->
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

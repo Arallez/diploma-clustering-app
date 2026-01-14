@@ -4,21 +4,33 @@
 {% block title %}Задания{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/simulator.css' %}">
 <link rel="stylesheet" href="{% static 'css/tasks.css' %}">
 {% endblock %}
 
 {% block content %}
-<div class="tasks-page">
-  <header class="tasks-header">
-    <a href="/" class="back-link">🏠 Home</a>
-    <span class="breadcrumb-separator">/</span>
-    <h1 class="tasks-title">🎯 Задания</h1>
-  </header>
+<div class="page-wrapper">
+  <nav class="navbar">
+    <a href="/" class="navbar-brand">
+      <div class="logo-icon"></div>
+      <span class="brand-text">K-Means Trainer</span>
+    </a>
+    <div class="nav-links">
+      <a href="/simulator/" class="nav-item">Simulator</a>
+      <a href="/simulator/tasks/" class="nav-item active">Tasks</a>
+    </div>
+  </nav>
 
-  <div class="empty-state">
-    <div class="empty-icon">📚</div>
-    <div class="empty-text">Заданий пока нет.</div>
-    <div class="empty-hint">Запустите: <code>python init_tasks.py</code></div>
+  <div class="tasks-page">
+    <header class="tasks-header">
+      <h1 class="tasks-title">🎯 Задания</h1>
+    </header>
+
+    <div class="empty-state">
+      <div class="empty-icon">📚</div>
+      <div class="empty-text">Заданий пока нет.</div>
+      <div class="empty-hint">Запустите: <code>python init_tasks.py</code></div>
+    </div>
   </div>
 </div>
 {% endblock %}

@@ -25,7 +25,13 @@ body {
 #app {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 60px);
+    height: 100vh;
+}
+
+.page-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
 }
 
 .navbar {
@@ -39,21 +45,31 @@ body {
     justify-content: space-between;
 }
 
-.navbar h1 { 
-    font-size: 18px; 
-    font-weight: 700; 
-    margin: 0; 
-    color: #fff; 
-    display: flex; 
-    align-items: center; 
-    gap: 10px; 
+.navbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: #fff;
+    font-weight: 700;
+    font-size: 18px;
+    transition: opacity 0.2s;
+}
+
+.navbar-brand:hover {
+    opacity: 0.8;
+}
+
+.brand-text {
+    color: #fff;
 }
 
 .logo-icon { 
-    width: 24px; 
-    height: 24px; 
+    width: 28px; 
+    height: 28px; 
     background: linear-gradient(135deg, #60a5fa, #a78bfa); 
-    border-radius: 6px; 
+    border-radius: 8px;
+    flex-shrink: 0;
 }
 
 .nav-links { display: flex; gap: 20px; }

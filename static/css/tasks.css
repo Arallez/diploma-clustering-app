@@ -1,124 +1,106 @@
-/* Стили для страниц задач (список заданий + заглушка) */
-
-body {
-  font-family: 'Inter', sans-serif;
-  background: #0f172a;
-  color: #fff;
-  margin: 0;
-  padding: 40px;
-}
-
-/* task_list.html */
-.tasklist-container {
-  max-width: 800px;
+.tasks-page {
+  max-width: 1200px;
   margin: 0 auto;
+  padding: 40px 24px;
 }
 
-.tasklist-title {
-  text-align: center;
-  margin-bottom: 40px;
-  background: linear-gradient(to right, #818cf8, #c084fc);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+.tasks-header {
+  margin-bottom: 32px;
+}
+
+.tasks-title {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0;
+  color: #e2e8f0;
+}
+
+.tasks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
 }
 
 .task-card {
-  background: rgba(30, 41, 59, 0.7);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  transition: transform 0.2s, background 0.2s;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 16px;
+  padding: 24px;
   text-decoration: none;
-  color: inherit;
+  color: #e2e8f0;
+  transition: all 0.2s;
+  display: block;
 }
 
 .task-card:hover {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(148, 163, 184, 0.3);
   transform: translateY(-2px);
-  background: rgba(30, 41, 59, 1);
-  border-color: #818cf8;
 }
 
-.badge {
-  background: #334155;
-  color: #94a3b8;
-  padding: 4px 8px;
-  border-radius: 6px;
+.task-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
   font-size: 12px;
   font-weight: 600;
-  margin-right: 15px;
-  min-width: 80px;
-  text-align: center;
+  margin-bottom: 12px;
 }
 
-.task-title-text {
-  font-weight: 600;
-  font-size: 16px;
-  flex: 1;
+.task-badge.difficulty-1 {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
 }
 
-.arrow {
-  color: #64748b;
-  font-weight: bold;
+.task-badge.difficulty-2 {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
 }
 
-.back-link {
-  display: block;
-  text-align: center;
-  margin-top: 40px;
-  color: #64748b;
-  text-decoration: none;
-  font-size: 14px;
+.task-badge.difficulty-3 {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
 }
 
-.back-link:hover { color: #fff; }
-
-.empty-msg {
-  text-align: center;
-  color: #64748b;
-  padding: 40px;
-}
-
-/* no_tasks.html */
-.notasks-body {
-  background: #0f172a;
+.task-card-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
   color: #fff;
-  font-family: 'Inter', sans-serif;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  margin: 0;
-  padding: 0;
 }
 
-.notasks-box {
+.task-card-desc {
+  font-size: 14px;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+
+.empty-state {
   text-align: center;
-  padding: 40px;
-  border: 1px solid #334155;
-  border-radius: 12px;
-  background: rgba(30,41,59,0.5);
+  padding: 80px 20px;
 }
 
-.notasks-box h1 {
-  margin-top: 0;
-  color: #f87171;
+.empty-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
 }
 
-.notasks-box code {
-  background: #1e293b;
+.empty-text {
+  font-size: 20px;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin-bottom: 8px;
+}
+
+.empty-hint {
+  font-size: 14px;
+  color: #64748b;
+}
+
+.empty-hint code {
+  background: rgba(148, 163, 184, 0.12);
   padding: 4px 8px;
-  border-radius: 4px;
-  font-family: monospace;
-}
-
-.notasks-link {
-  color: #60a5fa;
-  text-decoration: none;
-}
-
-.notasks-link:hover {
-  text-decoration: underline;
+  border-radius: 6px;
+  font-family: 'Fira Code', monospace;
+  color: #94a3b8;
 }

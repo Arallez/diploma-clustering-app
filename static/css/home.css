@@ -128,6 +128,19 @@
   padding: 16px;
 }
 
+.feature-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.feature-link:hover {
+  background: rgba(15, 23, 42, 0.45);
+  border-color: rgba(148, 163, 184, 0.26);
+  transform: translateY(-1px);
+}
+
 .feature-title {
   font-weight: 700;
 }

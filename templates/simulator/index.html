@@ -9,7 +9,7 @@
 {% block content %}
 <!-- Vue App Wrapper -->
 {% verbatim %}
-<div id="app" style="display: flex; flex-direction: column; height: calc(100vh - 60px);">
+<div id="app">
     
     <nav class="navbar">
         <h1><div class="logo-icon"></div> ML Simulator</h1>
@@ -24,7 +24,7 @@
         <aside class="sidebar">
             <div class="control-group">
                 <span class="control-label">Algorithm</span>
-                <select class="cluster-input" style="width: 100%; text-align: left;">
+                <select class="cluster-input full-width">
                     <option>K-Means Clustering</option>
                     <option disabled>DBSCAN (Coming Soon)</option>
                 </select>
@@ -32,7 +32,7 @@
 
             <div class="control-group">
                 <span class="control-label">Clusters (K)</span>
-                <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="k-controls">
                     <button class="btn btn-outline" @click="k > 1 ? k-- : null">-</button>
                     <input type="number" v-model="k" class="cluster-input" min="1" max="10">
                     <button class="btn btn-outline" @click="k < 10 ? k++ : null">+</button>
@@ -47,7 +47,7 @@
                 </button>
             </div>
 
-            <div style="margin-top: auto; padding: 16px; background: rgba(255,255,255,0.03); border-radius: 8px; font-size: 13px; color: #64748b; line-height: 1.5;">
+            <div class="help-box">
                 <strong>💡 How to use:</strong><br>
                 1. Click anywhere on the empty graph area to add points.<br>
                 2. Select number of clusters (K).<br>
@@ -77,9 +77,9 @@
                     <button class="btn btn-outline" @click="prevStep">◀</button>
                     
                     <div class="slider-container">
-                        <span style="font-size: 12px; color: #94a3b8; width: 40px; text-align: right;">{{ currentStep }}</span>
+                        <span class="step-label align-right">{{ currentStep }}</span>
                         <input type="range" min="0" :max="history.length - 1" v-model.number="currentStep">
-                        <span style="font-size: 12px; color: #94a3b8; width: 40px;">{{ history.length - 1 }}</span>
+                        <span class="step-label">{{ history.length - 1 }}</span>
                     </div>
 
                     <button class="btn btn-outline" @click="nextStep">▶</button>

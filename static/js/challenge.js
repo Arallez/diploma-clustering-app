@@ -1,127 +1,154 @@
-// Редактор задач (островок Vue.js + Monaco + Pyodide)
-// Будет подключен в challenge.html
+// Редактор задач (Vue.js Island)
+// Включает Monaco Editor + Pyodide для выполнения Python
 
-const { createApp } = Vue;
+const { createApp, onMounted, ref } = Vue;
 
-function initChallenge(taskData) {
-  return createApp({
-    data() {
-      return {
-        task: taskData,
-        editor: null,
-        pyodide: null,
-        output: '',
-        isRunning: false,
-        isChecking: false,
-        result: null
-      };
-    },
-    async mounted() {
-      await this.initMonaco();
-      await this.loadPyodide();
-    },
-    methods: {
-      async initMonaco() {
-        require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' } });
-        
-        require(['vs/editor/editor.main'], () => {
-          this.editor = monaco.editor.create(document.getElementById('code-editor'), {
-            value: this.task.initial_code,
-            language: 'python',
-            theme: 'vs-dark',
-            fontSize: 14,
-            minimap: { enabled: false },
-            automaticLayout: true
-          });
-        });
-      },
+function initChallengeApp(taskData) {
+    return createApp({
+        setup() {
+            const isPyodideReady = ref(false);
+            const isRunning = ref(false);
+            const resultStatus = ref('');
+            const resultMessage = ref('');
+            const task = ref(taskData);
+            let pyodide = null;
+            let editor = null;
 
-      async loadPyodide() {
-        this.output = '⏳ Загрузка Python-окружения...';
-        this.pyodide = await loadPyodide();
-        await this.pyodide.loadPackage('numpy');
-        this.output = '✅ Python готов к работе!';
-      },
+            const initEditor = () => {
+                require.config({ 
+                    paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' }
+                });
+                
+                require(['vs/editor/editor.main'], function() {
+                    editor = monaco.editor.create(document.getElementById('editor-container'), {
+                        value: task.value.initial_code,
+                        language: 'python',
+                        theme: 'vs-dark',
+                        minimap: { enabled: false },
+                        fontSize: 14,
+                        automaticLayout: true
+                    });
+                });
+            };
 
-      async runCode() {
-        if (!this.pyodide) {
-          alert('Pyodide ещё загружается...');
-          return;
-        }
+            const initPyodide = async () => {
+                try {
+                    pyodide = await loadPyodide();
+                    await pyodide.loadPackage('numpy');
+                    isPyodideReady.value = true;
+                } catch(e) {
+                    console.error('Pyodide failed', e);
+                }
+            };
 
-        this.isRunning = true;
-        this.output = '';
-        this.result = null;
+            const runCode = async () => {
+                if (!pyodide) return;
+                isRunning.value = true;
+                resultStatus.value = '';
+                resultMessage.value = '';
 
-        try {
-          const code = this.editor.getValue();
-          const testCode = `
+                const userCode = editor.getValue();
+                
+                const wrapper = `
 import json
-${code}
+import numpy as np
 
-# Запуск теста
-test_input = ${JSON.stringify(this.task.test_input)}
-result = ${this.task.function_name}(*test_input)
-print(json.dumps(result))
+out = None
+
+# User Code
+${userCode}
+
+# Test execution
+try:
+    test_input = ${JSON.stringify(task.value.test_input)}
+    
+    if '${task.value.function_name}' not in locals():
+        out = json.dumps({"ERROR_IN_PY": "Функция ${task.value.function_name} не найдена"})
+    else:
+        func = locals()['${task.value.function_name}']
+        
+        if isinstance(test_input, list):
+             if '${task.value.function_name}' == 'dist':
+                 result = func(*test_input)
+             else:
+                 result = func(test_input)
+        elif isinstance(test_input, dict):
+             result = func(**test_input)
+        else:
+             result = func(test_input)
+
+        if hasattr(result, 'tolist'): result = result.tolist()
+        if hasattr(result, 'item'): result = result.item() 
+        
+        out = json.dumps(result)
+except Exception as e:
+    out = json.dumps({"ERROR_IN_PY": str(e)})
+
+out
 `;
 
-          this.pyodide.runPython(`
-import sys
-from io import StringIO
-sys.stdout = StringIO()
-`);
+                try {
+                    const jsonOutput = await pyodide.runPythonAsync(wrapper);
+                    if (typeof jsonOutput !== 'string') throw new Error('Empty result');
 
-          this.pyodide.runPython(testCode);
-          const stdout = this.pyodide.runPython('sys.stdout.getvalue()');
-          this.output = stdout || '(программа ничего не вывела)';
+                    const output = JSON.parse(jsonOutput);
+                    if (output && output.ERROR_IN_PY) {
+                        resultStatus.value = 'error';
+                        resultMessage.value = 'Ошибка: ' + output.ERROR_IN_PY;
+                        return;
+                    }
 
-          // Парсим результат для проверки
-          const lines = stdout.trim().split('\n');
-          const lastLine = lines[lines.length - 1];
-          
-          try {
-            const userResult = JSON.parse(lastLine);
-            await this.checkSolution(userResult);
-          } catch {
-            this.output += '\n⚠️ Результат не в формате JSON';
-          }
+                    const response = await fetch('/simulator/api/check-solution/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            task_id: task.value.slug, 
+                            result: output 
+                        })
+                    });
+                    
+                    const serverResp = await response.json();
+                    
+                    if (serverResp.correct) {
+                        resultStatus.value = 'success';
+                        resultMessage.value = serverResp.message;
+                    } else {
+                        resultStatus.value = 'error';
+                        resultMessage.value = serverResp.message;
+                    }
+                } catch (e) {
+                    console.error(e);
+                    resultStatus.value = 'error';
+                    resultMessage.value = 'Ошибка: ' + e.message;
+                } finally {
+                    isRunning.value = false;
+                }
+            };
+            
+            const resetCode = () => {
+                if(editor) editor.setValue(task.value.initial_code);
+                resultStatus.value = '';
+            };
 
-        } catch (error) {
-          this.output = `❌ Ошибка:\n${error.message}`;
-        } finally {
-          this.isRunning = false;
+            onMounted(() => {
+                initEditor();
+                initPyodide();
+            });
+
+            return {
+                task,
+                isPyodideReady, 
+                isRunning, 
+                runCode, 
+                resetCode, 
+                resultStatus, 
+                resultMessage
+            };
         }
-      },
-
-      async checkSolution(userResult) {
-        this.isChecking = true;
-
-        try {
-          const response = await fetch('/simulator/api/check-solution/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              task_id: this.task.slug,
-              result: userResult
-            })
-          });
-
-          const data = await response.json();
-          this.result = data;
-          
-          if (data.correct) {
-            this.output += '\n\n✅ ' + data.message;
-          } else {
-            this.output += '\n\n❌ ' + data.message;
-          }
-        } catch (error) {
-          this.output += '\n\n⚠️ Ошибка проверки: ' + error.message;
-        } finally {
-          this.isChecking = false;
-        }
-      }
-    }
-  });
+    });
 }
 
-window.initChallenge = initChallenge;
+// Экспортируем
+if (typeof window !== 'undefined') {
+    window.initChallengeApp = initChallengeApp;
+}

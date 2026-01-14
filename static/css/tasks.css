@@ -1,0 +1,124 @@
+/* Стили для страниц задач (список заданий + заглушка) */
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: #0f172a;
+  color: #fff;
+  margin: 0;
+  padding: 40px;
+}
+
+/* task_list.html */
+.tasklist-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.tasklist-title {
+  text-align: center;
+  margin-bottom: 40px;
+  background: linear-gradient(to right, #818cf8, #c084fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.task-card {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  transition: transform 0.2s, background 0.2s;
+  text-decoration: none;
+  color: inherit;
+}
+
+.task-card:hover {
+  transform: translateY(-2px);
+  background: rgba(30, 41, 59, 1);
+  border-color: #818cf8;
+}
+
+.badge {
+  background: #334155;
+  color: #94a3b8;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-right: 15px;
+  min-width: 80px;
+  text-align: center;
+}
+
+.task-title-text {
+  font-weight: 600;
+  font-size: 16px;
+  flex: 1;
+}
+
+.arrow {
+  color: #64748b;
+  font-weight: bold;
+}
+
+.back-link {
+  display: block;
+  text-align: center;
+  margin-top: 40px;
+  color: #64748b;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.back-link:hover { color: #fff; }
+
+.empty-msg {
+  text-align: center;
+  color: #64748b;
+  padding: 40px;
+}
+
+/* no_tasks.html */
+.notasks-body {
+  background: #0f172a;
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+.notasks-box {
+  text-align: center;
+  padding: 40px;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  background: rgba(30,41,59,0.5);
+}
+
+.notasks-box h1 {
+  margin-top: 0;
+  color: #f87171;
+}
+
+.notasks-box code {
+  background: #1e293b;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+.notasks-link {
+  color: #60a5fa;
+  text-decoration: none;
+}
+
+.notasks-link:hover {
+  text-decoration: underline;
+}

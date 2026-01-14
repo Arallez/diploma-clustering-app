@@ -10,12 +10,12 @@
 </head>
 <body>
 
-<div id="app" style="height: 100%;">
+<div id="app">
   <header class="header">
     <a href="/simulator/tasks/"><strong>🎓 Tasks</strong></a>
-    <span style="color: #64748b; margin: 0 10px;">/</span>
-    <span style="color: #e2e8f0;">{% verbatim %}{{ task.title }}{% endverbatim %}</span>
-    <a href="/simulator/" style="margin-left: auto; color: #94a3b8; font-size: 13px;">Simulator →</a>
+    <span class="breadcrumb-separator">/</span>
+    <span class="breadcrumb-current">{% verbatim %}{{ task.title }}{% endverbatim %}</span>
+    <a href="/simulator/" class="header-link-right">Simulator →</a>
   </header>
 
   <div class="main">
@@ -27,7 +27,7 @@
         {% endautoescape %}
       </div>
       
-      <div class="task-desc" style="margin-top: 20px; padding-top:20px; border-top: 1px solid var(--border);">
+      <div class="task-desc runtime-info">
         <p><i>Среда выполнения: Python 3.11 (Pyodide) + NumPy.</i></p>
       </div>
     </div>

@@ -66,6 +66,8 @@
       </div>
     </div>
 
+    <!-- Vue Template Block Start -->
+    {% verbatim %}
     <div class="editor-panel">
       <div id="editor-container"></div>
       <div class="toolbar">
@@ -80,13 +82,16 @@
         </button>
       </div>
     </div>
+    {% endverbatim %}
+    <!-- Vue Template Block End -->
+
   </div>
 </div>
 
 <script>
 const { createApp, onMounted, ref } = Vue
 
-// Data from Django
+// Data from Django passed to JS constants
 const TASK_SLUG = "{{ task.slug }}";
 const FUNCTION_NAME = "{{ task.function_name }}";
 const INITIAL_CODE = `{{ task.initial_code|escapejs }}`;
@@ -151,18 +156,19 @@ try:
     if '${FUNCTION_NAME}' not in locals():
         out = json.dumps({"ERROR_IN_PY": "Функция ${FUNCTION_NAME} не найдена"})
     else:
-        # Call the user function with unpacked arguments or single arg
-        # Simplification: we assume test_input is a DICT of args if function expects kwargs, 
-        # or a LIST if args. For now, let's pass test_input as a single argument if it's one object,
-        # or expand it. 
-        # Let's stick to simple: user functions take 1 main argument for now (e.g. points, or p1, p2 packed).
-        # Better: we pass keys as kwargs if input is dict.
-        
         func = locals()['${FUNCTION_NAME}']
         
-        # If test_input is a list, pass as *args. If dict, **kwargs
+        # Call logic
         if isinstance(test_input, list):
-             result = func(*test_input)
+             # Try unpacking if it looks like arguments list
+             # Simplistic heuristic: if list of lists and function likely takes one arg 'points', pass as single arg
+             # But if function is dist(a,b), pass as unpacked.
+             # Let's rely on try/except or task definition.
+             # For now: if function_name is 'dist', unpack. Else pass single.
+             if '${FUNCTION_NAME}' == 'dist':
+                 result = func(*test_input)
+             else:
+                 result = func(test_input)
         elif isinstance(test_input, dict):
              result = func(**test_input)
         else:
@@ -170,7 +176,7 @@ try:
 
         # Convert result
         if hasattr(result, 'tolist'): result = result.tolist()
-        if hasattr(result, 'item'): result = result.item() # for numpy scalars
+        if hasattr(result, 'item'): result = result.item() 
         
         out = json.dumps(result)
 except Exception as e:
@@ -190,7 +196,6 @@ out
           return
         }
 
-        // Check with server
         const response = await fetch('/simulator/api/check-solution/', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -210,7 +215,7 @@ out
         resultStatus.value = 'error'
         resultMessage.value = 'Ошибка: ' + e.message
       } finally {
-        isRunning.value = false
+        isRunning.value = false;
       }
     }
     
@@ -225,8 +230,7 @@ out
     })
 
     return {
-      isPyodideReady, isRunning, runCode, resetCode, resultStatus, resultMessage,
-      task: { title: "{{ task.title }}" } // simple proxy
+      isPyodideReady, isRunning, runCode, resetCode, resultStatus, resultMessage
     }
   }
 }).mount('#app')

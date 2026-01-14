@@ -249,10 +249,9 @@
                 showlegend: true,
                 legend: { x: 0, y: 1, bgcolor: 'rgba(30,41,59,0.8)' },
                 hovermode: false, 
-                dragmode: false // Strict disable to prevent zoom interference
+                dragmode: false
             });
 
-            // Initialize Plotly
             const initPlot = () => {
                 const plotDiv = document.getElementById('plot');
                 if (!plotDiv) return;
@@ -266,48 +265,29 @@
                 });
             };
 
-            // NATIVE DOM CLICK HANDLER - The most robust way to handle background clicks
             const handleCanvasClick = (event) => {
-                // If algorithm has run, disable adding points
                 if (history.value.length > 0) return;
 
                 const plotDiv = document.getElementById('plot');
-                
-                // Ensure we are clicking on the drag layer (the interactive part) or the main svg
-                // This prevents clicks on legend or other UI elements from adding points unexpectedly
-                // 'ns-drag-layer' is Plotly's internal class for the interaction layer
+                // Ensure click is on the interactive layer
                 const isPlotCanvas = event.target.classList.contains('nsewdrag') || 
                                      event.target.classList.contains('drag') || 
-                                     event.target.tagName === 'rect'; // Fallback for some SVG backgrounds
+                                     event.target.tagName === 'rect';
                 
-                // We use Plotly's internal axis mapping to get exact data coordinates
-                // This works regardless of margins, padding, or screen size
                 if (plotDiv && plotDiv._fullLayout) {
                     const xaxis = plotDiv._fullLayout.xaxis;
                     const yaxis = plotDiv._fullLayout.yaxis;
-                    
-                    // event.layerX/Y are relative to the element, but better to be safe
-                    // Plotly typically handles pointer events well, but we need raw coordinates here
-                    // p2d (pixel to data) requires coordinates relative to the axis bounding box
-                    
-                    // Simplest approach: let Plotly tell us where the mouse is
-                    // But since this is a native click, we need to map manually.
                     
                     const rect = plotDiv.getBoundingClientRect();
                     const xPx = event.clientX - rect.left;
                     const yPx = event.clientY - rect.top;
 
-                    // Use Plotly's internal function to map pixels to data
-                    // Note: xaxis.p2d takes pixels relative to the plot area (inside margins)
-                    // So we subtract the margin left/top
-                    
                     const marginL = plotDiv._fullLayout.margin.l;
                     const marginT = plotDiv._fullLayout.margin.t;
 
                     let xVal = xaxis.p2d(xPx - marginL);
                     let yVal = yaxis.p2d(yPx - marginT);
 
-                    // Clamp to range [0, 10]
                     if (xVal >= 0 && xVal <= 10 && yVal >= 0 && yVal <= 10) {
                         points.value.push([xVal, yVal]);
                         drawPoints();
@@ -331,21 +311,35 @@
             const drawStep = (stepIndex) => {
                 const stepData = history.value[stepIndex];
                 if (!stepData) return;
+
                 const traces = [];
                 const colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
 
-                stepData.clusters.forEach((clusterPoints, i) => {
-                    if (clusterPoints.length > 0) {
-                        traces.push({
-                            x: clusterPoints.map(p => p[0]),
-                            y: clusterPoints.map(p => p[1]),
-                            mode: 'markers',
-                            type: 'scatter',
-                            name: `Cluster ${i+1}`,
-                            marker: { size: 10, color: colors[i % colors.length] }
-                        });
-                    }
-                });
+                // Prepare clusters based on labels
+                // The backend returns 'labels' array, which maps each point to a cluster index
+                if (stepData.labels) {
+                    const clusters = Array.from({ length: k.value }, () => []);
+                    
+                    points.value.forEach((point, index) => {
+                        const label = stepData.labels[index];
+                        if (label !== undefined && clusters[label]) {
+                            clusters[label].push(point);
+                        }
+                    });
+
+                    clusters.forEach((clusterPoints, i) => {
+                        if (clusterPoints.length > 0) {
+                            traces.push({
+                                x: clusterPoints.map(p => p[0]),
+                                y: clusterPoints.map(p => p[1]),
+                                mode: 'markers',
+                                type: 'scatter',
+                                name: `Cluster ${i+1}`,
+                                marker: { size: 10, color: colors[i % colors.length] }
+                            });
+                        }
+                    });
+                }
 
                 if (stepData.centroids && stepData.centroids.length > 0) {
                     traces.push({
@@ -357,6 +351,7 @@
                         marker: { symbol: 'x', size: 14, color: '#fff', line: { width: 3 } }
                     });
                 }
+                
                 Plotly.react('plot', traces, getBaseLayout(), { displayModeBar: false });
             };
 
@@ -372,6 +367,8 @@
                     if (data.success) {
                         history.value = data.history;
                         currentStep.value = 0;
+                        // Force draw initial state immediately
+                        drawStep(0);
                     } else {
                         alert('Error: ' + data.error);
                     }

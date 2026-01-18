@@ -1,24 +1,44 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}K-Means Тренажер{% endblock %}</title>
+    <title>{% block title %}Clustering Trainer{% endblock %}</title>
     
-    <!-- Базовые стили -->
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Base CSS -->
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
     
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Основной контент (навигация внутри страниц) -->
-    <main>
-        {% block content %}{% endblock %}
-    </main>
+    
+    {% if messages %}
+    <div class="messages-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}" style="background: #3b82f6; color: white; padding: 15px 20px; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
 
-    <!-- Базовые скрипты -->
+    {% block content %}
+    {% endblock %}
+
     {% block extra_js %}{% endblock %}
+    
+    <script>
+        // Auto-hide messages after 5 seconds
+        setTimeout(() => {
+            const msgs = document.querySelector('.messages-container');
+            if (msgs) msgs.style.display = 'none';
+        }, 5000);
+    </script>
 </body>
 </html>

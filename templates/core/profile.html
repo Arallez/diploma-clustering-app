@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Профиль{% endblock %}
+
+{% block content %}
+<div class="page-wrapper" style="padding: 40px; max-width: 800px; margin: 0 auto;">
+    <div style="background: #1e293b; padding: 30px; border-radius: 16px; border: 1px solid #334155; display: flex; align-items: center; gap: 20px;">
+        <div style="width: 80px; height: 80px; background: #3b82f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px;">
+            👤
+        </div>
+        <div>
+            <h1 style="margin: 0; font-size: 24px;">{{ user.username }}</h1>
+            <p style="margin: 5px 0; color: #94a3b8;">{{ user.email }}</p>
+            <div style="margin-top: 10px;">
+                <span style="background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 4px 10px; border-radius: 8px; font-size: 13px;">Студент</span>
+            </div>
+        </div>
+        <div style="margin-left: auto;">
+            <form action="{% url 'logout' %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline" style="color: #ef4444; border-color: #ef4444;">Выйти</button>
+            </form>
+        </div>
+    </div>
+
+    <h2 style="margin-top: 40px;">Мой прогресс</h2>
+    <div style="background: rgba(30, 41, 59, 0.5); padding: 40px; border-radius: 12px; text-align: center; border: 1px dashed #334155; color: #64748b;">
+        Здесь скоро появится статистика решений задач и дерево навыков.
+    </div>
+</div>
+{% endblock %}

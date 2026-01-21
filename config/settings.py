@@ -24,7 +24,7 @@ INSTALLED_APPS = [
     # Local apps
     'apps.core.apps.CoreConfig',
     'apps.simulator',
-    # 'apps.encyclopedia',  # Временно закомментировано
+    'apps.encyclopedia',
     # 'apps.users',         # Временно закомментировано
 ]
 

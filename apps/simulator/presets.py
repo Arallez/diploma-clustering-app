@@ -29,8 +29,19 @@ def generate_preset(preset_type: str, n_samples: int = 100):
     else:
         raise ValueError(f"Unknown preset type: {preset_type}")
     
-    # Normalize to [0, 10] range
-    X_min, X_max = X.min(axis=0), X.max(axis=0)
-    X_normalized = (X - X_min) / (X_max - X_min) * 9 + 0.5  # Scale to [0.5, 9.5]
+    # Normalize with Aspect Ratio Preservation
+    X_min = X.min(axis=0)
+    X_max = X.max(axis=0)
     
-    return X_normalized.tolist()
+    # Calculate scale factor to fit in 8x8 box (leaving margin)
+    ranges = X_max - X_min
+    max_range = ranges.max()
+    scale = 8.0 / max_range
+    
+    # Center the data
+    X_centered = X - X_min - (ranges / 2) # Center around 0
+    
+    # Scale and move to center of 10x10 grid (5, 5)
+    X_final = X_centered * scale + 5.0
+    
+    return X_final.tolist()

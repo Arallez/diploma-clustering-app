@@ -1,4 +1,4 @@
-import { runKMeans, runDBSCAN } from './api.js';
+import { runKMeans, runDBSCAN, generatePreset } from './api.js';
 import { initPlot, drawPoints, drawStep, convertClickToPoint } from './plot.js';
 
 const { createApp, ref, onMounted, watch } = Vue;
@@ -14,6 +14,7 @@ const app = createApp({
         const history = ref([]);
         const currentStep = ref(0);
         const isRunning = ref(false);
+        const selectedPreset = ref('');
 
         // Actions
         const handleCanvasClick = (event) => {
@@ -22,6 +23,27 @@ const app = createApp({
             if (point) {
                 points.value.push(point);
                 drawPoints(points.value);
+            }
+        };
+
+        const loadPreset = async () => {
+            if (!selectedPreset.value) return;
+            isRunning.value = true;
+            try {
+                const data = await generatePreset(selectedPreset.value, 100);
+                if (data.success) {
+                    points.value = data.points;
+                    history.value = [];
+                    currentStep.value = 0;
+                    drawPoints(points.value);
+                } else {
+                    alert('Error loading preset: ' + data.error);
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Server error');
+            } finally {
+                isRunning.value = false;
             }
         };
 
@@ -54,6 +76,7 @@ const app = createApp({
             points.value = [];
             history.value = [];
             currentStep.value = 0;
+            selectedPreset.value = '';
             initPlot();
         };
 
@@ -67,6 +90,7 @@ const app = createApp({
             if (history.value.length > 0) drawStep(points.value, history.value[newVal]); 
         });
         watch(algorithm, () => { clearPoints(); });
+        watch(selectedPreset, () => { if (selectedPreset.value) loadPreset(); });
 
         onMounted(() => {
             setTimeout(initPlot, 100);
@@ -74,6 +98,7 @@ const app = createApp({
 
         return {
             algorithm, k, eps, minPts, points, history, currentStep, isRunning,
+            selectedPreset, loadPreset,
             runAlgorithm, nextStep, prevStep, setStep, clearPoints, handleCanvasClick
         };
     }

@@ -12,4 +12,5 @@ urlpatterns = [
     path('api/run-kmeans/', views.run_kmeans, name='run_kmeans'),
     path('api/run-dbscan/', views.run_dbscan, name='run_dbscan'),
     path('api/check-solution/', views.check_solution, name='check_solution'),
+    path('api/generate-preset/', views.get_preset, name='get_preset'),
 ]

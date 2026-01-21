@@ -4,6 +4,7 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 from .models import Task, UserTaskAttempt
 from .algorithms import kmeans_step, dbscan_step
+from .presets import generate_preset
 
 def simulator_index(request):
     return render(request, 'simulator/index.html')
@@ -110,3 +111,18 @@ def check_solution(request):
         except Exception as e:
             return JsonResponse({'correct': False, 'message': f'Ошибка сервера: {str(e)}'})
     return JsonResponse({'correct': False, 'message': 'Invalid request'})
+
+@csrf_exempt
+def get_preset(request):
+    """Generate dataset presets for quick testing"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            preset_type = data.get('type', 'blobs')
+            n_samples = int(data.get('n_samples', 100))
+            
+            points = generate_preset(preset_type, n_samples)
+            return JsonResponse({'success': True, 'points': points})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False, 'error': 'Invalid request'})

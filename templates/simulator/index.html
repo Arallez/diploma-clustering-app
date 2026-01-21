@@ -34,6 +34,18 @@
                 </select>
             </div>
 
+            <!-- Dataset Presets -->
+            <div class="control-group">
+                <span class="control-label">📊 Load Dataset</span>
+                <select class="cluster-input full-width" v-model="selectedPreset">
+                    <option value="" selected>Manual (click to add)</option>
+                    <option value="moons">🌙 Moons (DBSCAN demo)</option>
+                    <option value="circles">⭕ Circles (nested)</option>
+                    <option value="blobs">🔵 Blobs (K-Means demo)</option>
+                    <option value="grid">🟦 Grid (uniform)</option>
+                </select>
+            </div>
+
             <!-- Controls for K-Means -->
             <div class="control-group" v-if="algorithm === 'kmeans'">
                 <span class="control-label">Clusters (K)</span>
@@ -74,13 +86,13 @@
             <div class="help-box">
                 <div v-if="algorithm === 'kmeans'">
                     <strong>💡 How to use K-Means:</strong><br>
-                    1. Click to add points.<br>
+                    1. Load preset or click to add points.<br>
                     2. Select number of clusters (K).<br>
                     3. Press "Run".
                 </div>
                 <div v-else-if="algorithm === 'dbscan'">
                     <strong>💡 How to use DBSCAN:</strong><br>
-                    1. Add points (try shapes like moons).<br>
+                    1. Load "Moons" preset or add points.<br>
                     2. Set <b>Epsilon</b> (radius) and <b>MinPts</b>.<br>
                     3. Run to see noise vs clusters.
                 </div>

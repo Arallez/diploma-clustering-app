@@ -5,9 +5,24 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/profile.css' %}">
+<!-- Add simulator CSS to reuse navbar styles -->
+<link rel="stylesheet" href="{% static 'css/simulator.css' %}"> 
 {% endblock %}
 
 {% block content %}
+<!-- Navbar for better navigation -->
+<nav class="navbar" style="position: sticky; top: 0; z-index: 100;">
+    <a href="/" class="navbar-brand">
+        <div class="logo-icon"></div>
+        <span class="brand-text">Clustering Trainer</span>
+    </a>
+    <div class="nav-links">
+        <a href="/" class="nav-item">Главная</a>
+        <a href="/simulator/" class="nav-item">Симулятор</a>
+        <a href="/simulator/tasks/" class="nav-item">Задачи</a>
+    </div>
+</nav>
+
 <div class="page-wrapper profile-page">
     
     <!-- Header Card -->
@@ -81,7 +96,8 @@
         </table>
         {% else %}
         <div class="empty-history">
-            Пока нет решений. <a href="{% url 'simulator:task_list' %}" style="color: #3b82f6;">Перейти к заданиям</a>
+            Пока нет решений. <br><br>
+            <a href="{% url 'simulator:task_list' %}" class="btn">Перейти к заданиям</a>
         </div>
         {% endif %}
     </div>

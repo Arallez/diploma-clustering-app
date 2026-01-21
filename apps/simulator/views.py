@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
-from .models import Task
+from .models import Task, UserTaskAttempt
 from .algorithms import kmeans_step, dbscan_step
 
 def simulator_index(request):
@@ -60,17 +60,49 @@ def check_solution(request):
         try:
             data = json.loads(request.body)
             task_slug = data.get('task_slug')
-            user_code = data.get('code')
-            test_input = data.get('test_input')
+            user_result = data.get('result')
+            user_code = data.get('code', '')
             
             task = get_object_or_404(Task, slug=task_slug)
+            expected = task.expected_output
             
-            # Basic validation (actual execution happens in Pyodide on client)
-            return JsonResponse({
-                'success': True, 
-                'message': 'Code received',
-                'expected': task.expected_output
-            })
+            # Compare user result with expected output
+            is_correct = False
+            
+            # Handle floating point comparison with tolerance
+            if isinstance(expected, float) and isinstance(user_result, (int, float)):
+                is_correct = abs(user_result - expected) < 0.0001
+            elif isinstance(expected, list) and isinstance(user_result, list):
+                if len(expected) == len(user_result):
+                    # Check if all elements match (with tolerance for floats)
+                    is_correct = all(
+                        abs(e - u) < 0.0001 if isinstance(e, float) else e == u
+                        for e, u in zip(expected, user_result)
+                    )
+            else:
+                is_correct = user_result == expected
+            
+            # Save attempt if user is authenticated
+            if request.user.is_authenticated:
+                UserTaskAttempt.objects.create(
+                    user=request.user,
+                    task=task,
+                    code=user_code,
+                    is_correct=is_correct,
+                    error_message=None if is_correct else f'Expected: {expected}, Got: {user_result}'
+                )
+            
+            if is_correct:
+                return JsonResponse({
+                    'correct': True,
+                    'message': 'Правильно! Задание выполнено.'
+                })
+            else:
+                return JsonResponse({
+                    'correct': False,
+                    'message': f'Неверно. Ожидалось: {expected}, получено: {user_result}'
+                })
+                
         except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})
-    return JsonResponse({'success': False, 'error': 'Invalid request'})
+            return JsonResponse({'correct': False, 'message': f'Ошибка сервера: {str(e)}'})
+    return JsonResponse({'correct': False, 'message': 'Invalid request'})

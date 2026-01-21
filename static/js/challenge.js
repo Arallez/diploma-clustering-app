@@ -102,8 +102,9 @@ out
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ 
-                            task_id: task.value.slug, 
-                            result: output 
+                            task_slug: task.value.slug, 
+                            result: output,
+                            code: userCode
                         })
                     });
                     

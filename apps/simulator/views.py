@@ -59,10 +59,14 @@ def check_solution(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            task_slug = data.get('task_slug')
+            # Support both new 'task_slug' and legacy 'task_id' (for cached clients)
+            task_slug = data.get('task_slug') or data.get('task_id')
             user_result = data.get('result')
             user_code = data.get('code', '')
             
+            if not task_slug:
+                return JsonResponse({'correct': False, 'message': 'Missing task_slug'})
+
             task = get_object_or_404(Task, slug=task_slug)
             expected = task.expected_output
             

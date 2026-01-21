@@ -22,13 +22,11 @@ class Task(models.Model):
     algorithm = models.CharField(max_length=50, choices=ALGORITHM_CHOICES, default='general', verbose_name="Алгоритм")
     order = models.IntegerField(default=0, verbose_name="Порядок")
     
-    # Поля для кода
-    function_name = models.CharField(max_length=100, help_text="Имя функции, которую должен написать юзер")
+    function_name = models.CharField(max_length=100, help_text="Имя функции")
     initial_code = models.TextField(verbose_name="Заготовка кода")
-    solution_code = models.TextField(verbose_name="Эталонное решение (для проверки)")
+    solution_code = models.TextField(verbose_name="Эталонное решение")
     
-    # Тестовые данные (JSON)
-    test_input = models.JSONField(default=dict, verbose_name="Входные данные теста")
+    test_input = models.JSONField(default=dict, verbose_name="Входные данные")
     expected_output = models.JSONField(default=dict, verbose_name="Ожидаемый ответ")
 
     def __str__(self):
@@ -36,3 +34,22 @@ class Task(models.Model):
 
     class Meta:
         ordering = ['algorithm', 'order']
+
+
+class UserTaskAttempt(models.Model):
+    """История попыток решения заданий"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='task_attempts')
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='attempts')
+    code = models.TextField(verbose_name="Код решения")
+    is_correct = models.BooleanField(default=False, verbose_name="Правильно")
+    error_message = models.TextField(blank=True, null=True, verbose_name="Сообщение об ошибке")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата попытки")
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Попытка решения"
+        verbose_name_plural = "Попытки решений"
+
+    def __str__(self):
+        status = "✅" if self.is_correct else "❌"
+        return f"{status} {self.user.username} - {self.task.title} ({self.created_at.strftime('%d.%m.%Y %H:%M')})"

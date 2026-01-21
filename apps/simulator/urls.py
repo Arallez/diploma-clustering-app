@@ -1,14 +1,15 @@
 from django.urls import path
-from .views import simulator_view, challenge_view, tasks_view, RunKMeans, CheckSolution
+from . import views
 
 app_name = 'simulator'
 
 urlpatterns = [
-    path('', simulator_view, name='simulator_index'),
-    path('tasks/', tasks_view, name='task_list'),
-    path('challenge/', challenge_view, name='challenge_start'),
-    path('challenge/<slug:slug>/', challenge_view, name='challenge_detail'),
+    path('', views.simulator_index, name='index'),
+    path('tasks/', views.task_list, name='task_list'),
+    path('challenge/<slug:slug>/', views.challenge_detail, name='challenge_detail'),
     
-    path('api/run-kmeans/', RunKMeans.as_view(), name='run_kmeans'),
-    path('api/check-solution/', CheckSolution.as_view(), name='check_solution'),
+    # API endpoints
+    path('api/run-kmeans/', views.run_kmeans, name='run_kmeans'),
+    path('api/run-dbscan/', views.run_dbscan, name='run_dbscan'),
+    path('api/check-solution/', views.check_solution, name='check_solution'),
 ]

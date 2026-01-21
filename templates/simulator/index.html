@@ -27,19 +27,39 @@
         <aside class="sidebar">
             <div class="control-group">
                 <span class="control-label">Algorithm</span>
-                <select class="cluster-input full-width">
-                    <option>K-Means Clustering</option>
-                    <option disabled>DBSCAN (Coming Soon)</option>
-                    <option disabled>Hierarchical (Coming Soon)</option>
+                <select class="cluster-input full-width" v-model="algorithm">
+                    <option value="kmeans">K-Means Clustering</option>
+                    <option value="dbscan">DBSCAN</option>
+                    <option value="hierarchical" disabled>Hierarchical (Coming Soon)</option>
                 </select>
             </div>
 
-            <div class="control-group">
+            <!-- Controls for K-Means -->
+            <div class="control-group" v-if="algorithm === 'kmeans'">
                 <span class="control-label">Clusters (K)</span>
                 <div class="k-controls">
                     <button class="btn btn-outline" @click="k > 1 ? k-- : null">-</button>
                     <input type="number" v-model="k" class="cluster-input" min="1" max="10">
                     <button class="btn btn-outline" @click="k < 10 ? k++ : null">+</button>
+                </div>
+            </div>
+
+            <!-- Controls for DBSCAN -->
+            <div class="control-group" v-if="algorithm === 'dbscan'">
+                <span class="control-label">Epsilon (Radius)</span>
+                <div class="k-controls">
+                    <button class="btn btn-outline" @click="eps = Math.max(0.1, (parseFloat(eps) - 0.1).toFixed(1))">-</button>
+                    <input type="number" v-model.number="eps" class="cluster-input" step="0.1" min="0.1" max="5.0">
+                    <button class="btn btn-outline" @click="eps = Math.min(5.0, (parseFloat(eps) + 0.1).toFixed(1))">+</button>
+                </div>
+            </div>
+
+            <div class="control-group" v-if="algorithm === 'dbscan'">
+                <span class="control-label">Min Points</span>
+                <div class="k-controls">
+                    <button class="btn btn-outline" @click="minPts > 1 ? minPts-- : null">-</button>
+                    <input type="number" v-model="minPts" class="cluster-input" min="1" max="20">
+                    <button class="btn btn-outline" @click="minPts < 20 ? minPts++ : null">+</button>
                 </div>
             </div>
 
@@ -52,10 +72,18 @@
             </div>
 
             <div class="help-box">
-                <strong>💡 How to use:</strong><br>
-                1. Click anywhere on the empty graph area to add points.<br>
-                2. Select number of clusters (K).<br>
-                3. Press "Run" to see step-by-step clustering.
+                <div v-if="algorithm === 'kmeans'">
+                    <strong>💡 How to use K-Means:</strong><br>
+                    1. Click to add points.<br>
+                    2. Select number of clusters (K).<br>
+                    3. Press "Run".
+                </div>
+                <div v-else-if="algorithm === 'dbscan'">
+                    <strong>💡 How to use DBSCAN:</strong><br>
+                    1. Add points (try shapes like moons).<br>
+                    2. Set <b>Epsilon</b> (radius) and <b>MinPts</b>.<br>
+                    3. Run to see noise vs clusters.
+                </div>
             </div>
         </aside>
 
@@ -65,8 +93,9 @@
             <!-- Info Chips -->
             <div class="stats-bar">
                 <div class="stat-chip">Points: <span class="stat-value">{{ points.length }}</span></div>
-                <div class="stat-chip">K-Value: <span class="stat-value">{{ k }}</span></div>
-                <div class="stat-chip">Total Steps: <span class="stat-value">{{ history.length ? history.length : 0 }}</span></div>
+                <div class="stat-chip" v-if="algorithm === 'kmeans'">K: <span class="stat-value">{{ k }}</span></div>
+                <div class="stat-chip" v-else>Eps: <span class="stat-value">{{ eps }}</span></div>
+                <div class="stat-chip">Steps: <span class="stat-value">{{ history.length ? history.length : 0 }}</span></div>
             </div>
 
             <!-- Visualization -->
@@ -106,7 +135,6 @@
 <!-- Наш симулятор -->
 <script src="/static/js/simulator.js"></script>
 <script>
-    // Инициализация Vue-приложения
     window.initSimulatorApp().mount('#app');
 </script>
 {% endblock %}

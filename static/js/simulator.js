@@ -1,12 +1,14 @@
-// Симулятор K-Means (Vue.js Island)
-// Этот файл содержит всю логику интерактивного графика
-
+// Simulator for K-Means & DBSCAN (Vue.js Island)
 const { createApp, ref, onMounted, watch } = Vue;
 
 function initSimulatorApp() {
     return createApp({
         setup() {
+            // State
+            const algorithm = ref('kmeans');
             const k = ref(3);
+            const eps = ref(1.0);
+            const minPts = ref(3);
             const points = ref([]);
             const history = ref([]);
             const currentStep = ref(0);
@@ -29,35 +31,23 @@ function initSimulatorApp() {
             const initPlot = () => {
                 const plotDiv = document.getElementById('plot');
                 if (!plotDiv) return;
-
-                Plotly.newPlot('plot', [{
-                    x: [], y: [], mode: 'markers', type: 'scatter', hoverinfo: 'none'
-                }], getBaseLayout(), { 
-                    displayModeBar: false, 
-                    responsive: true,
-                    staticPlot: false 
-                });
+                Plotly.newPlot('plot', [{ x: [], y: [], mode: 'markers', type: 'scatter', hoverinfo: 'none' }], 
+                    getBaseLayout(), { displayModeBar: false, responsive: true, staticPlot: false });
             };
 
             const handleCanvasClick = (event) => {
                 if (history.value.length > 0) return;
-
                 const plotDiv = document.getElementById('plot');
-                
                 if (plotDiv && plotDiv._fullLayout) {
                     const xaxis = plotDiv._fullLayout.xaxis;
                     const yaxis = plotDiv._fullLayout.yaxis;
-                    
                     const rect = plotDiv.getBoundingClientRect();
                     const xPx = event.clientX - rect.left;
                     const yPx = event.clientY - rect.top;
-
                     const marginL = plotDiv._fullLayout.margin.l;
                     const marginT = plotDiv._fullLayout.margin.t;
-
                     let xVal = xaxis.p2d(xPx - marginL);
                     let yVal = yaxis.p2d(yPx - marginT);
-
                     if (xVal >= 0 && xVal <= 10 && yVal >= 0 && yVal <= 10) {
                         points.value.push([xVal, yVal]);
                         drawPoints();
@@ -81,20 +71,36 @@ function initSimulatorApp() {
             const drawStep = (stepIndex) => {
                 const stepData = history.value[stepIndex];
                 if (!stepData) return;
-
                 const traces = [];
                 const colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
 
                 if (stepData.labels) {
-                    const clusters = Array.from({ length: k.value }, () => []);
+                    const maxLabel = Math.max(...stepData.labels);
+                    const clusters = Array.from({ length: maxLabel + 1 }, () => []);
+                    const noise = [];
                     
                     points.value.forEach((point, index) => {
                         const label = stepData.labels[index];
-                        if (label !== undefined && clusters[label]) {
+                        if (label === -1) {
+                            noise.push(point);
+                        } else if (clusters[label]) {
                             clusters[label].push(point);
                         }
                     });
 
+                    // Draw noise points (gray)
+                    if (noise.length > 0) {
+                        traces.push({
+                            x: noise.map(p => p[0]),
+                            y: noise.map(p => p[1]),
+                            mode: 'markers',
+                            type: 'scatter',
+                            name: 'Noise',
+                            marker: { size: 8, color: '#64748b', symbol: 'x' }
+                        });
+                    }
+
+                    // Draw clusters
                     clusters.forEach((clusterPoints, i) => {
                         if (clusterPoints.length > 0) {
                             traces.push({
@@ -126,10 +132,15 @@ function initSimulatorApp() {
             const runAlgorithm = async () => {
                 isRunning.value = true;
                 try {
-                    const response = await fetch('/simulator/api/run-kmeans/', {
+                    const endpoint = algorithm.value === 'kmeans' ? '/simulator/api/run-kmeans/' : '/simulator/api/run-dbscan/';
+                    const body = algorithm.value === 'kmeans' 
+                        ? { points: points.value, k: k.value }
+                        : { points: points.value, eps: parseFloat(eps.value), min_pts: minPts.value };
+                    
+                    const response = await fetch(endpoint, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ points: points.value, k: k.value })
+                        body: JSON.stringify(body)
                     });
                     const data = await response.json();
                     if (data.success) {
@@ -147,18 +158,9 @@ function initSimulatorApp() {
                 }
             };
 
-            const nextStep = () => { 
-                if (currentStep.value < history.value.length - 1) currentStep.value++; 
-            };
-            
-            const prevStep = () => { 
-                if (currentStep.value > 0) currentStep.value--; 
-            };
-            
-            const setStep = (val) => { 
-                currentStep.value = val; 
-            };
-
+            const nextStep = () => { if (currentStep.value < history.value.length - 1) currentStep.value++; };
+            const prevStep = () => { if (currentStep.value > 0) currentStep.value--; };
+            const setStep = (val) => { currentStep.value = val; };
             const clearPoints = () => {
                 points.value = [];
                 history.value = [];
@@ -166,23 +168,19 @@ function initSimulatorApp() {
                 initPlot();
             };
 
-            watch(currentStep, (newVal) => { 
-                if (history.value.length > 0) drawStep(newVal); 
-            });
+            watch(currentStep, (newVal) => { if (history.value.length > 0) drawStep(newVal); });
+            watch(algorithm, () => { clearPoints(); });
 
-            onMounted(() => {
-                setTimeout(initPlot, 100);
-            });
+            onMounted(() => { setTimeout(initPlot, 100); });
 
             return {
-                k, points, history, currentStep, isRunning,
+                algorithm, k, eps, minPts, points, history, currentStep, isRunning,
                 runAlgorithm, nextStep, prevStep, setStep, clearPoints, handleCanvasClick
             };
         }
     });
 }
 
-// Экспортируем для использования в шаблоне
 if (typeof window !== 'undefined') {
     window.initSimulatorApp = initSimulatorApp;
 }

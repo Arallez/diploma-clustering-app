@@ -1,7 +1,7 @@
 import os
 from owlready2 import *
 from django.conf import settings
-from .models import Concept, ConceptRelation
+from .models import Concept as DjangoConcept, ConceptRelation  # Renamed import
 
 def sync_ontology():
     """
@@ -21,7 +21,7 @@ def sync_ontology():
         
         class Algorithm(KnowledgeItem): pass
         class Metric(KnowledgeItem): pass
-        class Concept(KnowledgeItem): pass
+        class OntologyConcept(KnowledgeItem): pass # Renamed to avoid conflict
         
         # Определяем свойства (Relationships)
         class uses_metric(ObjectProperty):
@@ -55,7 +55,7 @@ def sync_ontology():
         dbscan.comment = ["Алгоритм кластеризации, основанный на плотности. Способен находить кластеры произвольной формы и выделять шум."]
         dbscan.uses_metric = [euclidean] # Может использовать разные, но по умолчанию евклид
 
-        centroid = Concept("Centroid")
+        centroid = OntologyConcept("Centroid")
         centroid.label = ["Центроид"]
         centroid.comment = ["Геометрический центр кластера. В K-Means координаты центроида вычисляются как среднее арифметическое всех точек кластера."]
         
@@ -72,7 +72,8 @@ def sync_ontology():
         title = owl_entity.label[0] if owl_entity.label else owl_entity.name
         desc = owl_entity.comment[0] if owl_entity.comment else ""
         
-        obj, created = Concept.objects.get_or_create(
+        # Use DjangoConcept explicitly
+        obj, created = DjangoConcept.objects.get_or_create(
             uri=owl_entity.name,
             defaults={'title': title, 'description': desc}
         )

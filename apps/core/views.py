@@ -2,6 +2,9 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 from .forms import UserRegisterForm
 from apps.simulator.models import Task, UserTaskAttempt
 
@@ -12,9 +15,28 @@ def register(request):
     if request.method == 'POST':
         form = UserRegisterForm(request.POST)
         if form.is_valid():
-            form.save()
+            user = form.save()
             username = form.cleaned_data.get('username')
-            messages.success(request, f'Создан аккаунт для {username}! Теперь вы можете войти.')
+            email = form.cleaned_data.get('email')
+            
+            # Send Welcome Email
+            try:
+                subject = 'Добро пожаловать в Clustering Trainer!'
+                html_message = render_to_string('emails/welcome.html', {'username': username})
+                plain_message = strip_tags(html_message)
+                
+                send_mail(
+                    subject,
+                    plain_message,
+                    None, # Uses DEFAULT_FROM_EMAIL
+                    [email],
+                    html_message=html_message,
+                    fail_silently=True # Don't crash if email fails
+                )
+            except Exception as e:
+                print(f"Error sending email: {e}")
+
+            messages.success(request, f'Создан аккаунт для {username}! Письмо отправлено на почту.')
             return redirect('login')
     else:
         form = UserRegisterForm()

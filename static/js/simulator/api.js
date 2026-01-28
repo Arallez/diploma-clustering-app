@@ -16,24 +16,6 @@ export async function runDBSCAN(points, eps, minPts) {
     return await response.json();
 }
 
-export async function runForel(points, r) {
-    const response = await fetch('/simulator/api/run-forel/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ points, r })
-    });
-    return await response.json();
-}
-
-export async function runAgglomerative(points, n_clusters) {
-    const response = await fetch('/simulator/api/run-agglomerative/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ points, n_clusters })
-    });
-    return await response.json();
-}
-
 export async function generatePreset(type, nSamples = 100) {
     const response = await fetch('/simulator/api/generate-preset/', {
         method: 'POST',

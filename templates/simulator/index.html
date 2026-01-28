@@ -3,7 +3,8 @@
 {% block title %}Clustering Simulator{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="/static/css/simulator.css">
+<!-- Added version parameter to force cache refresh -->
+<link rel="stylesheet" href="/static/css/simulator.css?v=2.1">
 {% endblock %}
 
 {% block content %}
@@ -69,9 +70,9 @@
             <div class="control-group" v-if="algorithm === 'forel'">
                 <span class="control-label">Radius (R)</span>
                 <div class="k-controls">
-                    <button class="btn btn-outline" @click="radius = Math.max(0.1, (parseFloat(radius) - 0.1).toFixed(1))">-</button>
+                    <button class="btn btn-outline" @click="radius = Math.max(0.1, ((parseFloat(radius) || 1.0) - 0.1).toFixed(1))">-</button>
                     <input type="number" v-model.number="radius" class="cluster-input" step="0.1" min="0.1" max="5.0">
-                    <button class="btn btn-outline" @click="radius = Math.min(5.0, (parseFloat(radius) + 0.1).toFixed(1))">+</button>
+                    <button class="btn btn-outline" @click="radius = Math.min(5.0, ((parseFloat(radius) || 1.0) + 0.1).toFixed(1))">+</button>
                 </div>
             </div>
 
@@ -85,8 +86,8 @@
                 </div>
             </div>
 
-            <div class="control-group" style="margin-top: 1rem;">
-                <button class="btn btn-outline" @click="clearPoints" style="margin-bottom: 0.5rem; width: 100%;">Clear Board</button>
+            <div class="control-group" style="margin-top: 0.5rem;">
+                <button class="btn btn-outline" @click="clearPoints" style="margin-bottom: 0.25rem; width: 100%;">Clear Board</button>
                 <button class="btn" @click="runAlgorithm" :disabled="points.length === 0 || isRunning" style="width: 100%;">
                     {{ isRunning ? 'Processing...' : 'Run Algorithm' }}
                 </button>
@@ -156,5 +157,6 @@
 <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 
 <!-- New Modular Architecture -->
-<script type="module" src="/static/js/simulator/app.js"></script>
+<!-- Added version parameter to force cache refresh -->
+<script type="module" src="/static/js/simulator/app.js?v=2.1"></script>
 {% endblock %}

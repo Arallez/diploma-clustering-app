@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 from .models import Task, UserTaskAttempt
-from .algorithms import kmeans_step, dbscan_step
+from .algorithms import kmeans_step, dbscan_step, forel_step, agglomerative_step
 from .presets import generate_preset
 
 def simulator_index(request):
@@ -56,11 +56,44 @@ def run_dbscan(request):
     return JsonResponse({'success': False, 'error': 'Invalid request'})
 
 @csrf_exempt
+def run_forel(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            points = data.get('points', [])
+            r = float(data.get('r', 1.0))
+            
+            if len(points) < 1:
+                return JsonResponse({'success': False, 'error': 'Need points'})
+            
+            history = forel_step(points, r)
+            return JsonResponse({'success': True, 'history': history})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False, 'error': 'Invalid request'})
+
+@csrf_exempt
+def run_agglomerative(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            points = data.get('points', [])
+            n_clusters = int(data.get('n_clusters', 2))
+            
+            if len(points) < n_clusters:
+                return JsonResponse({'success': False, 'error': 'Not enough points'})
+            
+            history = agglomerative_step(points, n_clusters)
+            return JsonResponse({'success': True, 'history': history})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False, 'error': 'Invalid request'})
+
+@csrf_exempt
 def check_solution(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            # Support both new 'task_slug' and legacy 'task_id' (for cached clients)
             task_slug = data.get('task_slug') or data.get('task_id')
             user_result = data.get('result')
             user_code = data.get('code', '')
@@ -71,15 +104,12 @@ def check_solution(request):
             task = get_object_or_404(Task, slug=task_slug)
             expected = task.expected_output
             
-            # Compare user result with expected output
             is_correct = False
             
-            # Handle floating point comparison with tolerance
             if isinstance(expected, float) and isinstance(user_result, (int, float)):
                 is_correct = abs(user_result - expected) < 0.0001
             elif isinstance(expected, list) and isinstance(user_result, list):
                 if len(expected) == len(user_result):
-                    # Check if all elements match (with tolerance for floats)
                     is_correct = all(
                         abs(e - u) < 0.0001 if isinstance(e, float) else e == u
                         for e, u in zip(expected, user_result)
@@ -87,7 +117,6 @@ def check_solution(request):
             else:
                 is_correct = user_result == expected
             
-            # Save attempt if user is authenticated
             if request.user.is_authenticated:
                 UserTaskAttempt.objects.create(
                     user=request.user,

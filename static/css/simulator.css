@@ -3,6 +3,8 @@ html, body {
     height: 100%;
     margin: 0;
     overflow-x: hidden;
+    background-color: #0f172a; /* Ensure dark background globally */
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 /* Base Layout */
@@ -103,6 +105,15 @@ html, body {
 }
 .btn-outline:hover { background: #334155; }
 
+.btn-secondary {
+    background: #0f172a;
+    border: 1px solid #3b82f6;
+    color: #3b82f6;
+}
+.btn-secondary:hover:not(:disabled) {
+    background: #1e293b;
+}
+
 /* Stats Bar */
 .stats-bar {
     display: flex;
@@ -168,6 +179,7 @@ html, body {
     font-family: monospace;
     font-size: 1rem;
     min-width: 2rem;
+    color: #cbd5e1;
 }
 
 input[type="range"] {
@@ -187,6 +199,55 @@ input[type="range"] {
     color: #64748b;
     line-height: 1.5;
     border: 1px solid #334155;
+}
+
+/* MODAL STYLES (Dendrogram) */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.85); /* Dark slate overlay */
+    backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: #1e293b; /* Match graph card */
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 1.5rem;
+    width: 80%;
+    max-width: 900px;
+    position: relative;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.modal-close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 2rem;
+    cursor: pointer;
+    line-height: 1;
+}
+.modal-close:hover {
+    color: #f1f5f9;
+}
+
+/* Transitions */
+.fade-enter-active, .fade-leave-active {
+    transition: opacity 0.3s ease;
+}
+.fade-enter-from, .fade-leave-to {
+    opacity: 0;
 }
 
 /* V-cloak to hide raw templates */

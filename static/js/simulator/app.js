@@ -1,5 +1,5 @@
-import { runKMeans, runDBSCAN, runForel, runAgglomerative, generatePreset, getDendrogram } from './api.js?v=4.3';
-import { initPlot, drawPoints, drawStep, convertClickToPoint } from './plot.js?v=4.3';
+import { runKMeans, runDBSCAN, runForel, runAgglomerative, generatePreset, getDendrogram } from './api.js?v=4.4';
+import { initPlot, drawPoints, drawStep, convertClickToPoint } from './plot.js?v=4.4';
 
 const { createApp, ref, onMounted, watch } = Vue;
 
@@ -108,10 +108,8 @@ const app = createApp({
             const { icoord, dcoord } = dendroData;
             
             const traces = [];
-            const leafX = [];
-            const leafY = [];
 
-            // 1. Draw lines (Dendrogram branches)
+            // Draw lines (Dendrogram branches) only - cleaner look
             for (let i = 0; i < icoord.length; i++) {
                 traces.push({
                     x: icoord[i],
@@ -121,29 +119,7 @@ const app = createApp({
                     showlegend: false,
                     hoverinfo: 'skip'
                 });
-
-                // Find leaf nodes (y=0) to plot as points
-                for (let j = 0; j < dcoord[i].length; j++) {
-                    if (dcoord[i][j] === 0) {
-                        leafX.push(icoord[i][j]);
-                        leafY.push(0);
-                    }
-                }
             }
-
-            // 2. Draw "Points" at the bottom (Leaves) - styling them like the main graph
-            traces.push({
-                x: leafX,
-                y: leafY,
-                mode: 'markers',
-                marker: {
-                    color: '#22d3ee', // Cyan (same as main plot)
-                    size: 10,
-                    line: { color: '#ffffff', width: 2 }
-                },
-                showlegend: false,
-                hoverinfo: 'none' // Static points
-            });
 
             const layout = {
                 title: {

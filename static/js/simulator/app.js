@@ -1,4 +1,4 @@
-import { runKMeans, runDBSCAN, generatePreset } from './api.js';
+import { runKMeans, runDBSCAN, runForel, runAgglomerative, generatePreset } from './api.js';
 import { initPlot, drawPoints, drawStep, convertClickToPoint } from './plot.js';
 
 const { createApp, ref, onMounted, watch } = Vue;
@@ -10,6 +10,7 @@ const app = createApp({
         const k = ref(3);
         const eps = ref(1.0);
         const minPts = ref(3);
+        const radius = ref(1.0); // FOREL radius
         const points = ref([]);
         const history = ref([]);
         const currentStep = ref(0);
@@ -53,16 +54,20 @@ const app = createApp({
                 let data;
                 if (algorithm.value === 'kmeans') {
                     data = await runKMeans(points.value, k.value);
-                } else {
+                } else if (algorithm.value === 'dbscan') {
                     data = await runDBSCAN(points.value, parseFloat(eps.value), minPts.value);
+                } else if (algorithm.value === 'forel') {
+                    data = await runForel(points.value, parseFloat(radius.value));
+                } else if (algorithm.value === 'agglomerative') {
+                    data = await runAgglomerative(points.value, k.value);
                 }
 
-                if (data.success) {
+                if (data && data.success) {
                     history.value = data.history;
                     currentStep.value = 0;
                     drawStep(points.value, history.value[0]);
                 } else {
-                    alert('Error: ' + data.error);
+                    alert('Error: ' + (data ? data.error : 'Unknown error'));
                 }
             } catch (e) {
                 console.error(e);
@@ -97,7 +102,7 @@ const app = createApp({
         });
 
         return {
-            algorithm, k, eps, minPts, points, history, currentStep, isRunning,
+            algorithm, k, eps, minPts, radius, points, history, currentStep, isRunning,
             selectedPreset, loadPreset,
             runAlgorithm, nextStep, prevStep, setStep, clearPoints, handleCanvasClick
         };

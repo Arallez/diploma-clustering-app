@@ -1,5 +1,5 @@
-import { runKMeans, runDBSCAN, runForel, runAgglomerative, generatePreset } from './api.js?v=4.1';
-import { initPlot, drawPoints, drawStep, convertClickToPoint } from './plot.js?v=4.1';
+import { runKMeans, runDBSCAN, runForel, runAgglomerative, generatePreset, getDendrogram } from './api.js?v=4.2';
+import { initPlot, drawPoints, drawStep, convertClickToPoint } from './plot.js?v=4.2';
 
 const { createApp, ref, onMounted, watch } = Vue;
 
@@ -16,6 +16,7 @@ const app = createApp({
         const currentStep = ref(0);
         const isRunning = ref(false);
         const selectedPreset = ref('');
+        const showDendrogram = ref(false);
 
         // Actions
         const handleCanvasClick = (event) => {
@@ -78,6 +79,64 @@ const app = createApp({
             }
         };
 
+        const viewDendrogram = async () => {
+            if (points.value.length < 2) {
+                alert('Нужно минимум 2 точки для дендрограммы');
+                return;
+            }
+            isRunning.value = true;
+            try {
+                const data = await getDendrogram(points.value);
+                if (data.success) {
+                    showDendrogram.value = true;
+                    // Render dendrogram in modal
+                    setTimeout(() => {
+                        renderDendrogram(data.dendrogram);
+                    }, 100);
+                } else {
+                    alert('Ошибка: ' + data.error);
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Ошибка сервера');
+            } finally {
+                isRunning.value = false;
+            }
+        };
+
+        const renderDendrogram = (dendroData) => {
+            const { icoord, dcoord } = dendroData;
+            
+            // Create Plotly traces for dendrogram
+            const traces = [];
+            for (let i = 0; i < icoord.length; i++) {
+                traces.push({
+                    x: icoord[i],
+                    y: dcoord[i],
+                    mode: 'lines',
+                    line: { color: '#3b82f6', width: 2 },
+                    showlegend: false,
+                    hoverinfo: 'skip'
+                });
+            }
+
+            const layout = {
+                title: 'Дендрограмма (Иерархическая кластеризация)',
+                xaxis: { title: 'Образцы', showticklabels: false },
+                yaxis: { title: 'Расстояние' },
+                paper_bgcolor: '#0f172a',
+                plot_bgcolor: '#1e293b',
+                font: { color: '#f1f5f9' },
+                margin: { t: 50, b: 50, l: 60, r: 20 }
+            };
+
+            Plotly.newPlot('dendrogram-plot', traces, layout, { responsive: true });
+        };
+
+        const closeDendrogram = () => {
+            showDendrogram.value = false;
+        };
+
         const clearPoints = () => {
             points.value = [];
             history.value = [];
@@ -104,8 +163,9 @@ const app = createApp({
 
         return {
             algorithm, k, eps, minPts, radius, points, history, currentStep, isRunning,
-            selectedPreset, loadPreset,
-            runAlgorithm, nextStep, prevStep, setStep, clearPoints, handleCanvasClick
+            selectedPreset, loadPreset, showDendrogram,
+            runAlgorithm, nextStep, prevStep, setStep, clearPoints, handleCanvasClick,
+            viewDendrogram, closeDendrogram
         };
     }
 });

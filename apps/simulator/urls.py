@@ -13,6 +13,7 @@ urlpatterns = [
     path('api/run-dbscan/', views.run_dbscan, name='run_dbscan'),
     path('api/run-forel/', views.run_forel, name='run_forel'),
     path('api/run-agglomerative/', views.run_agglomerative, name='run_agglomerative'),
+    path('api/get-dendrogram/', views.get_dendrogram, name='get_dendrogram'),
     path('api/check-solution/', views.check_solution, name='check_solution'),
     path('api/generate-preset/', views.get_preset, name='get_preset'),
 ]

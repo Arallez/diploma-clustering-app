@@ -1,215 +1,215 @@
-"""Algorithm implementations for clustering simulation"""
 import numpy as np
-from typing import List, Tuple, Dict
-from scipy.spatial.distance import pdist, squareform
-from scipy.cluster.hierarchy import linkage
+from scipy.cluster.hierarchy import dendrogram, linkage
+from scipy.spatial.distance import pdist
 
-def euclidean_distance(p1, p2):
-    return np.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
-
-def kmeans_step(points: List[List[float]], k: int, max_iterations: int = 20) -> List[Dict]:
+def normalize_points(points):
     """
-    K-Means clustering with step-by-step history.
-    Returns list of steps: [{centroids: [[x,y],...], labels: [0,1,2,...]}]
+    Convert points from list of dicts [{'x': 1, 'y': 2}] or list of lists 
+    to numpy array [[1, 2]].
     """
-    points = np.array(points)
-    n = len(points)
+    if not points:
+        return np.array([])
     
-    # Random initial centroids
-    indices = np.random.choice(n, size=min(k, n), replace=False)
-    centroids = points[indices].tolist()
+    # If already numpy array, just return
+    if isinstance(points, np.ndarray):
+        return points
+
+    # Check first element to see format
+    first = points[0]
+    if isinstance(first, dict) and 'x' in first and 'y' in first:
+        return np.array([[p['x'], p['y']] for p in points])
+    elif isinstance(first, (list, tuple)):
+        return np.array(points)
+    
+    return np.array(points)
+
+def kmeans_step(points, k):
+    X = normalize_points(points)
+    if len(X) < k:
+        return []
+    
+    # Randomly initialize centroids
+    indices = np.random.choice(len(X), k, replace=False)
+    centroids = X[indices]
     
     history = []
+    max_iters = 100
     
-    for iteration in range(max_iterations):
-        # Assign labels
-        labels = []
-        for point in points:
-            distances = [euclidean_distance(point, c) for c in centroids]
-            labels.append(int(np.argmin(distances)))
+    for _ in range(max_iters):
+        # Calculate distances
+        distances = np.linalg.norm(X[:, np.newaxis] - centroids, axis=2)
+        labels = np.argmin(distances, axis=1)
         
-        history.append({'centroids': centroids.copy(), 'labels': labels.copy()})
+        step_data = {
+            'centroids': [{'x': c[0], 'y': c[1]} for c in centroids],
+            'labels': labels.tolist()
+        }
+        history.append(step_data)
         
-        # Update centroids
-        new_centroids = []
-        for i in range(k):
-            cluster_points = points[np.array(labels) == i]
-            if len(cluster_points) > 0:
-                new_centroids.append(cluster_points.mean(axis=0).tolist())
-            else:
-                new_centroids.append(centroids[i])  # Keep old if empty
+        new_centroids = np.array([X[labels == i].mean(axis=0) if np.sum(labels == i) > 0 else centroids[i] for i in range(k)])
         
-        # Check convergence
-        if np.allclose(centroids, new_centroids, atol=0.01):
+        if np.allclose(centroids, new_centroids):
             break
+            
         centroids = new_centroids
-    
+        
     return history
 
-
-def dbscan_step(points: List[List[float]], eps: float, min_pts: int) -> List[Dict]:
-    """
-    DBSCAN clustering with step visualization.
-    Returns history showing cluster assignment progression.
-    """
-    points = np.array(points)
-    n = len(points)
-    labels = [-1] * n  # -1 = noise
+def dbscan_step(points, eps, min_pts):
+    X = normalize_points(points)
+    n = len(X)
+    labels = -1 * np.ones(n, dtype=int)  # -1 = noise
+    visited = np.zeros(n, dtype=bool)
     cluster_id = 0
-    visited = [False] * n
     history = []
-    
-    def region_query(point_idx):
-        neighbors = []
-        for i in range(n):
-            if euclidean_distance(points[point_idx], points[i]) <= eps:
-                neighbors.append(i)
-        return neighbors
-    
-    def expand_cluster(point_idx, neighbors, cluster_id):
-        labels[point_idx] = cluster_id
-        i = 0
-        while i < len(neighbors):
-            neighbor_idx = neighbors[i]
-            if not visited[neighbor_idx]:
-                visited[neighbor_idx] = True
-                neighbor_neighbors = region_query(neighbor_idx)
-                if len(neighbor_neighbors) >= min_pts:
-                    neighbors.extend([n for n in neighbor_neighbors if n not in neighbors])
-            if labels[neighbor_idx] == -1:
-                labels[neighbor_idx] = cluster_id
-            i += 1
-        history.append({'labels': labels.copy()})
-    
+
+    def get_neighbors(idx):
+        return np.where(np.linalg.norm(X - X[idx], axis=1) <= eps)[0]
+
     for i in range(n):
         if visited[i]:
             continue
+            
         visited[i] = True
-        neighbors = region_query(i)
+        neighbors = get_neighbors(i)
         
+        # Snapshot for visualization (visiting point i)
+        history.append({
+            'labels': labels.tolist(),
+            'current': int(i),
+            'neighbors': neighbors.tolist()
+        })
+
         if len(neighbors) < min_pts:
-            labels[i] = -1  # Mark as noise
+            labels[i] = -1 # Noise
         else:
-            expand_cluster(i, neighbors, cluster_id)
+            labels[i] = cluster_id
+            seeds = list(neighbors)
+            if i in seeds:
+                seeds.remove(i)
+            
+            while seeds:
+                curr_p = seeds.pop(0)
+                if not visited[curr_p]:
+                    visited[curr_p] = True
+                    curr_neighbors = get_neighbors(curr_p)
+                    if len(curr_neighbors) >= min_pts:
+                        seeds.extend(curr_neighbors)
+                
+                if labels[curr_p] == -1:
+                    labels[curr_p] = cluster_id
+            
             cluster_id += 1
-    
-    # Add final state if no steps recorded
-    if not history:
-        history.append({'labels': labels})
+            
+            # Snapshot after forming a cluster
+            history.append({
+                'labels': labels.tolist(),
+                'current': None,
+                'neighbors': []
+            })
+            
+    # Final state
+    history.append({
+        'labels': labels.tolist(),
+        'current': None,
+        'neighbors': []
+    })
     
     return history
 
-def forel_step(points: List[List[float]], r: float) -> List[Dict]:
-    """
-    FOREL (FOrmal ELement) clustering algorithm.
-    Soviet heuristic algorithm:
-    1. Pick random point.
-    2. Build sphere radius R.
-    3. Find center of mass of points in sphere -> New center.
-    4. Repeat until center stabilizes.
-    5. Remove points, repeat.
-    """
-    points = np.array(points)
-    n = len(points)
-    labels = [-1] * n
-    remaining_indices = list(range(n))
+def forel_step(points, r):
+    X = normalize_points(points)
+    n = len(X)
+    labels = -1 * np.ones(n, dtype=int)
+    remaining_indices = np.arange(n)
     cluster_id = 0
     history = []
     
-    # Iterate until no points left
-    while remaining_indices:
-        # 1. Pick random point from remaining
+    while len(remaining_indices) > 0:
+        # Pick random point as start center
         current_idx = np.random.choice(remaining_indices)
-        center = points[current_idx]
+        center = X[current_idx]
         
-        # Move center to stable position
         while True:
-            # Find neighbors in radius R (among ALL points or Remaining? Usually remaining for removal, but density is global. 
-            # Classic FOREL removes points from consideration. Let's strictly follow "remove them".)
+            # Find neighbors in radius R
+            dists = np.linalg.norm(X[remaining_indices] - center, axis=1)
+            neighbors_mask = dists <= r
+            neighbors_indices = remaining_indices[neighbors_mask]
             
-            # Distance from current center to all REMAINING points
-            distances = np.linalg.norm(points[remaining_indices] - center, axis=1)
-            neighbors_mask = distances <= r
-            neighbor_indices = [remaining_indices[i] for i in range(len(remaining_indices)) if neighbors_mask[i]]
+            step_data = {
+                'labels': labels.tolist(),
+                'center': {'x': center[0], 'y': center[1]},
+                'radius': r,
+                'active_indices': neighbors_indices.tolist()
+            }
+            history.append(step_data)
             
-            if not neighbor_indices:
+            if len(neighbors_indices) == 0:
                 break
                 
-            # Calculate new center (center of mass)
-            sphere_points = points[neighbor_indices]
-            new_center = sphere_points.mean(axis=0)
+            new_center = np.mean(X[neighbors_indices], axis=0)
             
-            # Check convergence
-            if np.allclose(center, new_center, atol=0.001):
-                # Cluster found!
-                # Mark points
-                for idx in neighbor_indices:
-                    labels[idx] = cluster_id
+            if np.linalg.norm(new_center - center) < 1e-4:
+                # Stabilized
+                labels[neighbors_indices] = cluster_id
                 
-                # Record step
-                history.append({'labels': labels.copy(), 'centroids': [new_center.tolist()]})
+                # Remove clustered points
+                remaining_mask = np.ones(len(remaining_indices), dtype=bool)
+                remaining_mask[neighbors_mask] = False
+                remaining_indices = remaining_indices[remaining_mask]
                 
-                # Remove points from remaining
-                remaining_indices = [idx for idx in remaining_indices if idx not in neighbor_indices]
                 cluster_id += 1
                 break
             
             center = new_center
-            # Optional: Visualize moving center? For now just visualize finalized clusters.
             
-    if not history:
-        history.append({'labels': labels})
-        
+    # Final state
+    history.append({
+        'labels': labels.tolist(),
+        'center': None,
+        'radius': r,
+        'active_indices': []
+    })
+            
     return history
 
-def agglomerative_step(points: List[List[float]], n_clusters: int) -> List[Dict]:
-    """
-    Agglomerative Hierarchical Clustering (bottom-up).
-    Start with N clusters, merge closest pair until K clusters remain.
-    """
-    points = np.array(points)
-    n = len(points)
+def agglomerative_step(points, n_clusters):
+    X = normalize_points(points)
+    n = len(X)
     
-    # Initial: each point is a cluster
+    # Initially each point is a cluster
+    clusters = {i: [i] for i in range(n)} # cluster_id -> list of point indices
     labels = np.arange(n)
-    history = [{'labels': labels.tolist()}]
+    history = []
+    
+    # Save initial state
+    history.append({'labels': labels.tolist()})
     
     current_n_clusters = n
     
     while current_n_clusters > n_clusters:
-        # Find closest pair of clusters (Single Linkage for simplicity/speed)
         min_dist = float('inf')
         merge_pair = (-1, -1)
         
-        # This is O(N^3) naive, OK for N=100 in simulator
-        # Better: Precompute distance matrix, but we need cluster distances.
-        # Single Linkage: min distance between any two points in clusters A and B
-        
-        # Compute centroid distances for "Centroid Linkage" (easier to code efficiently)
-        # OR Single Linkage: dist(A,B) = min(dist(a,b)) for a in A, b in B
-        
-        # Let's use Ward's method or Centroid for better visual results usually, 
-        # but Single is standard "simplest". Let's do Centroid for now (points are their own centroids initially).
-        
-        # Construct clusters
-        clusters = {}
-        for idx, label in enumerate(labels):
-            if label not in clusters: clusters[label] = []
-            clusters[label].append(points[idx])
-            
+        # Prepare centroids
         cluster_ids = list(clusters.keys())
-        
-        # Calculate centroids of current clusters
-        centroids = {cid: np.mean(pts, axis=0) for cid, pts in clusters.items()}
-        
-        # Find closest pair of CENTROIDS (Centroid Linkage-ish)
+        centroids = {}
+        for cid in cluster_ids:
+            # points indices in this cluster
+            p_indices = clusters[cid]
+            # coordinates
+            pts_coords = X[p_indices]
+            centroids[cid] = np.mean(pts_coords, axis=0)
+            
+        # Brute force search for min distance between centroids
         for i in range(len(cluster_ids)):
             for j in range(i + 1, len(cluster_ids)):
                 cid1 = cluster_ids[i]
                 cid2 = cluster_ids[j]
-                d = np.linalg.norm(centroids[cid1] - centroids[cid2])
-                if d < min_dist:
-                    min_dist = d
+                dist = np.linalg.norm(centroids[cid1] - centroids[cid2])
+                
+                if dist < min_dist:
+                    min_dist = dist
                     merge_pair = (cid1, cid2)
         
         if merge_pair == (-1, -1):
@@ -217,38 +217,28 @@ def agglomerative_step(points: List[List[float]], n_clusters: int) -> List[Dict]
             
         # Merge
         c1, c2 = merge_pair
-        # Relabel c2 points to c1
-        labels[labels == c2] = c1
+        clusters[c1].extend(clusters[c2])
+        del clusters[c2]
         
+        # Update labels
+        for p_idx in clusters[c1]:
+            labels[p_idx] = c1 # Keep the ID of the first cluster
+            
         history.append({'labels': labels.tolist()})
         current_n_clusters -= 1
         
     return history
 
-def compute_dendrogram_data(points: List[List[float]]) -> Dict:
-    """
-    Compute dendrogram linkage matrix using scipy's 'ward' method.
-    Returns linkage matrix for visualization.
-    """
-    points = np.array(points)
-    if len(points) < 2:
-        return {'icoord': [], 'dcoord': [], 'ivl': [], 'leaves': []}
+def compute_dendrogram_data(points):
+    X = normalize_points(points)
+    if len(X) < 2:
+        # Need at least 2 points for linkage
+        raise ValueError("Need at least 2 points for dendrogram")
+        
+    # Ward linkage
+    Z = linkage(X, method='ward')
     
-    # Use Ward's method for dendrogram (better than single/complete for visualization)
-    Z = linkage(points, method='ward')
+    # Get dendrogram data for plotting
+    ddata = dendrogram(Z, no_plot=True)
     
-    # Convert to JSON-serializable format
-    # scipy.cluster.hierarchy.dendrogram would normally be used to plot,
-    # but we need to pass data to JS. We'll send the linkage matrix and let Plotly handle it.
-    # Plotly has no native dendrogram support for custom linkage, so we compute coordinates.
-    
-    from scipy.cluster.hierarchy import dendrogram as scipy_dendrogram
-    ddata = scipy_dendrogram(Z, no_plot=True)
-    
-    return {
-        'icoord': ddata['icoord'],  # x-coordinates for dendrogram lines
-        'dcoord': ddata['dcoord'],  # y-coordinates (distances)
-        'ivl': ddata['ivl'],        # leaf labels
-        'leaves': ddata['leaves'],  # original indices
-        'color_list': ddata.get('color_list', [])  # colors if available
-    }
+    return ddata

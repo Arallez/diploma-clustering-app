@@ -1,5 +1,5 @@
-import { runKMeans, runDBSCAN, runForel, runAgglomerative, generatePreset, getDendrogram } from './api.js?v=4.2';
-import { initPlot, drawPoints, drawStep, convertClickToPoint } from './plot.js?v=4.2';
+import { runKMeans, runDBSCAN, runForel, runAgglomerative, generatePreset, getDendrogram } from './api.js?v=4.3';
+import { initPlot, drawPoints, drawStep, convertClickToPoint } from './plot.js?v=4.3';
 
 const { createApp, ref, onMounted, watch } = Vue;
 
@@ -114,23 +114,37 @@ const app = createApp({
                     x: icoord[i],
                     y: dcoord[i],
                     mode: 'lines',
-                    line: { color: '#3b82f6', width: 2 },
+                    line: { color: '#22d3ee', width: 2 }, // Cyan color matching points
                     showlegend: false,
                     hoverinfo: 'skip'
                 });
             }
 
             const layout = {
-                title: 'Дендрограмма (Иерархическая кластеризация)',
-                xaxis: { title: 'Образцы', showticklabels: false },
-                yaxis: { title: 'Расстояние' },
-                paper_bgcolor: '#0f172a',
-                plot_bgcolor: '#1e293b',
-                font: { color: '#f1f5f9' },
-                margin: { t: 50, b: 50, l: 60, r: 20 }
+                title: {
+                    text: 'Дендрограмма',
+                    font: { color: '#f1f5f9', size: 18 }
+                },
+                paper_bgcolor: '#1e293b', // Dark background (modal content color)
+                plot_bgcolor: '#1e293b',  // Dark plot background
+                font: { color: '#94a3b8' },
+                margin: { t: 50, b: 50, l: 60, r: 20 },
+                xaxis: {
+                    showgrid: false,
+                    zeroline: false,
+                    showticklabels: false, // Hide numeric indices
+                    title: { text: 'Точки (Образцы)', font: { color: '#94a3b8' } }
+                },
+                yaxis: {
+                    showgrid: true,
+                    gridcolor: '#334155', // Subtle grid
+                    zeroline: false,
+                    title: { text: 'Расстояние', font: { color: '#94a3b8' } },
+                    tickfont: { color: '#cbd5e1' }
+                }
             };
 
-            Plotly.newPlot('dendrogram-plot', traces, layout, { responsive: true });
+            Plotly.newPlot('dendrogram-plot', traces, layout, { responsive: true, displayModeBar: false });
         };
 
         const closeDendrogram = () => {

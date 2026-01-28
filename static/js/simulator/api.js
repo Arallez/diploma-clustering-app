@@ -34,6 +34,15 @@ export async function runAgglomerative(points, n_clusters) {
     return await response.json();
 }
 
+export async function getDendrogram(points) {
+    const response = await fetch('/simulator/api/get-dendrogram/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ points })
+    });
+    return await response.json();
+}
+
 export async function generatePreset(type, nSamples = 100) {
     const response = await fetch('/simulator/api/generate-preset/', {
         method: 'POST',

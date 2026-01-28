@@ -1,24 +1,19 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8">
-  <title>Challenge: {{ task.title }}</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/css/base.css">
-  <link rel="stylesheet" href="/static/css/simulator.css">
-  <link rel="stylesheet" href="/static/css/challenge.css">
-</head>
-<body>
+{% extends 'base.html' %}
+{% load static %}
 
-<div id="app">
-  <!-- Navbar included from separate component for consistency -->
-  {% include 'includes/navbar.html' %}
+{% block title %}Challenge: {{ task.title }}{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/simulator.css' %}">
+<link rel="stylesheet" href="{% static 'css/challenge.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- Vue App Wrapper -->
+<div id="app" class="challenge-page">
   <div class="main">
     <div class="task-panel">
-      <div class="task-title">{% verbatim %}{{ task.title }}{% endverbatim %}</div>
+      <div class="task-title">{{ task.title }}</div>
       <div class="task-desc">
         {% autoescape off %}
         {{ task.description }}
@@ -46,19 +41,19 @@
       </div>
     </div>
     {% endverbatim %}
-
   </div>
 </div>
+{% endblock %}
 
-<!-- Внешние библиотеки -->
+{% block extra_js %}
+<!-- External Libs -->
 <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
 <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
 
-<!-- Наш код -->
-<script src="/static/js/challenge.js"></script>
+<!-- Challenge Logic -->
+<script src="{% static 'js/challenge.js' %}"></script>
 <script>
-    // Передаём данные из Django в JavaScript
     const taskData = {
         slug: "{{ task.slug }}",
         title: "{{ task.title }}",
@@ -66,10 +61,6 @@
         initial_code: `{{ task.initial_code|escapejs }}`,
         test_input: {{ task.test_input|safe }}
     };
-
-    // Инициализация Vue-приложения
     window.initChallengeApp(taskData).mount('#app');
 </script>
-
-</body>
-</html>
+{% endblock %}

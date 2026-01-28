@@ -11,138 +11,136 @@
 {% verbatim %}
 <div id="app">
     
-    <div class="simulator-container">
+    <div class="layout">
         <!-- Sidebar Controls -->
         <aside class="sidebar">
-            <div class="controls-section">
-                <div class="control-group">
-                    <label class="control-label">Algorithm</label>
-                    <select class="control-select" v-model="algorithm">
-                        <option value="kmeans">K-Means Clustering</option>
-                        <option value="dbscan">DBSCAN</option>
-                        <option value="forel">FOREL (Soviet) ⭐</option>
-                        <option value="agglomerative">Hierarchical (Agglomerative)</option>
-                    </select>
-                </div>
+            <div class="control-group">
+                <span class="control-label">Algorithm</span>
+                <select class="cluster-input full-width" v-model="algorithm">
+                    <option value="kmeans">K-Means Clustering</option>
+                    <option value="dbscan">DBSCAN</option>
+                    <option value="forel">FOREL (Soviet) ⭐</option>
+                    <option value="agglomerative">Hierarchical</option>
+                </select>
+            </div>
 
-                <!-- Dataset Presets -->
-                <div class="control-group">
-                    <label class="control-label">📊 Load Dataset</label>
-                    <select class="control-select" v-model="selectedPreset">
-                        <option value="" selected>Manual (click to add)</option>
-                        <option value="moons">🌙 Moons (DBSCAN demo)</option>
-                        <option value="circles">⭕ Circles (nested)</option>
-                        <option value="blobs">🔵 Blobs (K-Means demo)</option>
-                        <option value="grid">🟦 Grid (uniform)</option>
-                    </select>
-                </div>
+            <!-- Dataset Presets -->
+            <div class="control-group">
+                <span class="control-label">📊 Load Dataset</span>
+                <select class="cluster-input full-width" v-model="selectedPreset">
+                    <option value="" selected>Manual (click to add)</option>
+                    <option value="moons">🌙 Moons (DBSCAN demo)</option>
+                    <option value="circles">⭕ Circles (nested)</option>
+                    <option value="blobs">🔵 Blobs (K-Means demo)</option>
+                    <option value="grid">🟦 Grid (uniform)</option>
+                </select>
+            </div>
 
-                <!-- Controls for K-Means -->
-                <div class="control-group" v-if="algorithm === 'kmeans'">
-                    <label class="control-label">Clusters (K)</label>
-                    <div class="step-controls">
-                        <button class="btn-step" @click="k > 1 ? k-- : null">-</button>
-                        <input type="number" v-model="k" class="control-input" min="1" max="10" style="text-align: center">
-                        <button class="btn-step" @click="k < 10 ? k++ : null">+</button>
-                    </div>
-                </div>
-
-                <!-- Controls for DBSCAN -->
-                <div class="control-group" v-if="algorithm === 'dbscan'">
-                    <label class="control-label">Epsilon (Radius)</label>
-                    <div class="step-controls">
-                        <button class="btn-step" @click="eps = Math.max(0.1, (parseFloat(eps) - 0.1).toFixed(1))">-</button>
-                        <input type="number" v-model.number="eps" class="control-input" step="0.1" min="0.1" max="5.0" style="text-align: center">
-                        <button class="btn-step" @click="eps = Math.min(5.0, (parseFloat(eps) + 0.1).toFixed(1))">+</button>
-                    </div>
-                </div>
-
-                <div class="control-group" v-if="algorithm === 'dbscan'">
-                    <label class="control-label">Min Points</label>
-                    <div class="step-controls">
-                        <button class="btn-step" @click="minPts > 1 ? minPts-- : null">-</button>
-                        <input type="number" v-model="minPts" class="control-input" min="1" max="20" style="text-align: center">
-                        <button class="btn-step" @click="minPts < 20 ? minPts++ : null">+</button>
-                    </div>
-                </div>
-
-                <!-- Controls for FOREL -->
-                <div class="control-group" v-if="algorithm === 'forel'">
-                    <label class="control-label">Sphere Radius (R)</label>
-                    <div class="step-controls">
-                        <button class="btn-step" @click="radius = Math.max(0.1, (parseFloat(radius) - 0.1).toFixed(1))">-</button>
-                        <input type="number" v-model.number="radius" class="control-input" step="0.1" min="0.1" max="5.0" style="text-align: center">
-                        <button class="btn-step" @click="radius = Math.min(5.0, (parseFloat(radius) + 0.1).toFixed(1))">+</button>
-                    </div>
-                </div>
-
-                <!-- Controls for Agglomerative -->
-                <div class="control-group" v-if="algorithm === 'agglomerative'">
-                    <label class="control-label">Clusters (N)</label>
-                    <div class="step-controls">
-                        <button class="btn-step" @click="k > 1 ? k-- : null">-</button>
-                        <input type="number" v-model="k" class="control-input" min="2" max="10" style="text-align: center">
-                        <button class="btn-step" @click="k < 10 ? k++ : null">+</button>
-                    </div>
-                </div>
-
-                <div class="control-group" style="margin-top: 1rem;">
-                    <button class="btn-danger" @click="clearPoints">Clear Board</button>
-                    <button class="btn-primary" @click="runAlgorithm" :disabled="points.length === 0 || isRunning" style="margin-top: 0.5rem;">
-                        {{ isRunning ? 'Processing...' : 'Run Algorithm' }}
-                    </button>
+            <!-- Controls for K-Means -->
+            <div class="control-group" v-if="algorithm === 'kmeans'">
+                <span class="control-label">Clusters (K)</span>
+                <div class="k-controls">
+                    <button class="btn btn-outline" @click="k > 1 ? k-- : null">-</button>
+                    <input type="number" v-model="k" class="cluster-input" min="1" max="10">
+                    <button class="btn btn-outline" @click="k < 10 ? k++ : null">+</button>
                 </div>
             </div>
 
-            <div class="help-text">
+            <!-- Controls for DBSCAN -->
+            <div class="control-group" v-if="algorithm === 'dbscan'">
+                <span class="control-label">Epsilon (Radius)</span>
+                <div class="k-controls">
+                    <button class="btn btn-outline" @click="eps = Math.max(0.1, (parseFloat(eps) - 0.1).toFixed(1))">-</button>
+                    <input type="number" v-model.number="eps" class="cluster-input" step="0.1" min="0.1" max="5.0">
+                    <button class="btn btn-outline" @click="eps = Math.min(5.0, (parseFloat(eps) + 0.1).toFixed(1))">+</button>
+                </div>
+            </div>
+
+            <div class="control-group" v-if="algorithm === 'dbscan'">
+                <span class="control-label">Min Points</span>
+                <div class="k-controls">
+                    <button class="btn btn-outline" @click="minPts > 1 ? minPts-- : null">-</button>
+                    <input type="number" v-model="minPts" class="cluster-input" min="1" max="20">
+                    <button class="btn btn-outline" @click="minPts < 20 ? minPts++ : null">+</button>
+                </div>
+            </div>
+
+            <!-- Controls for FOREL -->
+            <div class="control-group" v-if="algorithm === 'forel'">
+                <span class="control-label">Radius (R)</span>
+                <div class="k-controls">
+                    <button class="btn btn-outline" @click="radius = Math.max(0.1, (parseFloat(radius) - 0.1).toFixed(1))">-</button>
+                    <input type="number" v-model.number="radius" class="cluster-input" step="0.1" min="0.1" max="5.0">
+                    <button class="btn btn-outline" @click="radius = Math.min(5.0, (parseFloat(radius) + 0.1).toFixed(1))">+</button>
+                </div>
+            </div>
+
+            <!-- Controls for Agglomerative -->
+            <div class="control-group" v-if="algorithm === 'agglomerative'">
+                <span class="control-label">Target Clusters</span>
+                <div class="k-controls">
+                    <button class="btn btn-outline" @click="k > 1 ? k-- : null">-</button>
+                    <input type="number" v-model="k" class="cluster-input" min="2" max="10">
+                    <button class="btn btn-outline" @click="k < 10 ? k++ : null">+</button>
+                </div>
+            </div>
+
+            <div class="control-group" style="margin-top: 1rem;">
+                <button class="btn btn-outline" @click="clearPoints" style="margin-bottom: 0.5rem; width: 100%;">Clear Board</button>
+                <button class="btn" @click="runAlgorithm" :disabled="points.length === 0 || isRunning" style="width: 100%;">
+                    {{ isRunning ? 'Processing...' : 'Run Algorithm' }}
+                </button>
+            </div>
+
+            <div class="help-box">
                 <div v-if="algorithm === 'kmeans'">
-                    <strong>💡 K-Means:</strong> Select K clusters. Algorithm finds centroids iteratively.
+                    <strong>💡 K-Means:</strong> Select K clusters. Finds centroids iteratively.
                 </div>
                 <div v-else-if="algorithm === 'dbscan'">
-                    <strong>💡 DBSCAN:</strong> Density-based. Points within Eps become core if neighbors >= MinPts.
+                    <strong>💡 DBSCAN:</strong> Density-based. Needs Epsilon (radius) and MinPts.
                 </div>
                 <div v-else-if="algorithm === 'forel'">
-                    <strong>💡 FOREL:</strong> Place random sphere, move to center of mass, remove points, repeat.
+                    <strong>💡 FOREL:</strong> Moving sphere of radius R. Finds density centers.
                 </div>
                 <div v-else-if="algorithm === 'agglomerative'">
-                    <strong>💡 Hierarchical:</strong> Bottom-up approach. Merges closest clusters until N remain.
+                    <strong>💡 Hierarchical:</strong> Merges closest clusters bottom-up.
                 </div>
             </div>
         </aside>
 
         <!-- Main Workspace -->
-        <main class="main-area">
+        <main class="workspace">
             
+            <!-- Info Chips -->
+            <div class="stats-bar">
+                <div class="stat-chip">Points: <span class="stat-value">{{ points.length }}</span></div>
+                <div class="stat-chip" v-if="algorithm === 'kmeans' || algorithm === 'agglomerative'">K: <span class="stat-value">{{ k }}</span></div>
+                <div class="stat-chip" v-else-if="algorithm === 'forel'">R: <span class="stat-value">{{ radius }}</span></div>
+                <div class="stat-chip" v-else>Eps: <span class="stat-value">{{ eps }}</span></div>
+                <div class="stat-chip">Steps: <span class="stat-value">{{ history.length ? history.length : 0 }}</span></div>
+            </div>
+
             <!-- Visualization -->
-            <div class="canvas-container">
-                <div id="plot" @click="handleCanvasClick" style="width: 100%; height: 100%;"></div>
-                
-                <!-- Overlay Stats -->
-                <div class="stats-overlay">
-                    <div>Points: {{ points.length }}</div>
-                    <div v-if="algorithm === 'kmeans' || algorithm === 'agglomerative'">K: {{ k }}</div>
-                    <div v-else-if="algorithm === 'forel'">R: {{ radius }}</div>
-                    <div v-else>Eps: {{ eps }} | MinPts: {{ minPts }}</div>
-                    <div>Steps: {{ history.length ? history.length : 0 }}</div>
-                </div>
+            <div class="graph-card">
+                <div id="plot" @click="handleCanvasClick"></div>
             </div>
 
             <!-- Step Player -->
-            <div class="controls-section" v-if="history.length > 0" style="margin-top: 1rem; padding: 0.5rem;">
-                <div class="step-controls" style="align-items: center;">
-                    <button class="btn-step" @click="setStep(0)">⏮</button>
-                    <button class="btn-step" @click="prevStep">◀</button>
+            <transition name="fade">
+                <div class="step-control" v-if="history.length > 0">
+                    <button class="btn btn-outline" @click="setStep(0)">⏮</button>
+                    <button class="btn btn-outline" @click="prevStep">◀</button>
                     
-                    <div style="flex: 2; display: flex; align-items: center; padding: 0 1rem;">
-                        <span style="font-size: 0.8rem; margin-right: 0.5rem; color: #94a3b8;">{{ currentStep }}</span>
-                        <input type="range" min="0" :max="history.length - 1" v-model.number="currentStep" class="history-slider">
-                        <span style="font-size: 0.8rem; margin-left: 0.5rem; color: #94a3b8;">{{ history.length - 1 }}</span>
+                    <div class="slider-container">
+                        <span class="step-label align-right">{{ currentStep }}</span>
+                        <input type="range" min="0" :max="history.length - 1" v-model.number="currentStep">
+                        <span class="step-label">{{ history.length - 1 }}</span>
                     </div>
 
-                    <button class="btn-step" @click="nextStep">▶</button>
-                    <button class="btn-step" @click="setStep(history.length - 1)">⏭</button>
+                    <button class="btn btn-outline" @click="nextStep">▶</button>
+                    <button class="btn btn-outline" @click="setStep(history.length - 1)">⏭</button>
                 </div>
-            </div>
+            </transition>
 
         </main>
     </div>

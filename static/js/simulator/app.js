@@ -1,5 +1,5 @@
-import { runKMeans, runDBSCAN, runForel, runAgglomerative, generatePreset } from './api.js';
-import { initPlot, drawPoints, drawStep, convertClickToPoint } from './plot.js';
+import { runKMeans, runDBSCAN, runForel, runAgglomerative, generatePreset } from './api.js?v=3.1';
+import { initPlot, drawPoints, drawStep, convertClickToPoint } from './plot.js?v=3.1';
 
 const { createApp, ref, onMounted, watch } = Vue;
 

@@ -9,7 +9,7 @@
   --danger-color: #ef4444;
   --font-main: 'Inter', sans-serif;
   --font-mono: 'Fira Code', monospace;
-  --nav-height: 70px; /* Slightly taller to accommodate buttons */
+  --nav-height: 70px;
 }
 
 body {
@@ -29,10 +29,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: var(--nav-height); /* Changed from fixed height to min-height */
-  padding: 0.5rem 2rem; /* Added vertical padding */
-  background-color: rgba(15, 23, 42, 0.95);
-  backdrop-filter: blur(12px);
+  min-height: var(--nav-height);
+  padding: 0.5rem 2rem;
+  /* Original Simulator Style: Lighter Slate + Blur */
+  background-color: rgba(30, 41, 59, 0.8);
+  backdrop-filter: blur(10px);
   border-bottom: 1px solid #334155;
   position: sticky;
   top: 0;
@@ -66,7 +67,7 @@ body {
   display: flex;
   gap: 2rem;
   align-items: center;
-  flex-wrap: wrap; /* Allow wrapping on small screens */
+  flex-wrap: wrap;
 }
 
 .nav-item {
@@ -85,7 +86,7 @@ body {
 }
 
 .nav-item.active {
-  color: #3b82f6;
+  color: #fff; /* White for active state in this theme */
 }
 
 .nav-item.active::after {
@@ -95,7 +96,7 @@ body {
   left: 0;
   width: 100%;
   height: 2px;
-  background-color: #3b82f6;
+  background-color: #60a5fa; /* Accent color */
   border-radius: 2px;
 }
 
@@ -103,7 +104,7 @@ body {
   display: flex;
   align-items: center;
   gap: 1rem;
-  flex-shrink: 0; /* Prevent shrinking */
+  flex-shrink: 0;
 }
 
 /* Global Buttons */
@@ -129,7 +130,7 @@ body {
 }
 
 .btn-outline:hover {
-  background: #1e293b;
+  background: rgba(255, 255, 255, 0.1);
   border-color: #94a3b8;
   color: #fff;
 }

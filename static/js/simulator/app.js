@@ -107,37 +107,62 @@ const app = createApp({
         const renderDendrogram = (dendroData) => {
             const { icoord, dcoord } = dendroData;
             
-            // Create Plotly traces for dendrogram
             const traces = [];
+            const leafX = [];
+            const leafY = [];
+
+            // 1. Draw lines (Dendrogram branches)
             for (let i = 0; i < icoord.length; i++) {
                 traces.push({
                     x: icoord[i],
                     y: dcoord[i],
                     mode: 'lines',
-                    line: { color: '#22d3ee', width: 2 }, // Cyan color matching points
+                    line: { color: '#3b82f6', width: 2 }, // Blue lines
                     showlegend: false,
                     hoverinfo: 'skip'
                 });
+
+                // Find leaf nodes (y=0) to plot as points
+                for (let j = 0; j < dcoord[i].length; j++) {
+                    if (dcoord[i][j] === 0) {
+                        leafX.push(icoord[i][j]);
+                        leafY.push(0);
+                    }
+                }
             }
+
+            // 2. Draw "Points" at the bottom (Leaves) - styling them like the main graph
+            traces.push({
+                x: leafX,
+                y: leafY,
+                mode: 'markers',
+                marker: {
+                    color: '#22d3ee', // Cyan (same as main plot)
+                    size: 10,
+                    line: { color: '#ffffff', width: 2 }
+                },
+                showlegend: false,
+                hoverinfo: 'none' // Static points
+            });
 
             const layout = {
                 title: {
                     text: 'Дендрограмма',
                     font: { color: '#f1f5f9', size: 18 }
                 },
-                paper_bgcolor: '#1e293b', // Dark background (modal content color)
-                plot_bgcolor: '#1e293b',  // Dark plot background
+                paper_bgcolor: '#1e293b',
+                plot_bgcolor: '#1e293b',
                 font: { color: '#94a3b8' },
                 margin: { t: 50, b: 50, l: 60, r: 20 },
                 xaxis: {
                     showgrid: false,
                     zeroline: false,
-                    showticklabels: false, // Hide numeric indices
+                    showticklabels: false,
                     title: { text: 'Точки (Образцы)', font: { color: '#94a3b8' } }
                 },
                 yaxis: {
                     showgrid: true,
-                    gridcolor: '#334155', // Subtle grid
+                    gridcolor: '#334155',
                     zeroline: false,
                     title: { text: 'Расстояние', font: { color: '#94a3b8' } },
                     tickfont: { color: '#cbd5e1' }

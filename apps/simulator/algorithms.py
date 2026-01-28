@@ -2,6 +2,7 @@
 import numpy as np
 from typing import List, Tuple, Dict
 from scipy.spatial.distance import pdist, squareform
+from scipy.cluster.hierarchy import linkage
 
 def euclidean_distance(p1, p2):
     return np.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
@@ -223,3 +224,31 @@ def agglomerative_step(points: List[List[float]], n_clusters: int) -> List[Dict]
         current_n_clusters -= 1
         
     return history
+
+def compute_dendrogram_data(points: List[List[float]]) -> Dict:
+    """
+    Compute dendrogram linkage matrix using scipy's 'ward' method.
+    Returns linkage matrix for visualization.
+    """
+    points = np.array(points)
+    if len(points) < 2:
+        return {'icoord': [], 'dcoord': [], 'ivl': [], 'leaves': []}
+    
+    # Use Ward's method for dendrogram (better than single/complete for visualization)
+    Z = linkage(points, method='ward')
+    
+    # Convert to JSON-serializable format
+    # scipy.cluster.hierarchy.dendrogram would normally be used to plot,
+    # but we need to pass data to JS. We'll send the linkage matrix and let Plotly handle it.
+    # Plotly has no native dendrogram support for custom linkage, so we compute coordinates.
+    
+    from scipy.cluster.hierarchy import dendrogram as scipy_dendrogram
+    ddata = scipy_dendrogram(Z, no_plot=True)
+    
+    return {
+        'icoord': ddata['icoord'],  # x-coordinates for dendrogram lines
+        'dcoord': ddata['dcoord'],  # y-coordinates (distances)
+        'ivl': ddata['ivl'],        # leaf labels
+        'leaves': ddata['leaves'],  # original indices
+        'color_list': ddata.get('color_list', [])  # colors if available
+    }

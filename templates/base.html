@@ -6,7 +6,8 @@
     <title>{% block title %}Clustering Trainer{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <!-- Added version query param to force cache refresh -->
+    <link rel="stylesheet" href="{% static 'css/base.css' %}?v=1.1">
     {% block extra_css %}{% endblock %}
 </head>
 <body>

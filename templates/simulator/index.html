@@ -10,17 +10,7 @@
 <!-- Vue App Wrapper -->
 {% verbatim %}
 <div id="app">
-    
-    <nav class="navbar">
-        <a href="/" class="navbar-brand">
-            <div class="logo-icon"></div>
-            <span class="brand-text">Clustering Trainer</span>
-        </a>
-        <div class="nav-links">
-            <a href="/simulator/" class="nav-item active">Simulator</a>
-            <a href="/simulator/tasks/" class="nav-item">Tasks</a>
-        </div>
-    </nav>
+    <!-- Navbar removed (handled by base.html) -->
 
     <div class="layout">
         <!-- Sidebar Controls -->
@@ -137,14 +127,4 @@
 
 </div>
 {% endverbatim %}
-{% endblock %}
-
-{% block extra_js %}
-<!-- Plotly.js -->
-<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-<!-- Vue.js 3 -->
-<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-
-<!-- New Modular Architecture -->
-<script type="module" src="/static/js/simulator/app.js"></script>
 {% endblock %}

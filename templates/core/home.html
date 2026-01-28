@@ -9,7 +9,23 @@
 
 {% block content %}
 <div class="home">
-  <!-- Navbar is now in base.html -->
+  <header class="home-header">
+    <div class="brand">
+      <div class="logo-icon"></div>
+      <div class="brand-text">Clustering Trainer</div>
+    </div>
+    <nav class="home-nav">
+      {% if user.is_authenticated %}
+        <a class="nav-link" href="{% url 'profile' %}">👤 {{ user.username }}</a>
+      {% else %}
+        <a class="nav-link" href="{% url 'login' %}">Войти</a>
+        <a class="nav-link" href="{% url 'register' %}">Регистрация</a>
+      {% endif %}
+      {% if user.is_superuser %}
+        <a class="nav-link" href="/admin/">Админка</a>
+      {% endif %}
+    </nav>
+  </header>
 
   <main class="home-main">
     <section class="hero">
@@ -32,10 +48,10 @@
         <div class="feature-title">💻 Практика</div>
         <div class="feature-text">Monaco Editor + Pyodide: пиши Python-код и получай автопроверку по алгоритмам.</div>
       </a>
-      <a class="feature feature-link" href="/encyclopedia/">
-        <div class="feature-title">🧠 База Знаний</div>
-        <div class="feature-text">Онтологический справочник: граф понятий, метрик и зависимостей между алгоритмами.</div>
-      </a>
+      <div class="feature">
+        <div class="feature-title">🏗 Архитектура</div>
+        <div class="feature-text">Islands Architecture: Django (SSR) + Vue только для интерактивных «островков».</div>
+      </div>
     </section>
   </main>
 

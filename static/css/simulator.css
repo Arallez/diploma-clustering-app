@@ -220,7 +220,7 @@ input[type="range"] {
     background: #1e293b; /* Match graph card */
     border: 1px solid #334155;
     border-radius: 12px;
-    padding: 1.5rem;
+    padding: 2.5rem 1.5rem 1.5rem 1.5rem; /* Increased top padding to clear button */
     width: 80%;
     max-width: 900px;
     position: relative;
@@ -229,17 +229,27 @@ input[type="range"] {
 
 .modal-close {
     position: absolute;
-    top: 10px;
+    top: 15px; /* Slightly lower */
     right: 15px;
-    background: none;
-    border: none;
+    background: rgba(30, 41, 59, 0.8); /* Semi-transparent background */
+    border: 1px solid #334155;
+    border-radius: 50%; /* Make it round */
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: #94a3b8;
-    font-size: 2rem;
+    font-size: 1.5rem;
     cursor: pointer;
     line-height: 1;
+    z-index: 10; /* Ensure it is on top */
+    transition: all 0.2s;
 }
 .modal-close:hover {
     color: #f1f5f9;
+    background: #334155;
+    border-color: #475569;
 }
 
 /* Transitions */

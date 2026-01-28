@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
 
-{% block title %}Clustering Simulator{% endblock %}
+{% block title %}Симулятор Кластеризации{% endblock %}
 
 {% block extra_css %}
 <!-- Added version parameter to force cache refresh -->
-<link rel="stylesheet" href="/static/css/simulator.css?v=3.1">
+<link rel="stylesheet" href="/static/css/simulator.css?v=3.2">
 {% endblock %}
 
 {% block content %}
@@ -16,30 +16,30 @@
         <!-- Sidebar Controls -->
         <aside class="sidebar">
             <div class="control-group">
-                <span class="control-label">Algorithm</span>
+                <span class="control-label">Алгоритм</span>
                 <select class="cluster-input full-width" v-model="algorithm">
-                    <option value="kmeans">K-Means Clustering</option>
+                    <option value="kmeans">K-Means (К-Средних)</option>
                     <option value="dbscan">DBSCAN</option>
-                    <option value="forel">FOREL (Soviet) ⭐</option>
-                    <option value="agglomerative">Hierarchical</option>
+                    <option value="forel">FOREL (ФОРЭЛЬ) ⭐</option>
+                    <option value="agglomerative">Иерархическая (Agglomerative)</option>
                 </select>
             </div>
 
             <!-- Dataset Presets -->
             <div class="control-group">
-                <span class="control-label">📊 Load Dataset</span>
+                <span class="control-label">📊 Загрузить датасет</span>
                 <select class="cluster-input full-width" v-model="selectedPreset">
-                    <option value="" selected>Manual (click to add)</option>
-                    <option value="moons">🌙 Moons (DBSCAN demo)</option>
-                    <option value="circles">⭕ Circles (nested)</option>
-                    <option value="blobs">🔵 Blobs (K-Means demo)</option>
-                    <option value="grid">🟦 Grid (uniform)</option>
+                    <option value="" selected>Вручную (кликните для добавления)</option>
+                    <option value="moons">🌙 Луны (Demo DBSCAN)</option>
+                    <option value="circles">⭕ Кольца (Вложенные)</option>
+                    <option value="blobs">🔵 Пятна (Demo K-Means)</option>
+                    <option value="grid">🟦 Сетка (Равномерная)</option>
                 </select>
             </div>
 
             <!-- Controls for K-Means -->
             <div class="control-group" v-if="algorithm === 'kmeans'">
-                <span class="control-label">Clusters (K)</span>
+                <span class="control-label">Число кластеров (K)</span>
                 <div class="k-controls">
                     <button class="btn btn-outline" @click="k > 1 ? k-- : null">-</button>
                     <input type="number" v-model="k" class="cluster-input" min="1" max="10">
@@ -49,7 +49,7 @@
 
             <!-- Controls for DBSCAN -->
             <div class="control-group" v-if="algorithm === 'dbscan'">
-                <span class="control-label">Epsilon (Radius)</span>
+                <span class="control-label">Радиус поиска (Epsilon)</span>
                 <div class="k-controls">
                     <button class="btn btn-outline" @click="eps = Math.max(0.1, (parseFloat(eps) - 0.1).toFixed(1))">-</button>
                     <input type="number" v-model.number="eps" class="cluster-input" step="0.1" min="0.1" max="5.0">
@@ -58,7 +58,7 @@
             </div>
 
             <div class="control-group" v-if="algorithm === 'dbscan'">
-                <span class="control-label">Min Points</span>
+                <span class="control-label">Мин. соседей (MinPts)</span>
                 <div class="k-controls">
                     <button class="btn btn-outline" @click="minPts > 1 ? minPts-- : null">-</button>
                     <input type="number" v-model="minPts" class="cluster-input" min="1" max="20">
@@ -68,7 +68,7 @@
 
             <!-- Controls for FOREL -->
             <div class="control-group" v-if="algorithm === 'forel'">
-                <span class="control-label">Radius (R)</span>
+                <span class="control-label">Радиус сферы (R)</span>
                 <div class="k-controls">
                     <button class="btn btn-outline" @click="radius = Math.max(0.1, ((parseFloat(radius) || 1.0) - 0.1).toFixed(1))">-</button>
                     <input type="number" v-model.number="radius" class="cluster-input" step="0.1" min="0.1" max="5.0">
@@ -78,7 +78,7 @@
 
             <!-- Controls for Agglomerative -->
             <div class="control-group" v-if="algorithm === 'agglomerative'">
-                <span class="control-label">Target Clusters</span>
+                <span class="control-label">Целевые кластеры</span>
                 <div class="k-controls">
                     <button class="btn btn-outline" @click="k > 1 ? k-- : null">-</button>
                     <input type="number" v-model="k" class="cluster-input" min="2" max="10">
@@ -87,24 +87,24 @@
             </div>
 
             <div class="control-group" style="margin-top: 0.5rem;">
-                <button class="btn btn-outline" @click="clearPoints" style="margin-bottom: 0.25rem; width: 100%;">Clear Board</button>
+                <button class="btn btn-outline" @click="clearPoints" style="margin-bottom: 0.25rem; width: 100%;">Очистить поле</button>
                 <button class="btn" @click="runAlgorithm" :disabled="points.length === 0 || isRunning" style="width: 100%;">
-                    {{ isRunning ? 'Processing...' : 'Run Algorithm' }}
+                    {{ isRunning ? 'Выполняется...' : 'Запустить' }}
                 </button>
             </div>
 
             <div class="help-box">
                 <div v-if="algorithm === 'kmeans'">
-                    <strong>💡 K-Means:</strong> Select K clusters. Finds centroids iteratively.
+                    <strong>💡 K-Means:</strong> Выберите K. Алгоритм итеративно ищет центры кластеров.
                 </div>
                 <div v-else-if="algorithm === 'dbscan'">
-                    <strong>💡 DBSCAN:</strong> Density-based. Needs Epsilon (radius) and MinPts.
+                    <strong>💡 DBSCAN:</strong> По плотности. Точки в радиусе Eps становятся ядром, если соседей >= MinPts.
                 </div>
                 <div v-else-if="algorithm === 'forel'">
-                    <strong>💡 FOREL:</strong> Moving sphere of radius R. Finds density centers.
+                    <strong>💡 FOREL:</strong> Советский алгоритм. Сфера радиуса R перемещается в центр масс соседей.
                 </div>
                 <div v-else-if="algorithm === 'agglomerative'">
-                    <strong>💡 Hierarchical:</strong> Merges closest clusters bottom-up.
+                    <strong>💡 Иерархическая:</strong> Объединяет ближайшие кластеры снизу вверх до заданного числа.
                 </div>
             </div>
         </aside>
@@ -114,11 +114,11 @@
             
             <!-- Info Chips -->
             <div class="stats-bar">
-                <div class="stat-chip">Points: <span class="stat-value">{{ points.length }}</span></div>
+                <div class="stat-chip">Точки: <span class="stat-value">{{ points.length }}</span></div>
                 <div class="stat-chip" v-if="algorithm === 'kmeans' || algorithm === 'agglomerative'">K: <span class="stat-value">{{ k }}</span></div>
                 <div class="stat-chip" v-else-if="algorithm === 'forel'">R: <span class="stat-value">{{ radius }}</span></div>
                 <div class="stat-chip" v-else>Eps: <span class="stat-value">{{ eps }}</span></div>
-                <div class="stat-chip">Steps: <span class="stat-value">{{ history.length ? history.length : 0 }}</span></div>
+                <div class="stat-chip">Шаги: <span class="stat-value">{{ history.length ? history.length : 0 }}</span></div>
             </div>
 
             <!-- Visualization -->
@@ -158,5 +158,5 @@
 
 <!-- New Modular Architecture -->
 <!-- Added version parameter to force cache refresh -->
-<script type="module" src="/static/js/simulator/app.js?v=4.0"></script>
+<script type="module" src="/static/js/simulator/app.js?v=4.1"></script>
 {% endblock %}

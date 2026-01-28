@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 from .models import Task, UserTaskAttempt
-from .algorithms import kmeans_step, dbscan_step, forel_step, agglomerative_step
+from .algorithms import kmeans_step, dbscan_step, forel_step, agglomerative_step, compute_dendrogram_data
 from .presets import generate_preset
 
 def simulator_index(request):
@@ -85,6 +85,23 @@ def run_agglomerative(request):
             
             history = agglomerative_step(points, n_clusters)
             return JsonResponse({'success': True, 'history': history})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False, 'error': 'Invalid request'})
+
+@csrf_exempt
+def get_dendrogram(request):
+    """Get dendrogram data for hierarchical clustering visualization"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            points = data.get('points', [])
+            
+            if len(points) < 2:
+                return JsonResponse({'success': False, 'error': 'Need at least 2 points'})
+            
+            dendrogram_data = compute_dendrogram_data(points)
+            return JsonResponse({'success': True, 'dendrogram': dendrogram_data})
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
     return JsonResponse({'success': False, 'error': 'Invalid request'})

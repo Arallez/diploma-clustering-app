@@ -3,20 +3,17 @@
         <div class="logo-icon"></div>
         <span class="brand-text">Clustering Trainer</span>
     </a>
-    
     <div class="nav-links">
-        <a href="{% url 'home' %}" class="nav-item">Главная</a>
-        <a href="{% url 'simulator:index' %}" class="nav-item">Симулятор</a>
-        <a href="{% url 'simulator:task_list' %}" class="nav-item">Задачи</a>
-        <a href="{% url 'encyclopedia:graph' %}" class="nav-item">База Знаний</a>
+        <a href="{% url 'simulator:index' %}" class="nav-item {% if request.resolver_match.namespace == 'simulator' and request.resolver_match.url_name == 'index' %}active{% endif %}">Симулятор</a>
+        <a href="{% url 'simulator:task_list' %}" class="nav-item {% if request.resolver_match.url_name == 'task_list' %}active{% endif %}">Задачи</a>
+        <a href="{% url 'encyclopedia:graph' %}" class="nav-item {% if request.resolver_match.namespace == 'encyclopedia' %}active{% endif %}">База Знаний</a>
     </div>
-
     <div class="nav-auth">
         {% if user.is_authenticated %}
-            {% if user.is_superuser %}
-                <a href="/admin/" class="nav-item" style="color: #ec4899;">Админка</a>
+            <a href="{% url 'profile' %}" class="btn btn-outline">{{ user.username }}</a>
+            {% if user.is_staff %}
+                <a href="/admin/" class="btn btn-outline" style="margin-left: 10px;">Admin</a>
             {% endif %}
-            <a href="{% url 'profile' %}" class="btn btn-outline">👤 {{ user.username }}</a>
         {% else %}
             <a href="{% url 'login' %}" class="nav-item">Вход</a>
         {% endif %}

@@ -10,8 +10,7 @@
 <!-- Vue App Wrapper -->
 {% verbatim %}
 <div id="app">
-    <!-- Navbar removed (handled by base.html) -->
-
+    
     <div class="layout">
         <!-- Sidebar Controls -->
         <aside class="sidebar">
@@ -127,4 +126,14 @@
 
 </div>
 {% endverbatim %}
+{% endblock %}
+
+{% block extra_js %}
+<!-- Plotly.js -->
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<!-- Vue.js 3 -->
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+<!-- New Modular Architecture -->
+<script type="module" src="/static/js/simulator/app.js"></script>
 {% endblock %}

@@ -4,13 +4,13 @@
 
 {% block extra_css %}
 <!-- Added version parameter to force cache refresh -->
-<link rel="stylesheet" href="/static/css/simulator.css?v=2.3">
+<link rel="stylesheet" href="/static/css/simulator.css?v=2.4">
 {% endblock %}
 
 {% block content %}
 <!-- Vue App Wrapper -->
 {% verbatim %}
-<div id="app">
+<div id="app" v-cloak>
     
     <div class="layout">
         <!-- Sidebar Controls -->
@@ -158,5 +158,5 @@
 
 <!-- New Modular Architecture -->
 <!-- Added version parameter to force cache refresh -->
-<script type="module" src="/static/js/simulator/app.js?v=2.3"></script>
+<script type="module" src="/static/js/simulator/app.js?v=3.0"></script>
 {% endblock %}

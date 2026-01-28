@@ -1,44 +1,38 @@
-{% load static %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Clustering Trainer{% endblock %}</title>
-    
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
-    
-    <!-- Base CSS -->
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
-    
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    
-    {% if messages %}
-    <div class="messages-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
-        {% for message in messages %}
-        <div class="alert alert-{{ message.tags }}" style="background: #3b82f6; color: white; padding: 15px 20px; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-            {{ message }}
+    <nav class="navbar">
+        <a href="{% url 'home' %}" class="navbar-brand">
+            <div class="logo-icon"></div>
+            <span class="brand-text">Clustering Trainer</span>
+        </a>
+        <div class="nav-links">
+            <a href="{% url 'simulator:index' %}" class="nav-item">Симулятор</a>
+            <a href="{% url 'simulator:task_list' %}" class="nav-item">Задачи</a>
+            <a href="{% url 'encyclopedia:graph' %}" class="nav-item">База Знаний</a>
         </div>
-        {% endfor %}
-    </div>
-    {% endif %}
+        <div class="nav-auth">
+            {% if user.is_authenticated %}
+                <a href="{% url 'profile' %}" class="btn btn-outline">{{ user.username }}</a>
+            {% else %}
+                <a href="{% url 'login' %}" class="nav-item">Вход</a>
+            {% endif %}
+        </div>
+    </nav>
 
-    {% block content %}
-    {% endblock %}
-
-    {% block extra_js %}{% endblock %}
+    <main class="main-content">
+        {% block content %}
+        {% endblock %}
+    </main>
     
-    <script>
-        // Auto-hide messages after 5 seconds
-        setTimeout(() => {
-            const msgs = document.querySelector('.messages-container');
-            if (msgs) msgs.style.display = 'none';
-        }, 5000);
-    </script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

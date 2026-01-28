@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ concept.title }} | База Знаний{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/encyclopedia.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="encyclopedia-container">
+    <div class="breadcrumbs">
+        <a href="{% url 'encyclopedia:graph' %}">← Назад к списку</a>
+    </div>
+
+    <article class="concept-detail-card">
+        <header class="concept-header">
+            <div class="concept-type-badge">
+                {% if 'Algorithm' in concept.uri %}Алгоритм{% elif 'Metric' in concept.uri %}Метрика{% else %}Понятие{% endif %}
+            </div>
+            <h1>{{ concept.title }}</h1>
+        </header>
+
+        <div class="concept-body">
+            <p>{{ concept.description }}</p>
+        </div>
+
+        <!-- Ontological Relations Visualization -->
+        <div class="ontology-relations">
+            
+            <!-- Outgoing Relations (What this depends on) -->
+            {% if relations_out %}
+            <div class="relation-column">
+                <h3>Использует / Требует</h3>
+                <div class="relation-list">
+                    {% for rel in relations_out %}
+                    <a href="{% url 'encyclopedia:detail' rel.target.pk %}" class="relation-item">
+                        <span class="relation-type">{{ rel.get_relation_type_display }}</span>
+                        <span class="relation-target">{{ rel.target.title }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Incoming Relations (What depends on this) -->
+            {% if relations_in %}
+            <div class="relation-column">
+                <h3>Используется в</h3>
+                <div class="relation-list">
+                    {% for rel in relations_in %}
+                    <a href="{% url 'encyclopedia:detail' rel.source.pk %}" class="relation-item">
+                        <span class="relation-target">{{ rel.source.title }}</span>
+                        <span class="relation-type-tag">как {{ rel.get_relation_type_display }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+        </div>
+    </article>
+</div>
+{% endblock %}

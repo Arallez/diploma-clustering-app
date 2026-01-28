@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}База Знаний | Clustering Trainer{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/encyclopedia.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="encyclopedia-container">
+    <header class="page-header">
+        <h1 class="page-title">База Знаний</h1>
+        <p class="page-subtitle">Онтологический справочник по методам кластеризации</p>
+    </header>
+
+    <div class="concepts-grid">
+        {% for concept in concepts %}
+        <a href="{% url 'encyclopedia:detail' concept.pk %}" class="concept-card">
+            <div class="concept-icon">
+                {% if 'Algorithm' in concept.uri %}🧩{% elif 'Metric' in concept.uri %}📏{% else %}💡{% endif %}
+            </div>
+            <div class="concept-info">
+                <h3>{{ concept.title }}</h3>
+                <p class="concept-desc">{{ concept.description|truncatewords:15 }}</p>
+            </div>
+            <div class="concept-arrow">→</div>
+        </a>
+        {% empty %}
+        <div class="empty-state">
+            <p>База знаний пуста. Запустите генерацию онтологии.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

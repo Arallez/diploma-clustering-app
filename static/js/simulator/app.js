@@ -1,5 +1,5 @@
-import { runKMeans, runDBSCAN, runForel, runAgglomerative, generatePreset } from './api.js?v=4.0';
-import { initPlot, drawPoints, drawStep, convertClickToPoint } from './plot.js?v=4.0';
+import { runKMeans, runDBSCAN, runForel, runAgglomerative, generatePreset } from './api.js?v=4.1';
+import { initPlot, drawPoints, drawStep, convertClickToPoint } from './plot.js?v=4.1';
 
 const { createApp, ref, onMounted, watch } = Vue;
 
@@ -38,11 +38,11 @@ const app = createApp({
                     currentStep.value = 0;
                     drawPoints(points.value);
                 } else {
-                    alert('Error loading preset: ' + data.error);
+                    alert('Ошибка загрузки: ' + data.error);
                 }
             } catch (e) {
                 console.error(e);
-                alert('Server error');
+                alert('Ошибка сервера');
             } finally {
                 isRunning.value = false;
             }
@@ -64,14 +64,15 @@ const app = createApp({
 
                 if (data && data.success) {
                     history.value = data.history;
-                    currentStep.value = 0;
-                    drawStep(points.value, history.value[0]);
+                    // Auto-jump to the last step
+                    currentStep.value = history.value.length - 1;
+                    drawStep(points.value, history.value[currentStep.value]);
                 } else {
-                    alert('Error: ' + (data ? data.error : 'Unknown error'));
+                    alert('Ошибка: ' + (data ? data.error : 'Неизвестная ошибка'));
                 }
             } catch (e) {
                 console.error(e);
-                alert('Server error');
+                alert('Ошибка сервера');
             } finally {
                 isRunning.value = false;
             }

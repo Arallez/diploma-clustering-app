@@ -4,6 +4,7 @@ import ast
 import random
 import itertools
 import collections
+import sys  # Added for settrace (loop protection)
 import numpy as np
 import scipy.spatial.distance as scipy_dist
 import sklearn.metrics as sklearn_metrics
@@ -25,11 +26,30 @@ from .presets import generate_preset
 
 # --- Security Configuration ---
 
-# Modules that students are allowed to import
 WHITELISTED_MODULES = {
     'math', 'random', 'itertools', 'collections', 'heapq', 'bisect', 'copy',
     'numpy', 'scipy', 'sklearn', 'pandas', 'matplotlib' 
 }
+
+# --- Loop Protection ---
+class TimeLimitException(Exception):
+    pass
+
+def create_tracer(max_instructions=200000):
+    """
+    Creates a trace function that counts executed lines.
+    If the count exceeds max_instructions, it raises TimeLimitException.
+    This prevents 'while True' loops from freezing the server.
+    """
+    count = 0
+    def tracer(frame, event, arg):
+        nonlocal count
+        if event == 'line':
+            count += 1
+            if count > max_instructions:
+                raise TimeLimitException("Time Limit Exceeded: Infinite loop detected or code is too slow.")
+        return tracer
+    return tracer
 
 # --- Security Helper ---
 def is_safe_code(code_str):
@@ -240,8 +260,6 @@ def check_solution(request):
                 }
                 
                 # 3. Execution Context
-                # We still provide pre-imported convenience libs for backward compatibility,
-                # but users can now overwrite them or import new ones.
                 execution_context = {
                     '__builtins__': safe_builtins,
                     'np': np,           # Convenience (Legacy)
@@ -249,8 +267,18 @@ def check_solution(request):
                     'random': random,   # Convenience
                 }
                 
+                # 4. Execute with Loop Protection (Tracing)
                 try:
-                    exec(user_input, execution_context)
+                    # Set the trace function to count instructions
+                    sys.settrace(create_tracer(max_instructions=200000))
+                    try:
+                        exec(user_input, execution_context)
+                    finally:
+                        # CRITICAL: Always turn off tracing, or the whole server will slow down
+                        sys.settrace(None)
+                        
+                except TimeLimitException as e:
+                    return JsonResponse({'success': False, 'error': f'⏱️ {str(e)} (Бесконечный цикл?)'})
                 except Exception as e:
                     return JsonResponse({'success': False, 'error': f'Syntax/Runtime Error: {e}'})
                     
@@ -263,17 +291,25 @@ def check_solution(request):
                 expected = task.expected_output
                 
                 try:
-                    if isinstance(test_input, dict):
-                        result = user_func(**test_input)
-                    elif isinstance(test_input, list):
-                        try:
-                            result = user_func(*test_input)
-                        except TypeError:
+                    # Also wrap the function call itself in tracing, in case the loop is inside the function
+                    sys.settrace(create_tracer(max_instructions=200000))
+                    try:
+                        if isinstance(test_input, dict):
+                            result = user_func(**test_input)
+                        elif isinstance(test_input, list):
+                            try:
+                                result = user_func(*test_input)
+                            except TypeError:
+                                result = user_func(test_input)
+                        else:
                             result = user_func(test_input)
-                    else:
-                        result = user_func(test_input)
+                    finally:
+                        sys.settrace(None)
+                        
+                except TimeLimitException as e:
+                     return JsonResponse({'success': False, 'error': f'⏱️ {str(e)} (Бесконечный цикл?)'})
                 except Exception as e:
-                    return JsonResponse({'success': False, 'error': f'Function Call Error: {e}'})
+                    return JsonResponse({'success': False, 'error': f'Runtime Error: {e}'})
                 
                 # Compare
                 if isinstance(result, np.ndarray): result = result.tolist()

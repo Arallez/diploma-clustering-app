@@ -66,8 +66,8 @@ def get_preset(request):
     """
     if request.method == 'GET':
         try:
-            # Get params
-            preset_name = request.GET.get('preset', 'blobs')
+            # Get params (frontend sends 'name', keeping 'preset' for backward compat)
+            preset_name = request.GET.get('name') or request.GET.get('preset') or 'blobs'
             
             # Generate 300 points by default for the simulator
             data = generate_preset(preset_name, n_samples=300)

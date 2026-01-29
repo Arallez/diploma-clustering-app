@@ -14,7 +14,7 @@ from .presets import generate_preset
 
 # --- Page Views ---
 
-def simulator_index(request):
+def index(request):
     """Main simulator page"""
     return render(request, 'simulator/index.html')
 
@@ -68,10 +68,7 @@ def run_algorithm(request):
             
     return JsonResponse({'success': False, 'error': 'Method not allowed'})
 
-# Individual legacy endpoints (mapped to unified runner logic or kept for backward compatibility if needed)
-# Since we are updating urls.py next, we can skip individual views if we map them there, 
-# but better to have `run_algorithm` handle everything.
-
+# Legacy stubs to satisfy old urls.py until we update it
 @csrf_exempt
 def get_preset(request):
     if request.method == 'GET':
@@ -107,7 +104,6 @@ def get_dendrogram(request):
             return JsonResponse({'success': False, 'error': str(e)})
     return JsonResponse({'success': False, 'error': 'Method not allowed'})
 
-# Legacy stubs to satisfy old urls.py until we update it
 @csrf_exempt
 def run_kmeans(request): return run_algorithm(request)
 @csrf_exempt

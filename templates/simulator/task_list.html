@@ -5,6 +5,24 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/tasks.css' %}?v=1.2">
+<style>
+    /* Add style for completed tasks */
+    .task-card.completed {
+        border-color: #059669;
+        background: #022c22;
+        position: relative;
+    }
+    .task-card.completed::after {
+        content: "✅";
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 1.2rem;
+    }
+    .task-card.completed:hover {
+        border-color: #10b981;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -22,7 +40,7 @@
         </h2>
         <div class="tasks-grid">
           {% for task in tag.tasks.all %}
-          <a href="{% url 'simulator:challenge_detail' task.slug %}" class="task-card">
+          <a href="{% url 'simulator:challenge_detail' task.slug %}" class="task-card {% if task.id in completed_task_ids %}completed{% endif %}">
             <div class="task-badge difficulty-{{ task.difficulty }}">
               {% if task.difficulty == 1 %}⭐ Novice
               {% elif task.difficulty == 2 %}⭐⭐ Beginner
@@ -45,7 +63,7 @@
       <h2 class="algorithm-title">📂 Разное</h2>
       <div class="tasks-grid">
         {% for task in uncategorized %}
-        <a href="{% url 'simulator:challenge_detail' task.slug %}" class="task-card">
+        <a href="{% url 'simulator:challenge_detail' task.slug %}" class="task-card {% if task.id in completed_task_ids %}completed{% endif %}">
           <div class="task-badge difficulty-{{ task.difficulty }}">
             {% if task.difficulty == 1 %}⭐ Novice
             {% elif task.difficulty == 2 %}⭐⭐ Beginner

@@ -93,7 +93,7 @@ def check_solution(request):
         try:
             data = json.loads(request.body)
             slug = data.get('slug')
-            user_input = data.get('code') # Contains code or selected option
+            user_input = data.get('code') # Contains code or selected option(s)
             
             task = get_object_or_404(Task, slug=slug)
             
@@ -102,14 +102,26 @@ def check_solution(request):
             
             # --- HANDLE QUIZ (CHOICE) ---
             if task.task_type == 'choice':
-                expected = str(task.expected_output).strip()
-                submitted = str(user_input).strip()
+                expected = task.expected_output
                 
-                is_correct = (submitted == expected)
-                result_message = submitted
+                # Normalize types for comparison
+                if isinstance(user_input, list) and isinstance(expected, list):
+                    # Multi-question comparison
+                    is_correct = (user_input == expected)
+                    result_message = "Ответы приняты"
+                else:
+                    # Single question comparison
+                    expected_str = str(expected).strip()
+                    submitted_str = str(user_input).strip()
+                    is_correct = (submitted_str == expected_str)
+                    result_message = submitted_str
                 
                 if not is_correct:
-                    error_msg = f"Выбрано: {submitted}. Попробуйте еще раз."
+                    if isinstance(expected, list):
+                        # Simple error for multi-quiz
+                        error_msg = f"Некоторые ответы неверны. Попробуйте снова."
+                    else:
+                        error_msg = f"Выбрано: {user_input}. Попробуйте еще раз."
                 else:
                     error_msg = None
 
@@ -166,10 +178,13 @@ def check_solution(request):
 
             # --- SAVE ATTEMPT ---
             if request.user.is_authenticated:
+                # Store complex inputs as JSON string if needed
+                code_to_save = json.dumps(user_input, ensure_ascii=False) if isinstance(user_input, (list, dict)) else str(user_input)
+                
                 UserTaskAttempt.objects.create(
                     user=request.user,
                     task=task,
-                    code=user_input,
+                    code=code_to_save,
                     is_correct=is_correct,
                     error_message=error_msg
                 )

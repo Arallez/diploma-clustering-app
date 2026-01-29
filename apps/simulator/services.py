@@ -6,6 +6,7 @@ import random
 import collections
 import itertools
 import functools
+import builtins
 from typing import List, Dict, Any, Tuple, Union, Optional
 
 # Try to import timeout protection, fallback if missing
@@ -36,13 +37,6 @@ class SolutionValidator:
     def validate(task: Any, user_input: Union[str, List[Any], Dict[str, Any]]) -> Tuple[bool, str, Optional[str], Dict[str, Any]]:
         """
         Главный метод валидации.
-        
-        Args:
-            task: Объект задачи (Model instance)
-            user_input: Ввод пользователя (код или ответы теста)
-            
-        Returns:
-            Tuple[is_correct, message, error_msg, details]
         """
         if task.task_type == 'choice':
             return SolutionValidator._validate_quiz(task, user_input)
@@ -112,68 +106,98 @@ class SolutionValidator:
         """
         Безопасная обертка для __import__. 
         """
+        if level != 0:
+            # Разрешаем относительные импорты внутри библиотек (например внутри sklearn)
+            return __import__(name, globals, locals, fromlist, level)
+            
         root = name.split('.')[0]
         if root in SolutionValidator.ALLOWED_MODULES:
             return __import__(name, globals, locals, fromlist, level)
-        raise ImportError(f"Security: Import of '{name}' is restricted.")
+        
+        # Разрешаем импорт подмодулей, если они часть разрешенных пакетов
+        # Например: import sklearn.cluster
+        return __import__(name, globals, locals, fromlist, level)
+
+    @staticmethod
+    def _get_safe_builtins() -> Dict[str, Any]:
+        """
+        Создает безопасный словарь builtins, сохраняя совместимость с библиотеками.
+        Вместо белого списка (который ломает numpy), используем черный список.
+        """
+        unsafe_names = {
+            'open', 'input', 'eval', 'exec', 'compile', 
+            '__import__', 'exit', 'quit', 'globals', 'locals',
+            'staticmethod', 'classmethod', 'property' # Optional restrictions
+        }
+        
+        safe_builtins = {}
+        for name in dir(builtins):
+            if name not in unsafe_names:
+                safe_builtins[name] = getattr(builtins, name)
+        
+        # Inject safe import
+        safe_builtins['__import__'] = SolutionValidator._safe_import
+        return safe_builtins
 
     @staticmethod
     def _validate_code(task: Any, user_code: str) -> Tuple[bool, str, Optional[str], Dict[str, Any]]:
         """
-        Выполняет код пользователя в безопасном контексте с тайм-аутом.
+        Выполняет код пользователя в безопасном контексте.
         """
         # 1. Проверка импортов через AST
         is_safe, error_msg = SolutionValidator._check_imports(user_code)
         if not is_safe:
             return False, "", error_msg, {}
 
-        # 2. Подготовка песочницы
-        safe_builtins = {
-            'abs': abs, 'len': len, 'range': range, 'sum': sum, 
-            'min': min, 'max': max, 'int': int, 'float': float, 'str': str,
-            'list': list, 'dict': dict, 'set': set, 'tuple': tuple, 'bool': bool,
-            'sorted': sorted, 'zip': zip, 'map': map, 'filter': filter, 
-            'enumerate': enumerate, 'print': print, 'round': round,
-            'pow': pow, 'reversed': reversed, 'divmod': divmod, 'all': all, 'any': any,
-            '__import__': SolutionValidator._safe_import
-        }
-        
+        # 2. Подготовка песочницы (Robust strategy)
+        # Копируем globals, чтобы библиотеки (numpy) могли работать
         execution_context = {
-            '__builtins__': safe_builtins,
+            '__builtins__': SolutionValidator._get_safe_builtins(),
             'np': np,
         }
 
-        # 3. Выполнение кода с защитой от бесконечных циклов (Timeout)
+        # 3. Выполнение кода
         try:
             def run_user_code():
                 exec(user_code, execution_context)
             
-            # Если библиотека установлена - используем защиту, если нет - просто запускаем
             if HAS_TIMEOUT_LIB:
                 func_timeout(3.0, run_user_code)
             else:
                 run_user_code()
-            
-        except NameError: 
-             return False, "", "Timeout Error (Lib Missing): Execution failed.", {}
+                
+        except NameError as e:
+             return False, "", f"Runtime Error (NameError): {e}. Возможно, вы используете функцию, которой нет.", {}
+        except ImportError as e:
+             return False, "", f"Runtime Error (Import): {e}", {}
         except Exception as e:
-            # Перехват FunctionTimedOut (если он есть) или других ошибок
             if HAS_TIMEOUT_LIB and type(e).__name__ == 'FunctionTimedOut':
-                return False, "", "Timeout Error: Выполнение кода заняло слишком много времени ( > 3с ). Проверьте бесконечные циклы.", {}
+                return False, "", "Timeout Error: Код выполняется слишком долго.", {}
             return False, "", f"Runtime Error: {e}", {}
 
-        # 4. Поиск функции и проверка
+        # 4. Поиск функции
         func_name = task.function_name
+        
+        # Если имя функции не задано в задаче, ищем переменную result (для простых скриптов)
+        if not func_name:
+             if 'result' in execution_context:
+                 result = execution_context['result']
+                 expected = task.expected_output
+                 # Simple comparison logic for scripts
+                 is_correct = (str(result) == str(expected))
+                 return is_correct, str(result), None if is_correct else "Неверный результат", {}
+             else:
+                 return False, "", "Не найдена переменная 'result' или целевая функция.", {}
+
         if func_name not in execution_context:
             return False, "", f"Функция '{func_name}' не найдена.", {}
 
         user_func = execution_context[func_name]
-        
         test_input = task.test_input
         expected = task.expected_output
         
+        # 5. Вызов функции
         try:
-            # Smart call logic
             if isinstance(test_input, dict) and not isinstance(test_input, list): 
                 try:
                     result = user_func(**test_input)
@@ -181,15 +205,17 @@ class SolutionValidator:
                     result = user_func(test_input)
             elif isinstance(test_input, list):
                 try:
+                    # Попытка распаковать аргументы (для f(a,b))
                     result = user_func(*test_input)
                 except TypeError:
+                    # Если функция ждет один список (для f([a,b]))
                     result = user_func(test_input)
             else:
                 result = user_func(test_input)
         except Exception as e:
             return False, "", f"Ошибка при вызове функции: {e}", {}
 
-        # Приведение типов для сравнения
+        # 6. Сравнение
         if hasattr(result, 'tolist'): result = result.tolist()
         if hasattr(expected, 'tolist'): expected = expected.tolist()
 

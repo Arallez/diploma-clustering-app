@@ -59,16 +59,16 @@ class UserTaskAttempt(models.Model):
     """История попыток решения заданий"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='task_attempts')
     task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='attempts')
-    code = models.TextField(verbose_name=\"Код решения\")
-    is_correct = models.BooleanField(default=False, verbose_name=\"Правильно\")
-    error_message = models.TextField(blank=True, null=True, verbose_name=\"Сообщение об ошибке\")
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name=\"Дата попытки\")
+    code = models.TextField(verbose_name="Код решения")
+    is_correct = models.BooleanField(default=False, verbose_name="Правильно")
+    error_message = models.TextField(blank=True, null=True, verbose_name="Сообщение об ошибке")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата попытки")
 
     class Meta:
         ordering = ['-created_at']
-        verbose_name = \"Попытка решения\"
-        verbose_name_plural = \"Попытки решений\"
+        verbose_name = "Попытка решения"
+        verbose_name_plural = "Попытки решений"
 
     def __str__(self):
-        status = \"✅\" if self.is_correct else \"❌\"
-        return f\"{status} {self.user.username} - {self.task.title} ({self.created_at.strftime('%d.%m.%Y %H:%M')})\"
+        status = "✅" if self.is_correct else "❌"
+        return f"{status} {self.user.username} - {self.task.title} ({self.created_at.strftime('%d.%m.%Y %H:%M')})"

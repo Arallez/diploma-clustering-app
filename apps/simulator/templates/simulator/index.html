@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Симулятор Кластеризации{% endblock %}
+
+{% block extra_css %}
+<!-- Added version parameter to force cache refresh -->
+<link rel="stylesheet" href="{% static 'css/simulator.css' %}?v=3.5">
+{% endblock %}
+
+{% block content %}
+<!-- Vue App Wrapper -->
+{% verbatim %}
+<div id="app" v-cloak>
+    
+    <div class="layout">
+        <!-- Sidebar Controls -->
+        <aside class="sidebar">
+            <div class="control-group">
+                <span class="control-label">Алгоритм</span>
+                <select class="cluster-input full-width" v-model="algorithm">
+                    <option value="kmeans">K-Means (К-Средних)</option>
+                    <option value="dbscan">DBSCAN</option>
+                    <option value="forel">FOREL (ФОРЭЛЬ) ⭐</option>
+                    <option value="agglomerative">Иерархическая (Agglomerative)</option>
+                    <option value="meanshift">MeanShift (Сдвиг среднего)</option>
+                </select>
+            </div>
+
+            <!-- Dataset Presets -->
+            <div class="control-group">
+                <span class="control-label">📊 Загрузить датасет</span>
+                <select class="cluster-input full-width" v-model="selectedPreset">
+                    <option value="" selected>Вручную (кликните для добавления)</option>
+                    <option value="moons">Луны (Demo DBSCAN)</option>
+                    <option value="circles">Кольца (Вложенные)</option>
+                    <option value="blobs">Пятна (Demo K-Means)</option>
+                    <option value="grid">Сетка (Равномерная)</option>
+                    <option value="hierarchy">Иерархия (Для Agglomerative)</option>
+                    <option value="dense_sparse">Плотность (Для FOREL/DBSCAN)</option>
+                </select>
+            </div>
+
+            <!-- Controls for K-Means -->
+            <div class="control-group" v-if="algorithm === 'kmeans'">
+                <span class="control-label">Число кластеров (K)</span>
+                <div class="k-controls">
+                    <button class="btn btn-outline" @click="k > 1 ? k-- : null">-</button>
+                    <input type="number" v-model="k" class="cluster-input" min="1" max="10">
+                    <button class="btn btn-outline" @click="k < 10 ? k++ : null">+</button>
+                </div>
+            </div>
+
+            <!-- Controls for DBSCAN -->
+            <div class="control-group" v-if="algorithm === 'dbscan'">
+                <span class="control-label">Радиус поиска (Epsilon)</span>
+                <div class="k-controls">
+                    <button class="btn btn-outline" @click="eps = Math.max(0.1, (parseFloat(eps) - 0.1).toFixed(1))">-</button>
+                    <input type="number" v-model.number="eps" class="cluster-input" step="0.1" min="0.1" max="5.0">
+                    <button class="btn btn-outline" @click="eps = Math.min(5.0, (parseFloat(eps) + 0.1).toFixed(1))">+</button>
+                </div>
+            </div>
+
+            <div class="control-group" v-if="algorithm === 'dbscan'">
+                <span class="control-label">Мин. соседей (MinPts)</span>
+                <div class="k-controls">
+                    <button class="btn btn-outline" @click="minPts > 1 ? minPts-- : null">-</button>
+                    <input type="number" v-model="minPts" class="cluster-input" min="1" max="20">
+                    <button class="btn btn-outline" @click="minPts < 20 ? minPts++ : null">+</button>
+                </div>
+            </div>
+
+            <!-- Controls for FOREL -->
+            <div class="control-group" v-if="algorithm === 'forel'">
+                <span class="control-label">Радиус сферы (R)</span>
+                <div class="k-controls">
+                    <button class="btn btn-outline" @click="radius = Math.max(0.1, ((parseFloat(radius) || 1.0) - 0.1).toFixed(1))">-</button>
+                    <input type="number" v-model.number="radius" class="cluster-input" step="0.1" min="0.1" max="5.0">
+                    <button class="btn btn-outline" @click="radius = Math.min(5.0, ((parseFloat(radius) || 1.0) + 0.1).toFixed(1))">+</button>
+                </div>
+            </div>
+
+            <!-- Controls for Agglomerative -->
+            <div class="control-group" v-if="algorithm === 'agglomerative'">
+                <span class="control-label">Целевые кластеры</span>
+                <div class="k-controls">
+                    <button class="btn btn-outline" @click="k > 1 ? k-- : null">-</button>
+                    <input type="number" v-model="k" class="cluster-input" min="2" max="10">
+                    <button class="btn btn-outline" @click="k < 10 ? k++ : null">+</button>
+                </div>
+            </div>
+
+             <!-- Controls for MeanShift -->
+            <div class="control-group" v-if="algorithm === 'meanshift'">
+                <span class="control-label">Bandwidth (Ширина окна)</span>
+                <div class="k-controls">
+                    <button class="btn btn-outline" @click="bandwidth = Math.max(0.1, ((parseFloat(bandwidth) || 1.0) - 0.1).toFixed(1))">-</button>
+                    <input type="number" v-model.number="bandwidth" class="cluster-input" step="0.1" min="0.1" max="5.0">
+                    <button class="btn btn-outline" @click="bandwidth = Math.min(5.0, ((parseFloat(bandwidth) || 1.0) + 0.1).toFixed(1))">+</button>
+                </div>
+            </div>
+
+            <div class="control-group" style="margin-top: 0.5rem;">
+                <button class="btn btn-outline" @click="clearPoints" style="margin-bottom: 0.25rem; width: 100%;">Очистить поле</button>
+                <button class="btn" @click="runAlgorithm" :disabled="points.length === 0 || isRunning" style="width: 100%;">
+                    {{ isRunning ? 'Выполняется...' : 'Запустить' }}
+                </button>
+                
+                <!-- Dendrogram button for Agglomerative -->
+                <button v-if="algorithm === 'agglomerative'" class="btn btn-secondary" @click="viewDendrogram" :disabled="points.length < 2 || isRunning" style="width: 100%; margin-top: 0.25rem;">
+                    🌳 Показать дендрограмму
+                </button>
+            </div>
+
+            <div class="help-box">
+                <div v-if="algorithm === 'kmeans'">
+                    <strong>💡 K-Means:</strong> Выберите K. Алгоритм итеративно ищет центры кластеров.
+                </div>
+                <div v-else-if="algorithm === 'dbscan'">
+                    <strong>💡 DBSCAN:</strong> По плотности. Точки в радиусе Eps становятся ядром, если соседей >= MinPts.
+                </div>
+                <div v-else-if="algorithm === 'forel'">
+                    <strong>💡 FOREL:</strong> Советский алгоритм. Сфера радиуса R перемещается в центр масс соседей.
+                </div>
+                <div v-else-if="algorithm === 'agglomerative'">
+                    <strong>💡 Иерархическая:</strong> Объединяет ближайшие кластеры снизу вверх до заданного числа.
+                </div>
+                <div v-else-if="algorithm === 'meanshift'">
+                    <strong>💡 MeanShift:</strong> Ищет "моды" плотности. Окно сдвигается к среднему значению соседей.
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="workspace">
+            
+            <!-- Info Chips -->
+            <div class="stats-bar">
+                <div class="stat-chip">Точки: <span class="stat-value">{{ points.length }}</span></div>
+                <div class="stat-chip" v-if="algorithm === 'kmeans' || algorithm === 'agglomerative'">K: <span class="stat-value">{{ k }}</span></div>
+                <div class="stat-chip" v-else-if="algorithm === 'forel'">R: <span class="stat-value">{{ radius }}</span></div>
+                <div class="stat-chip" v-else-if="algorithm === 'meanshift'">BW: <span class="stat-value">{{ bandwidth }}</span></div>
+                <div class="stat-chip" v-else>Eps: <span class="stat-value">{{ eps }}</span></div>
+                <div class="stat-chip">Шаги: <span class="stat-value">{{ history.length ? history.length : 0 }}</span></div>
+            </div>
+
+            <!-- Visualization -->
+            <div class="graph-card">
+                <div id="plot" @click="handleCanvasClick"></div>
+            </div>
+
+            <!-- Step Player -->
+            <transition name="fade">
+                <div class="step-control" v-if="history.length > 0">
+                    <button class="btn btn-outline" @click="setStep(0)">⏮</button>
+                    <button class="btn btn-outline" @click="prevStep">◀</button>
+                    
+                    <div class="slider-container">
+                        <span class="step-label align-right">{{ currentStep }}</span>
+                        <input type="range" min="0" :max="history.length - 1" v-model.number="currentStep">
+                        <span class="step-label">{{ history.length - 1 }}</span>
+                    </div>
+
+                    <button class="btn btn-outline" @click="nextStep">▶</button>
+                    <button class="btn btn-outline" @click="setStep(history.length - 1)">⏭</button>
+                </div>
+            </transition>
+
+        </main>
+    </div>
+
+    <!-- Dendrogram Modal -->
+    <transition name="fade">
+        <div v-if="showDendrogram" class="modal-overlay" @click="closeDendrogram">
+            <div class="modal-content" @click.stop>
+                <button class="modal-close" @click="closeDendrogram">×</button>
+                <div id="dendrogram-plot" style="width: 100%; height: 500px;"></div>
+            </div>
+        </div>
+    </transition>
+
+</div>
+{% endverbatim %}
+{% endblock %}
+
+{% block extra_js %}
+<!-- Local Vendors (Faster, Offline) -->
+<script src="{% static 'js/vendor/plotly.min.js' %}"></script>
+<script src="{% static 'js/vendor/vue.global.js' %}"></script>
+
+<!-- Main App -->
+<script type="module" src="{% static 'js/simulator/app.js' %}?v=4.8"></script>
+{% endblock %}

@@ -1,5 +1,5 @@
-import { runKMeans, runDBSCAN, runForel, runAgglomerative, runMeanShift, generatePreset, getDendrogram } from './api.js?v=4.6';
-import { initPlot, drawPoints, drawStep, convertClickToPoint } from './plot.js?v=4.6';
+import { runKMeans, runDBSCAN, runForel, runAgglomerative, runMeanShift, generatePreset, getDendrogram } from './api.js?v=5.0';
+import { initPlot, drawPoints, drawStep, convertClickToPoint } from './plot.js?v=5.0';
 
 const { createApp, ref, onMounted, watch } = Vue;
 

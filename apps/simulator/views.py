@@ -4,7 +4,7 @@ import numpy as np
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, get_object_or_404
-from .models import Task, TaskCategory, UserTaskAttempt
+from .models import Task, UserTaskAttempt
 from .algorithms import (
     kmeans_step, 
     dbscan_step, 
@@ -22,14 +22,9 @@ def index(request):
     return render(request, 'simulator/index.html')
 
 def task_list(request):
-    """List of educational tasks grouped by category"""
-    categories = TaskCategory.objects.prefetch_related('tasks').order_by('order')
-    uncategorized_tasks = Task.objects.filter(category__isnull=True).order_by('order')
-    
-    return render(request, 'simulator/task_list.html', {
-        'categories': categories,
-        'uncategorized_tasks': uncategorized_tasks
-    })
+    """List of educational tasks (Reverted to flat list)"""
+    tasks = Task.objects.all().order_by('algorithm', 'order')
+    return render(request, 'simulator/task_list.html', {'tasks': tasks})
 
 def challenge_detail(request, slug):
     """Specific challenge page"""
@@ -91,7 +86,6 @@ def run_algorithm(request):
 def check_solution(request):
     """
     Checks user solution by running it against test data.
-    WARNING: Uses exec(). Safe only for local/educational use.
     """
     if request.method == 'POST':
         try:
@@ -101,8 +95,6 @@ def check_solution(request):
             
             task = get_object_or_404(Task, slug=slug)
             
-            # Prepare execution environment
-            # Allow common libraries
             local_scope = {
                 'np': np,
                 'math': math,
@@ -110,26 +102,20 @@ def check_solution(request):
                 'Dict': dict
             }
             
-            # 1. Execute user code to define the function
             try:
                 exec(user_code, {}, local_scope)
             except Exception as e:
                 return JsonResponse({'success': False, 'error': f'Syntax Error: {e}'})
                 
-            # 2. Check if function exists
             func_name = task.function_name
             if func_name not in local_scope:
                 return JsonResponse({'success': False, 'error': f'Функция {func_name} не найдена. Не меняйте название!'})
                 
             user_func = local_scope[func_name]
             
-            # 3. Run test cases
             test_input = task.test_input
             expected = task.expected_output
             
-            # Handle different input formats (list of args or single dict)
-            # For simplicity, we assume test_input matches function signature
-            # or is a dictionary of kwargs
             try:
                 if isinstance(test_input, dict):
                     result = user_func(**test_input)
@@ -140,21 +126,14 @@ def check_solution(request):
             except Exception as e:
                 return JsonResponse({'success': False, 'error': f'Runtime Error: {e}'})
                 
-            # 4. Compare results
-            # Simple equality check (can be improved for floats/arrays)
             is_correct = False
-            
             if isinstance(expected, (list, dict)):
-                is_correct = (str(result) == str(expected)) # Strict type comparison might fail on tuples vs lists
+                is_correct = (str(result) == str(expected))
                 if not is_correct and isinstance(result, (list, tuple)) and isinstance(expected, (list, tuple)):
-                     # Try sorting if order doesn't matter (e.g. clusters)? 
-                     # For now, stick to strict equality or simple match
                      is_correct = (list(result) == list(expected))
             else:
-                # Basic types
                 is_correct = (result == expected)
                 
-            # Save attempt
             if request.user.is_authenticated:
                 UserTaskAttempt.objects.create(
                     user=request.user,

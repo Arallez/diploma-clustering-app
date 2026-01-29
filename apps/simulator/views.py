@@ -60,6 +60,25 @@ def challenge_detail(request, slug):
 # --- API Endpoints ---
 
 @csrf_exempt
+def get_preset(request):
+    """
+    Returns points for a selected preset (Blobs, Moons, etc.)
+    """
+    if request.method == 'GET':
+        try:
+            # Get params
+            preset_name = request.GET.get('preset', 'blobs')
+            
+            # Generate 300 points by default for the simulator
+            data = generate_preset(preset_name, n_samples=300)
+            
+            return JsonResponse({'success': True, 'points': data})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+            
+    return JsonResponse({'success': False, 'error': 'Method not allowed'})
+
+@csrf_exempt
 def run_algorithm(request):
     """Unified endpoint for running all clustering algorithms"""
     if request.method == 'POST':
@@ -226,8 +245,6 @@ def check_solution(request):
     return JsonResponse({'success': False, 'error': 'Method not allowed'})
 
 # Legacy stubs
-@csrf_exempt
-def get_preset(request): return JsonResponse({'success': False})
 @csrf_exempt
 def get_dendrogram(request): return JsonResponse({'success': False})
 @csrf_exempt

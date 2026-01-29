@@ -6,6 +6,7 @@ import random
 import collections
 import itertools
 import functools
+from func_timeout import func_timeout, FunctionTimedOut
 
 class SolutionValidator:
     """
@@ -104,7 +105,7 @@ class SolutionValidator:
     @staticmethod
     def _validate_code(task, user_code):
         """
-        Выполняет код пользователя в безопасном контексте.
+        Выполняет код пользователя в безопасном контексте с тайм-аутом.
         """
         # 1. Проверка импортов через AST
         is_safe, error_msg = SolutionValidator._check_imports(user_code)
@@ -127,9 +128,16 @@ class SolutionValidator:
             'np': np,
         }
 
-        # 3. Выполнение кода
+        # 3. Выполнение кода с защитой от бесконечных циклов (Timeout)
         try:
-            exec(user_code, execution_context)
+            def run_user_code():
+                exec(user_code, execution_context)
+            
+            # Лимит времени: 3 секунды
+            func_timeout(3.0, run_user_code)
+            
+        except FunctionTimedOut:
+            return False, "", "Timeout Error: Выполнение кода заняло слишком много времени ( > 3с ). Проверьте бесконечные циклы.", {}
         except Exception as e:
             return False, "", f"Runtime Error: {e}", {}
 

@@ -1,8 +1,10 @@
 import json
+import math
+import numpy as np
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, get_object_or_404
-from .models import Task, TaskCategory
+from .models import Task, TaskCategory, UserTaskAttempt
 from .algorithms import (
     kmeans_step, 
     dbscan_step, 
@@ -22,8 +24,6 @@ def index(request):
 def task_list(request):
     """List of educational tasks grouped by category"""
     categories = TaskCategory.objects.prefetch_related('tasks').order_by('order')
-    
-    # Also fetch tasks without category to show them at the end or beginning
     uncategorized_tasks = Task.objects.filter(category__isnull=True).order_by('order')
     
     return render(request, 'simulator/task_list.html', {
@@ -35,7 +35,6 @@ def challenge_detail(request, slug):
     """Specific challenge page"""
     task = get_object_or_404(Task, slug=slug)
     
-    # Get user's previous successful attempt if exists
     previous_code = ""
     if request.user.is_authenticated:
         last_attempt = request.user.task_attempts.filter(task=task, is_correct=True).first()
@@ -88,7 +87,97 @@ def run_algorithm(request):
             
     return JsonResponse({'success': False, 'error': 'Method not allowed'})
 
-# Legacy stubs to satisfy old urls.py until we update it
+@csrf_exempt
+def check_solution(request):
+    """
+    Checks user solution by running it against test data.
+    WARNING: Uses exec(). Safe only for local/educational use.
+    """
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            slug = data.get('slug')
+            user_code = data.get('code')
+            
+            task = get_object_or_404(Task, slug=slug)
+            
+            # Prepare execution environment
+            # Allow common libraries
+            local_scope = {
+                'np': np,
+                'math': math,
+                'List': list,
+                'Dict': dict
+            }
+            
+            # 1. Execute user code to define the function
+            try:
+                exec(user_code, {}, local_scope)
+            except Exception as e:
+                return JsonResponse({'success': False, 'error': f'Syntax Error: {e}'})
+                
+            # 2. Check if function exists
+            func_name = task.function_name
+            if func_name not in local_scope:
+                return JsonResponse({'success': False, 'error': f'Функция {func_name} не найдена. Не меняйте название!'})
+                
+            user_func = local_scope[func_name]
+            
+            # 3. Run test cases
+            test_input = task.test_input
+            expected = task.expected_output
+            
+            # Handle different input formats (list of args or single dict)
+            # For simplicity, we assume test_input matches function signature
+            # or is a dictionary of kwargs
+            try:
+                if isinstance(test_input, dict):
+                    result = user_func(**test_input)
+                elif isinstance(test_input, list):
+                    result = user_func(*test_input)
+                else:
+                    result = user_func(test_input)
+            except Exception as e:
+                return JsonResponse({'success': False, 'error': f'Runtime Error: {e}'})
+                
+            # 4. Compare results
+            # Simple equality check (can be improved for floats/arrays)
+            is_correct = False
+            
+            if isinstance(expected, (list, dict)):
+                is_correct = (str(result) == str(expected)) # Strict type comparison might fail on tuples vs lists
+                if not is_correct and isinstance(result, (list, tuple)) and isinstance(expected, (list, tuple)):
+                     # Try sorting if order doesn't matter (e.g. clusters)? 
+                     # For now, stick to strict equality or simple match
+                     is_correct = (list(result) == list(expected))
+            else:
+                # Basic types
+                is_correct = (result == expected)
+                
+            # Save attempt
+            if request.user.is_authenticated:
+                UserTaskAttempt.objects.create(
+                    user=request.user,
+                    task=task,
+                    code=user_code,
+                    is_correct=is_correct,
+                    error_message=None if is_correct else f"Expected {expected}, got {result}"
+                )
+                
+            if is_correct:
+                return JsonResponse({'success': True, 'message': f'Тест пройден! Ответ: {result}'})
+            else:
+                return JsonResponse({
+                    'success': False, 
+                    'error': f'Неверный ответ. Ожидалось: {expected}, Получено: {result}'
+                })
+                
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+            
+    return JsonResponse({'success': False, 'error': 'Method not allowed'})
+
+# Legacy stubs
 @csrf_exempt
 def get_preset(request):
     if request.method == 'GET':
@@ -99,7 +188,6 @@ def get_preset(request):
             return JsonResponse({'success': True, 'points': points})
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
-            
     return JsonResponse({'success': False, 'error': 'Method not allowed'})
 
 @csrf_exempt
@@ -108,9 +196,7 @@ def get_dendrogram(request):
         try:
             data = json.loads(request.body)
             points = data.get('points', [])
-            
             dendro_data = compute_dendrogram_data(points)
-            
             return JsonResponse({
                 'success': True, 
                 'dendrogram': {
@@ -132,5 +218,3 @@ def run_dbscan(request): return run_algorithm(request)
 def run_forel(request): return run_algorithm(request)
 @csrf_exempt
 def run_agglomerative(request): return run_algorithm(request)
-@csrf_exempt
-def check_solution(request): return JsonResponse({'success': False, 'error': 'Not implemented'})

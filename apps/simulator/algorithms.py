@@ -229,6 +229,119 @@ def agglomerative_step(points, n_clusters):
         
     return history
 
+def mean_shift_step(points, bandwidth=1.0):
+    X = normalize_points(points)
+    n_samples = len(X)
+    
+    if n_samples == 0:
+        return []
+        
+    # Start with each point being its own cluster center candidate
+    centroids = np.copy(X)
+    history = []
+    
+    max_iters = 100
+    stop_thresh = 1e-3 * bandwidth
+    
+    for it in range(max_iters):
+        new_centroids = np.zeros_like(centroids)
+        
+        # Save state before shift
+        # To visualize, we assign each original point to its closest CURRENT centroid
+        # But since centroids == points count initially, and they move... 
+        # We group points by which final centroid they are converging to.
+        # Simple viz: just show "shifting" centers isn't enough for the current UI.
+        # Let's map original points to the index of the centroid they are tracking.
+        # Actually, standard MeanShift groups points that converge to the SAME location.
+        
+        # For intermediate visualization:
+        # We can try to cluster the current 'centroids' positions.
+        # But easier: just record the centroids positions. The UI might need update to show them?
+        # Re-using existing UI: 'centroids' field in history is used by K-Means.
+        # We can pass 'centroids' to show the kernels moving.
+        # 'labels' can be calculated by assigning each point X[i] to the nearest centroid[j].
+        # Since centroid[i] "belongs" to X[i], this is trivial (label=i), which is rainbow chaos.
+        
+        # Better Viz Strategy:
+        # 1. At each step, centroids move.
+        # 2. We group centroids that are very close to each other.
+        # 3. Assign label based on that group.
+        
+        # Quick grouping for visualization
+        unique_centers = []
+        labels = np.zeros(n_samples, dtype=int)
+        
+        # Simple rounding to group for viz (fast approx)
+        # or just use first point as representative if close
+        viz_centers = np.copy(centroids)
+        active_indices = np.arange(n_samples) # All active initially
+        
+        # We won't do full grouping every frame, too slow.
+        # Let's just output the current centroids positions.
+        # We will assume every point i tracks centroid i.
+        
+        # To make it look like clustering, we need to detect convergence.
+        
+        step_data = {
+            'centroids': [{'x': c[0], 'y': c[1]} for c in centroids],
+            'labels': list(range(n_samples)) # Initially rainbow, will merge later?
+            # Actually, without proper merging, it just looks like moving dots.
+            # Let's implement real merging at the end, but for intermediate steps
+            # we can show the "path".
+        }
+        # Ideally we want to show points merging.
+        
+        # Let's run the shift
+        shift_happened = False
+        for i in range(n_samples):
+            # Find neighbors in bandwidth
+            dists = np.linalg.norm(centroids - centroids[i], axis=1)
+            weights = (dists <= bandwidth).astype(float) # Flat kernel
+            # Gaussian kernel is better usually: exp(-d^2 / (2*bw^2))
+            # But flat is standard "neighbors within radius" logic from presentation usually.
+            # Let's use Flat kernel (like DBSCAN radius) for simplicity/speed.
+            
+            denom = np.sum(weights)
+            if denom > 0:
+                new_center = np.dot(weights, centroids) / denom
+                new_centroids[i] = new_center
+            else:
+                new_centroids[i] = centroids[i]
+                
+            if np.linalg.norm(new_centroids[i] - centroids[i]) > stop_thresh:
+                shift_happened = True
+        
+        centroids = np.copy(new_centroids)
+        
+        if not shift_happened:
+            break
+
+        # Post-processing for this step to create meaningful colors:
+        # Group centroids that are within small distance
+        # This is expensive O(N^2) every frame. Maybe just every 5 frames or at end?
+        # Let's do it every step but simplified: round coordinates
+        
+        # We need meaningful labels for history.
+        # Let's cluster the *current centroids* using a simple greedy approach
+        rounded = np.round(centroids, decimals=1) 
+        # Map rounded tuples to cluster IDs
+        unique_pos = np.unique(rounded, axis=0)
+        
+        # Assign label based on nearest unique center
+        # This gives the "merging" effect visually
+        step_labels = []
+        for c in centroids:
+             # Find closest unique
+             d = np.linalg.norm(unique_pos - c, axis=1)
+             step_labels.append(int(np.argmin(d)))
+             
+        step_data['labels'] = step_labels
+        step_data['centroids'] = [{'x': c[0], 'y': c[1]} for c in unique_pos] # Show merged centers
+        
+        history.append(step_data)
+
+    return history
+
 def compute_dendrogram_data(points):
     X = normalize_points(points)
     if len(X) < 2:

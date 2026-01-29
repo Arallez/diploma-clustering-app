@@ -1,6 +1,5 @@
 import json
 import math
-import ast
 import random
 import itertools
 import collections
@@ -12,7 +11,7 @@ import sklearn.cluster as sklearn_cluster
 import sklearn.datasets as sklearn_datasets
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
-from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt # <--- Restored csrf_exempt
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from .models import Task, TaskTag, UserTaskAttempt
 from .algorithms import (
     kmeans_step, 
@@ -23,72 +22,12 @@ from .algorithms import (
     mean_shift_step
 )
 from .presets import generate_preset
-
-# --- Security Configuration ---
-
-WHITELISTED_MODULES = {
-    'math', 'random', 'itertools', 'collections', 'heapq', 'bisect', 'copy',
-    'numpy', 'scipy', 'sklearn', 'pandas', 'matplotlib' 
-}
-
-# --- Loop Protection ---
-class TimeLimitException(Exception):
-    pass
-
-def create_tracer(max_instructions=200000):
-    """
-    Creates a trace function that counts executed lines.
-    If the count exceeds max_instructions, it raises TimeLimitException.
-    This prevents 'while True' loops from freezing the server.
-    """
-    count = 0
-    def tracer(frame, event, arg):
-        nonlocal count
-        if event == 'line':
-            count += 1
-            if count > max_instructions:
-                raise TimeLimitException("Time Limit Exceeded: Infinite loop detected or code is too slow.")
-        return tracer
-    return tracer
-
-# --- Security Helper ---
-def is_safe_code(code_str):
-    """
-    Static analysis:
-    1. Checks syntax.
-    2. Allows only specific imports (Whitelist).
-    3. Blocks dangerous functions (exec, eval, open).
-    4. Blocks private attributes (_attr).
-    """
-    try:
-        tree = ast.parse(code_str)
-    except SyntaxError as e:
-        return False, f"Syntax Error: {e}"
-
-    for node in ast.walk(tree):
-        # 1. Validate Imports
-        if isinstance(node, ast.Import):
-            for alias in node.names:
-                base_module = alias.name.split('.')[0]
-                if base_module not in WHITELISTED_MODULES:
-                    return False, f"Security Error: Import of '{base_module}' is forbidden. Allowed: {', '.join(sorted(WHITELISTED_MODULES))}"
-        
-        if isinstance(node, ast.ImportFrom):
-            if node.module:
-                base_module = node.module.split('.')[0]
-                if base_module not in WHITELISTED_MODULES:
-                    return False, f"Security Error: Import from '{base_module}' is forbidden."
-        
-        # 2. Ban accessing private attributes (starting with _)
-        if isinstance(node, ast.Attribute) and node.attr.startswith('_'):
-             return False, "Security Error: Access to private attributes (starting with _) is forbidden."
-             
-        # 3. Ban dangerous calls
-        if isinstance(node, ast.Call):
-            if isinstance(node.func, ast.Name) and node.func.id in ['exec', 'eval', 'open', 'help', 'exit', 'quit', 'compile', 'globals', 'locals', 'vars']:
-                return False, f"Security Error: Function '{node.func.id}' is forbidden."
-
-    return True, ""
+from .services import (
+    is_safe_code, 
+    create_tracer, 
+    TimeLimitException, 
+    get_safe_builtins
+)
 
 # --- Page Views ---
 
@@ -136,7 +75,7 @@ def challenge_detail(request, slug):
 
 # --- API Endpoints ---
 
-@csrf_exempt # <--- Safe to exempt, just generates random points
+@csrf_exempt
 def get_preset(request):
     """
     Returns points for a selected preset (Blobs, Moons, etc.)
@@ -155,7 +94,7 @@ def get_preset(request):
             
     return JsonResponse({'success': False, 'error': 'Method not allowed'})
 
-@csrf_exempt # <--- Exempting Simulator engine to fix 403 errors on some browsers
+@csrf_exempt
 def run_algorithm(request):
     """Unified endpoint for running all clustering algorithms"""
     if request.method == 'POST':
@@ -192,7 +131,6 @@ def run_algorithm(request):
             
     return JsonResponse({'success': False, 'error': 'Method not allowed'})
 
-# NO @csrf_exempt here! This must be protected.
 def check_solution(request):
     """
     Checks user solution (Code execution or Quiz answer).
@@ -251,15 +189,7 @@ def check_solution(request):
                     return JsonResponse({'success': False, 'error': security_msg})
 
                 # 2. Construct Safe Builtins (Enable __import__)
-                safe_builtins = {
-                    '__import__': __import__, # Allows 'import numpy' to work
-                    'abs': abs, 'len': len, 'range': range, 'sum': sum, 
-                    'min': min, 'max': max, 'int': int, 'float': float, 'str': str, 'bool': bool,
-                    'list': list, 'dict': dict, 'set': set, 'tuple': tuple,
-                    'print': print, 'round': round, 'all': all, 'any': any, 'divmod': divmod,
-                    'sorted': sorted, 'zip': zip, 'map': map, 'filter': filter, 'enumerate': enumerate,
-                    'isinstance': isinstance, 'issubclass': issubclass,
-                }
+                safe_builtins = get_safe_builtins()
                 
                 # 3. Execution Context
                 execution_context = {

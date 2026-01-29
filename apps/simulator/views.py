@@ -95,24 +95,40 @@ def check_solution(request):
             
             task = get_object_or_404(Task, slug=slug)
             
-            local_scope = {
+            # Prepare Execution Context (Globals)
+            # This ensures functions defined in user_code can see these imports
+            execution_context = {
                 'np': np,
                 'math': math,
                 'List': list,
-                'Dict': dict
+                'Dict': dict,
+                'abs': abs,
+                'len': len,
+                'range': range,
+                'sum': sum,
+                'min': min,
+                'max': max,
+                'int': int,
+                'float': float,
+                'sorted': sorted,
+                'zip': zip,
+                'map': map,
+                'filter': filter,
+                'enumerate': enumerate,
             }
             
             # 1. Execute User Code
             try:
-                exec(user_code, {}, local_scope)
+                # Pass execution_context as globals so defined functions inherit it
+                exec(user_code, execution_context)
             except Exception as e:
                 return JsonResponse({'success': False, 'error': f'Syntax Error: {e}'})
                 
             func_name = task.function_name
-            if func_name not in local_scope:
+            if func_name not in execution_context:
                 return JsonResponse({'success': False, 'error': f'Функция {func_name} не найдена. Не меняйте название!'})
                 
-            user_func = local_scope[func_name]
+            user_func = execution_context[func_name]
             
             # 2. Prepare Inputs
             test_input = task.test_input
@@ -129,7 +145,6 @@ def check_solution(request):
                         result = user_func(*test_input)
                     except TypeError:
                         # Fallback: Pass the list as a single argument
-                        # This catches cases where input is [[0,0], [1,1]] and func expects points_list
                         result = user_func(test_input)
                 else:
                     result = user_func(test_input)
@@ -146,11 +161,8 @@ def check_solution(request):
                 expected = expected.tolist()
 
             if isinstance(expected, (list, dict)):
-                # Convert to string for simple comparison if deep comparison is complex
-                # But lists order might not matter? Assuming strict order for now.
                 is_correct = (str(result) == str(expected)) 
                 
-                # Double check for float precision issues using numpy
                 if not is_correct:
                     try:
                          # Try loose comparison for floats

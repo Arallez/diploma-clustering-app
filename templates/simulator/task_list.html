@@ -4,46 +4,68 @@
 {% block title %}Задания{% endblock %}
 
 {% block extra_css %}
-<!-- Removed simulator.css - not needed here, only tasks.css -->
 <link rel="stylesheet" href="{% static 'css/tasks.css' %}?v=1.2">
 {% endblock %}
 
 {% block content %}
 <div class="page-wrapper">
-  <!-- Navbar removed - handled by base.html -->
-
   <div class="tasks-page">
     <header class="tasks-header">
       <h1 class="tasks-title">🎯 Практические задания</h1>
     </header>
 
-    {% regroup tasks by algorithm as algorithm_groups %}
-    {% for group in algorithm_groups %}
+    <!-- Dynamic Tags (Blocks) -->
+    {% for tag in tags %}
       <div class="algorithm-section">
         <h2 class="algorithm-title">
-          {% if group.grouper == 'general' %}📚 Общие знания
-          {% elif group.grouper == 'kmeans' %}🔵 K-Means
-          {% elif group.grouper == 'dbscan' %}🔴 DBSCAN
-          {% elif group.grouper == 'hierarchical' %}🌳 Иерархическая
-          {% else %}{{ group.grouper }}
-          {% endif %}
+          {{ tag.name }}
         </h2>
         <div class="tasks-grid">
-          {% for task in group.list %}
+          {% for task in tag.tasks.all %}
           <a href="{% url 'simulator:challenge_detail' task.slug %}" class="task-card">
             <div class="task-badge difficulty-{{ task.difficulty }}">
-              {% if task.difficulty == 1 %}⭐ Easy
-              {% elif task.difficulty == 2 %}⭐⭐ Medium
+              {% if task.difficulty == 1 %}⭐ Novice
+              {% elif task.difficulty == 2 %}⭐⭐ Beginner
               {% else %}⭐⭐⭐ Hard
               {% endif %}
             </div>
             <div class="task-card-title">{{ task.title }}</div>
             <div class="task-card-desc">{{ task.description|striptags|truncatewords:15 }}</div>
           </a>
+          {% empty %}
+            <p style="color: #64748b;">В этом блоке пока нет задач.</p>
           {% endfor %}
         </div>
       </div>
     {% endfor %}
+
+    <!-- Uncategorized Tasks -->
+    {% if uncategorized %}
+    <div class="algorithm-section">
+      <h2 class="algorithm-title">📂 Разное</h2>
+      <div class="tasks-grid">
+        {% for task in uncategorized %}
+        <a href="{% url 'simulator:challenge_detail' task.slug %}" class="task-card">
+          <div class="task-badge difficulty-{{ task.difficulty }}">
+            {% if task.difficulty == 1 %}⭐ Novice
+            {% elif task.difficulty == 2 %}⭐⭐ Beginner
+            {% else %}⭐⭐⭐ Hard
+            {% endif %}
+          </div>
+          <div class="task-card-title">{{ task.title }}</div>
+          <div class="task-card-desc">{{ task.description|striptags|truncatewords:15 }}</div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if not tags and not uncategorized %}
+      <div class="empty-state" style="text-align: center; color: #94a3b8; padding: 2rem;">
+        <p>Задач пока нет. Добавьте теги и задачи через админку.</p>
+      </div>
+    {% endif %}
+
   </div>
 </div>
 {% endblock %}

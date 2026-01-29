@@ -1,6 +1,20 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+class TaskTag(models.Model):
+    """Теги (Категории) для группировки задач"""
+    name = models.CharField(max_length=100, verbose_name="Название тега")
+    slug = models.SlugField(unique=True, verbose_name="Slug (для URL)")
+    order = models.IntegerField(default=0, verbose_name="Порядок вывода")
+
+    class Meta:
+        ordering = ['order', 'name']
+        verbose_name = "Тег (Блок задач)"
+        verbose_name_plural = "Теги задач"
+
+    def __str__(self):
+        return self.name
+
 class Task(models.Model):
     DIFFICULTY_CHOICES = [
         (1, '⭐ Novice (Основы)'),
@@ -8,18 +22,21 @@ class Task(models.Model):
         (3, '⭐⭐⭐ Intermediate (Алгоритмы)'),
     ]
 
-    ALGORITHM_CHOICES = [
-        ('kmeans', 'K-Means'),
-        ('dbscan', 'DBSCAN'),
-        ('hierarchical', 'Иерархическая кластеризация'),
-        ('general', 'Общие знания'),
-    ]
-
     title = models.CharField(max_length=200, verbose_name="Название")
     slug = models.SlugField(unique=True, help_text="URL-имя, например 'euclidean-dist'")
     description = models.TextField(verbose_name="Описание (HTML)")
     difficulty = models.IntegerField(choices=DIFFICULTY_CHOICES, default=1)
-    algorithm = models.CharField(max_length=50, choices=ALGORITHM_CHOICES, default='general', verbose_name="Алгоритм")
+    
+    # Changed from hardcoded algorithm choices to dynamic ForeignKey
+    tags = models.ForeignKey(
+        TaskTag, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='tasks',
+        verbose_name="Тег (Блок)"
+    )
+    
     order = models.IntegerField(default=0, verbose_name="Порядок")
     
     function_name = models.CharField(max_length=100, help_text="Имя функции")
@@ -30,10 +47,11 @@ class Task(models.Model):
     expected_output = models.JSONField(default=dict, verbose_name="Ожидаемый ответ")
 
     def __str__(self):
-        return f"{self.order}. {self.title} ({self.get_algorithm_display()})"
+        tag_name = self.tags.name if self.tags else "Без тега"
+        return f"{self.order}. {self.title} ({tag_name})"
 
     class Meta:
-        ordering = ['algorithm', 'order']
+        ordering = ['tags__order', 'order']
 
 
 class UserTaskAttempt(models.Model):

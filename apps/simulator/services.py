@@ -6,7 +6,14 @@ import random
 import collections
 import itertools
 import functools
-from func_timeout import func_timeout, FunctionTimedOut
+
+# Try to import timeout protection, fallback if missing
+try:
+    from func_timeout import func_timeout, FunctionTimedOut
+    HAS_TIMEOUT_LIB = True
+except ImportError:
+    HAS_TIMEOUT_LIB = False
+    print("Warning: 'func_timeout' library not found. Code execution timeout protection is DISABLED.")
 
 class SolutionValidator:
     """
@@ -133,12 +140,19 @@ class SolutionValidator:
             def run_user_code():
                 exec(user_code, execution_context)
             
-            # Лимит времени: 3 секунды
-            func_timeout(3.0, run_user_code)
+            # Если библиотека установлена - используем защиту, если нет - просто запускаем
+            if HAS_TIMEOUT_LIB:
+                func_timeout(3.0, run_user_code)
+            else:
+                run_user_code()
             
-        except FunctionTimedOut:
-            return False, "", "Timeout Error: Выполнение кода заняло слишком много времени ( > 3с ). Проверьте бесконечные циклы.", {}
+        except NameError: 
+             # На случай, если FunctionTimedOut не импортирован (хотя мы проверили HAS_TIMEOUT_LIB)
+             return False, "", "Timeout Error (Lib Missing): Execution failed.", {}
         except Exception as e:
+            # Перехват FunctionTimedOut (если он есть) или других ошибок
+            if HAS_TIMEOUT_LIB and type(e).__name__ == 'FunctionTimedOut':
+                return False, "", "Timeout Error: Выполнение кода заняло слишком много времени ( > 3с ). Проверьте бесконечные циклы.", {}
             return False, "", f"Runtime Error: {e}", {}
 
         # 4. Поиск функции и проверка

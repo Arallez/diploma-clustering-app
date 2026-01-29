@@ -2,7 +2,7 @@ import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, get_object_or_404
-from .models import Task
+from .models import Task, TaskCategory
 from .algorithms import (
     kmeans_step, 
     dbscan_step, 
@@ -20,10 +20,16 @@ def index(request):
     return render(request, 'simulator/index.html')
 
 def task_list(request):
-    """List of educational tasks"""
-    # Optimized query to fetch all tasks grouped by algorithm in the template
-    tasks = Task.objects.all().order_by('algorithm', 'order')
-    return render(request, 'simulator/task_list.html', {'tasks': tasks})
+    """List of educational tasks grouped by category"""
+    categories = TaskCategory.objects.prefetch_related('tasks').order_by('order')
+    
+    # Also fetch tasks without category to show them at the end or beginning
+    uncategorized_tasks = Task.objects.filter(category__isnull=True).order_by('order')
+    
+    return render(request, 'simulator/task_list.html', {
+        'categories': categories,
+        'uncategorized_tasks': uncategorized_tasks
+    })
 
 def challenge_detail(request, slug):
     """Specific challenge page"""

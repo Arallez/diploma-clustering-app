@@ -62,11 +62,20 @@
     }
 
     .question-block {
-        border-bottom: 1px solid #334155;
-        padding-bottom: 1.5rem;
+        border: 1px solid transparent; /* Placeholder for validation border */
+        padding: 1rem;
+        border-radius: 8px;
+        transition: all 0.3s;
     }
-    .question-block:last-child {
-        border-bottom: none;
+    
+    .question-block.wrong {
+        border-color: #ef4444;
+        background: rgba(239, 68, 68, 0.1);
+    }
+    
+    .question-block.correct {
+        border-color: #10b981;
+        background: rgba(16, 185, 129, 0.1);
     }
 
     .question-text {
@@ -270,7 +279,7 @@ Output: {{ task.expected_output }}</code></pre>
                     {% if task.test_input.questions %}
                         <!-- MULTI QUESTION MODE -->
                         {% for question in task.test_input.questions %}
-                        <div class="question-block">
+                        <div class="question-block" id="q-block-{{ forloop.counter0 }}">
                             <div class="question-text">{{ question.text|safe }}</div>
                             {% for option in question.options %}
                             <label class="quiz-option">
@@ -339,6 +348,11 @@ Output: {{ task.expected_output }}</code></pre>
         const resultBox = document.getElementById('result-box');
         let payload = { slug: '{{ task.slug }}' };
         
+        // Reset previous validation styles
+        document.querySelectorAll('.question-block').forEach(el => {
+            el.classList.remove('correct', 'wrong');
+        });
+
         if (taskType === 'code') {
             payload.code = document.getElementById('code-editor').value;
         } else {
@@ -394,10 +408,24 @@ Output: {{ task.expected_output }}</code></pre>
             
             const data = await response.json();
             
+            // Handle per-question feedback
+            if (data.quiz_results) {
+                data.quiz_results.forEach((isCorrect, index) => {
+                    const block = document.getElementById(`q-block-${index}`);
+                    if (block) {
+                        if (isCorrect) {
+                            block.classList.add('correct');
+                        } else {
+                            block.classList.add('wrong');
+                        }
+                    }
+                });
+            }
+
             if (data.success) {
                 resultBox.className = 'result-box success';
                 resultBox.style.display = 'block'; 
-                resultBox.innerHTML = '✅ <b>Верно!</b> ' + data.message;
+                resultBox.innerHTML = '✅ <b>Верно!</b> ' + (data.message || '');
             } else {
                 resultBox.className = 'result-box error';
                 resultBox.style.display = 'block'; 

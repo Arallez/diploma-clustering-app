@@ -1,14 +1,8 @@
 import json
 import math
 import random
-import itertools
-import collections
 import sys
 import numpy as np
-import scipy.spatial.distance as scipy_dist
-import sklearn.metrics as sklearn_metrics
-import sklearn.cluster as sklearn_cluster
-import sklearn.datasets as sklearn_datasets
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
@@ -18,7 +12,6 @@ from .algorithms import (
     dbscan_step, 
     forel_step, 
     agglomerative_step,
-    compute_dendrogram_data,
     mean_shift_step
 )
 from .presets import generate_preset

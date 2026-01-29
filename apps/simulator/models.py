@@ -21,13 +21,25 @@ class Task(models.Model):
         (2, '⭐⭐ Beginner (Логика)'),
         (3, '⭐⭐⭐ Intermediate (Алгоритмы)'),
     ]
+    
+    TASK_TYPE_CHOICES = [
+        ('code', '💻 Написание кода'),
+        ('choice', '📝 Выбор ответа (Тест)'),
+    ]
 
     title = models.CharField(max_length=200, verbose_name="Название")
     slug = models.SlugField(unique=True, help_text="URL-имя, например 'euclidean-dist'")
     description = models.TextField(verbose_name="Описание (HTML)")
+    
+    task_type = models.CharField(
+        max_length=20, 
+        choices=TASK_TYPE_CHOICES, 
+        default='code', 
+        verbose_name="Тип задачи"
+    )
+    
     difficulty = models.IntegerField(choices=DIFFICULTY_CHOICES, default=1)
     
-    # Changed from hardcoded algorithm choices to dynamic ForeignKey
     tags = models.ForeignKey(
         TaskTag, 
         on_delete=models.SET_NULL, 
@@ -39,16 +51,19 @@ class Task(models.Model):
     
     order = models.IntegerField(default=0, verbose_name="Порядок")
     
-    function_name = models.CharField(max_length=100, help_text="Имя функции")
-    initial_code = models.TextField(verbose_name="Заготовка кода")
-    solution_code = models.TextField(verbose_name="Эталонное решение")
+    # Fields for CODE tasks
+    function_name = models.CharField(max_length=100, blank=True, null=True, help_text="Только для задач с кодом")
+    initial_code = models.TextField(blank=True, verbose_name="Заготовка кода / Комментарий")
+    solution_code = models.TextField(blank=True, verbose_name="Эталонное решение / Пояснение")
     
-    test_input = models.JSONField(default=dict, verbose_name="Входные данные")
-    expected_output = models.JSONField(default=dict, verbose_name="Ожидаемый ответ")
+    # Fields for BOTH types (For Quiz: test_input={'options': [...]}, expected_output="Correct Answer")
+    test_input = models.JSONField(default=dict, blank=True, verbose_name="Входные данные / Варианты ответа")
+    expected_output = models.JSONField(default=dict, blank=True, verbose_name="Ожидаемый ответ")
 
     def __str__(self):
         tag_name = self.tags.name if self.tags else "Без тега"
-        return f"{self.order}. {self.title} ({tag_name})"
+        type_icon = "💻" if self.task_type == 'code' else "📝"
+        return f"{self.order}. {type_icon} {self.title} ({tag_name})"
 
     class Meta:
         ordering = ['tags__order', 'order']
@@ -58,7 +73,7 @@ class UserTaskAttempt(models.Model):
     """История попыток решения заданий"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='task_attempts')
     task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='attempts')
-    code = models.TextField(verbose_name="Код решения")
+    code = models.TextField(verbose_name="Код решения / Ответ пользователя")
     is_correct = models.BooleanField(default=False, verbose_name="Правильно")
     error_message = models.TextField(blank=True, null=True, verbose_name="Сообщение об ошибке")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата попытки")

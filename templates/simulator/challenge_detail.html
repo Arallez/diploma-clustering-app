@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ task.title }} | Задачи{% endblock %}
+
+{% block extra_css %}
+<style>
+    .challenge-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        height: calc(100vh - 100px);
+        margin-top: 1rem;
+    }
+    
+    .task-desc {
+        background: #1e293b;
+        padding: 2rem;
+        border-radius: 12px;
+        overflow-y: auto;
+    }
+    
+    .editor-container {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .code-editor {
+        flex: 1;
+        background: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        padding: 1rem;
+        color: #f8fafc;
+        font-family: 'Fira Code', monospace;
+        font-size: 14px;
+        resize: none;
+        outline: none;
+    }
+    
+    .actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .result-box {
+        margin-top: 1rem;
+        padding: 1rem;
+        border-radius: 8px;
+        display: none;
+    }
+    
+    .result-box.success {
+        display: block;
+        background: #064e3b;
+        color: #a7f3d0;
+        border: 1px solid #059669;
+    }
+    
+    .result-box.error {
+        display: block;
+        background: #450a0a;
+        color: #fca5a5;
+        border: 1px solid #b91c1c;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="challenge-layout">
+    <!-- Left: Task Description -->
+    <div class="task-desc">
+        <a href="{% url 'simulator:task_list' %}" class="back-link">← Назад к списку</a>
+        <h1>{{ task.title }}</h1>
+        <div class="badge-row">
+            <span class="difficulty-badge level-{{ task.difficulty }}">
+                {% if task.difficulty == 1 %}Easy
+                {% elif task.difficulty == 2 %}Medium
+                {% else %}Hard{% endif %}
+            </span>
+            <span class="algo-tag">{{ task.get_algorithm_display }}</span>
+        </div>
+        
+        <div class="description-content" style="margin-top: 1.5rem; line-height: 1.6;">
+            {{ task.description|safe }}
+        </div>
+        
+        <div class="examples" style="margin-top: 2rem;">
+            <h3>Пример:</h3>
+            <pre style="background: #0f172a; padding: 1rem; border-radius: 6px;"><code>Input: {{ task.test_input }}
+Output: {{ task.expected_output }}</code></pre>
+        </div>
+    </div>
+
+    <!-- Right: Code Editor -->
+    <div class="editor-container">
+        <textarea id="code-editor" class="code-editor" spellcheck="false">{{ previous_code }}</textarea>
+        
+        <div class="actions">
+            <button class="btn btn-secondary" onclick="resetCode()">Сбросить</button>
+            <button class="btn btn-primary" onclick="submitSolution()">Проверить решение ▶</button>
+        </div>
+        
+        <div id="result-box" class="result-box"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const initialCode = `{{ task.initial_code|escapejs }}`;
+    
+    function resetCode() {
+        if(confirm('Сбросить код к начальному состоянию?')) {
+            document.getElementById('code-editor').value = initialCode;
+        }
+    }
+    
+    async function submitSolution() {
+        const code = document.getElementById('code-editor').value;
+        const resultBox = document.getElementById('result-box');
+        
+        resultBox.style.display = 'none';
+        resultBox.className = 'result-box';
+        
+        try {
+            const response = await fetch('/simulator/api/check-solution/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    slug: '{{ task.slug }}',
+                    code: code
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                resultBox.className = 'result-box success';
+                resultBox.innerHTML = '✅ <b>Верно!</b> ' + data.message;
+            } else {
+                resultBox.className = 'result-box error';
+                resultBox.innerHTML = '❌ <b>Ошибка:</b> ' + (data.error || data.message);
+            }
+        } catch (e) {
+            resultBox.className = 'result-box error';
+            resultBox.innerHTML = '❌ Ошибка сети';
+        }
+    }
+</script>
+{% endblock %}

@@ -11,8 +11,8 @@ import sklearn.metrics as sklearn_metrics
 import sklearn.cluster as sklearn_cluster
 import sklearn.datasets as sklearn_datasets
 from django.http import JsonResponse
-# from django.views.decorators.csrf import csrf_exempt  <-- Removed
 from django.shortcuts import render, get_object_or_404
+from django.views.decorators.csrf import ensure_csrf_cookie # <--- Added this
 from .models import Task, TaskTag, UserTaskAttempt
 from .algorithms import (
     kmeans_step, 
@@ -92,6 +92,7 @@ def is_safe_code(code_str):
 
 # --- Page Views ---
 
+@ensure_csrf_cookie  # <--- Forces sending the cookie to the frontend
 def index(request):
     """Main simulator page"""
     return render(request, 'simulator/index.html')
@@ -117,6 +118,7 @@ def task_list(request):
         'completed_task_ids': completed_task_ids
     })
 
+@ensure_csrf_cookie # <--- Forces sending the cookie here too
 def challenge_detail(request, slug):
     """Specific challenge page"""
     task = get_object_or_404(Task, slug=slug)
@@ -134,7 +136,6 @@ def challenge_detail(request, slug):
 
 # --- API Endpoints ---
 
-# @csrf_exempt  <-- Removed, enabling standard Django security
 def get_preset(request):
     """
     Returns points for a selected preset (Blobs, Moons, etc.)
@@ -153,7 +154,6 @@ def get_preset(request):
             
     return JsonResponse({'success': False, 'error': 'Method not allowed'})
 
-# @csrf_exempt  <-- Removed
 def run_algorithm(request):
     """Unified endpoint for running all clustering algorithms"""
     if request.method == 'POST':
@@ -190,7 +190,6 @@ def run_algorithm(request):
             
     return JsonResponse({'success': False, 'error': 'Method not allowed'})
 
-# @csrf_exempt  <-- Removed
 def check_solution(request):
     """
     Checks user solution (Code execution or Quiz answer).
@@ -354,13 +353,8 @@ def check_solution(request):
     return JsonResponse({'success': False, 'error': 'Method not allowed'})
 
 # Legacy stubs
-# @csrf_exempt
 def get_dendrogram(request): return JsonResponse({'success': False})
-# @csrf_exempt
 def run_kmeans(request): return run_algorithm(request)
-# @csrf_exempt
 def run_dbscan(request): return run_algorithm(request)
-# @csrf_exempt
 def run_forel(request): return run_algorithm(request)
-# @csrf_exempt
 def run_agglomerative(request): return run_algorithm(request)

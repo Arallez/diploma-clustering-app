@@ -1,10 +1,11 @@
 import os
-import requests
+import urllib.request
+import ssl
 from django.core.management.base import BaseCommand
 from django.conf import settings
 
 class Command(BaseCommand):
-    help = 'Downloads external JS libraries (Vue, Plotly) for local usage'
+    help = 'Downloads external JS libraries (Vue, Plotly) for local usage using standard libraries'
 
     def handle(self, *args, **kwargs):
         # Define target directory
@@ -25,19 +26,22 @@ class Command(BaseCommand):
             }
         ]
 
+        # Bypass SSL verification if needed (sometimes helps with local dev envs)
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+
         for lib in libs:
             self.stdout.write(f"Downloading {lib['name']}...")
             try:
-                response = requests.get(lib['url'], stream=True)
-                if response.status_code == 200:
+                # Use standard library urllib
+                with urllib.request.urlopen(lib['url'], context=ctx) as response:
+                    data = response.read()
                     file_path = static_dir / lib['name']
                     with open(file_path, 'wb') as f:
-                        for chunk in response.iter_content(chunk_size=8192):
-                            f.write(chunk)
+                        f.write(data)
                     self.stdout.write(self.style.SUCCESS(f"Saved to {file_path}"))
-                else:
-                    self.stdout.write(self.style.ERROR(f"Failed to download {lib['url']}"))
             except Exception as e:
-                self.stdout.write(self.style.ERROR(f"Error: {e}"))
+                self.stdout.write(self.style.ERROR(f"Error downloading {lib['name']}: {e}"))
 
         self.stdout.write(self.style.SUCCESS("All libraries downloaded successfully!"))

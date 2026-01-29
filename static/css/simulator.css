@@ -91,6 +91,9 @@ html, body {
     background: #3b82f6;
     color: white;
     font-size: 0.95rem;
+    text-decoration: none; /* Fix for link buttons */
+    display: inline-block; /* Fix for link buttons */
+    text-align: center;
 }
 
 .btn:hover:not(:disabled) { background: #2563eb; }
@@ -112,6 +115,14 @@ html, body {
 }
 .btn-secondary:hover:not(:disabled) {
     background: #1e293b;
+}
+
+.btn-primary {
+    background: #2563eb;
+    color: white;
+}
+.btn-primary:hover {
+    background: #1d4ed8;
 }
 
 /* Stats Bar */
@@ -233,12 +244,10 @@ input[type="range"] {
     right: 15px;
     background: rgba(30, 41, 59, 0.8); /* Semi-transparent background */
     border: 1px solid #334155;
-    border-radius: 50%; /* Make it round */
-    width: 32px;
+    border-radius: 50%; /* Make it round */\n    width: 32px;
     height: 32px;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: center;\n    justify-content: center;
     color: #94a3b8;
     font-size: 1.5rem;
     cursor: pointer;
@@ -275,4 +284,152 @@ input[type="range"] {
 .sidebar::-webkit-scrollbar-thumb {
     background: #334155; 
     border-radius: 3px;
+}
+
+/* --- TASKS PAGE STYLES --- */
+
+.tasks-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.page-title {
+    font-size: 2.5rem;
+    color: #f1f5f9;
+    margin-bottom: 0.5rem;
+}
+
+.page-subtitle {
+    color: #94a3b8;
+    margin-bottom: 3rem;
+    font-size: 1.1rem;
+}
+
+.algorithm-section {
+    margin-bottom: 3rem;
+}
+
+.algo-title {
+    color: #3b82f6;
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid #1e293b;
+    padding-bottom: 0.5rem;
+}
+
+.task-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.task-card {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-decoration: none;
+    transition: transform 0.2s, border-color 0.2s;
+    display: flex;
+    flex-direction: column;
+}
+
+.task-card:hover {
+    transform: translateY(-4px);
+    border-color: #3b82f6;
+}
+
+.task-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.difficulty-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 12px;
+    font-weight: 600;
+}
+.difficulty-badge.level-1 { background: #064e3b; color: #a7f3d0; }
+.difficulty-badge.level-2 { background: #713f12; color: #fde047; }
+.difficulty-badge.level-3 { background: #7f1d1d; color: #fca5a5; }
+
+.task-order {
+    color: #64748b;
+    font-family: monospace;
+}
+
+.task-title {
+    color: #f8fafc;
+    font-size: 1.25rem;
+    margin: 0 0 1rem 0;
+}
+
+.task-meta {
+    margin-top: auto;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.algo-tag {
+    background: #0f172a;
+    color: #94a3b8;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    border: 1px solid #334155;
+}
+
+/* CHALLENGE DETAIL STYLES */
+.back-link {
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    transition: color 0.2s;
+}
+.back-link:hover {
+    color: #3b82f6;
+}
+
+.badge-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.description-content code {
+    background: #0f172a;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.9em;
+    color: #e2e8f0;
+}
+
+.result-box {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 8px;
+    display: none;
+    font-family: sans-serif;
+    line-height: 1.4;
+}
+
+.result-box.success {
+    display: block;
+    background: #064e3b;
+    color: #a7f3d0;
+    border: 1px solid #059669;
+}
+
+.result-box.error {
+    display: block;
+    background: #450a0a;
+    color: #fca5a5;
+    border: 1px solid #b91c1c;
 }

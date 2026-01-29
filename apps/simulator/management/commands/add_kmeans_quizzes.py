@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand
 from apps.simulator.models import Task, TaskTag
 
 class Command(BaseCommand):
-    help = 'Adds K-Means quiz tasks'
+    help = 'Adds a combined K-Means quiz task'
 
     def handle(self, *args, **kwargs):
         # 1. Create/Get the Tag
@@ -10,92 +10,74 @@ class Command(BaseCommand):
             slug='kmeans-theory',
             defaults={'name': 'K-Means: Теория', 'order': 10}
         )
-        if created:
-            self.stdout.write(f"Created tag: {tag.name}")
-        else:
-            self.stdout.write(f"Using existing tag: {tag.name}")
 
-        # 2. Define Tasks
-        tasks_data = [
+        # 2. Define the Multi-Question Quiz
+        quiz_questions = [
             {
-                'slug': 'kmeans-quiz-k-meaning',
-                'title': 'Значение параметра K',
-                'description': '<p>Что означает параметр <b>K</b> в названии алгоритма K-Means?</p>',
-                'difficulty': 1,
+                'text': '1. Что означает параметр <b>K</b> в названии алгоритма K-Means?',
                 'options': [
                     'Количество итераций алгоритма',
                     'Количество кластеров, которые мы хотим найти',
-                    'Количество признаков (измерений) в данных',
-                    'Количество соседей для проверки'
-                ],
-                'answer': 'Количество кластеров, которые мы хотим найти',
-                'order': 1
+                    'Количество признаков (измерений) в данных'
+                ]
             },
             {
-                'slug': 'kmeans-quiz-convergence',
-                'title': 'Условие остановки',
-                'description': '<p>Какое условие обычно используется для остановки алгоритма K-Means?</p>',
-                'difficulty': 2,
+                'text': '2. Какое условие обычно используется для остановки алгоритма?',
                 'options': [
                     'Когда все точки посещены',
                     'Когда центроиды перестают менять своё положение',
-                    'Ровно через 100 итераций',
-                    'Когда расстояние между всеми точками становится равным 0'
-                ],
-                'answer': 'Когда центроиды перестают менять своё положение',
-                'order': 2
+                    'Ровно через 100 итераций'
+                ]
             },
             {
-                'slug': 'kmeans-quiz-init',
-                'title': 'Проблема инициализации',
-                'description': '<p>К чему чувствителен алгоритм K-Means?</p>',
-                'difficulty': 2,
+                'text': '3. К чему чувствителен алгоритм K-Means?',
                 'options': [
-                    'Только к масштабу данных',
                     'К начальному случайному положению центроидов',
-                    'К порядку строк в базе данных',
-                    'Он ни к чему не чувствителен'
-                ],
-                'answer': 'К начальному случайному положению центроидов',
-                'order': 3
+                    'Только к масштабу данных',
+                    'К порядку строк в базе данных'
+                ]
             },
             {
-                'slug': 'kmeans-quiz-shape',
-                'title': 'Форма кластеров',
-                'description': '<p>С какими кластерами K-Means справляется <b>плохо</b>?</p>',
-                'difficulty': 3,
+                'text': '4. С какими кластерами K-Means справляется плохо?',
                 'options': [
                     'Сферическими (круглыми)',
                     'Выпуклыми облаками точек',
-                    'Кластерами сложной формы (дуги, кольца, спирали)',
-                    'Плотными компактными группами'
-                ],
-                'answer': 'Кластерами сложной формы (дуги, кольца, спирали)',
-                'order': 4
+                    'Кластерами сложной формы (дуги, кольца)'
+                ]
             }
         ]
 
-        # 3. Create Tasks
-        for data in tasks_data:
-            task, created = Task.objects.update_or_create(
-                slug=data['slug'],
-                defaults={
-                    'title': data['title'],
-                    'description': data['description'],
-                    'task_type': 'choice',  # Quiz type
-                    'difficulty': data['difficulty'],
-                    'tags': tag,
-                    'order': data['order'],
-                    'test_input': {'options': data['options']}, # Options go here
-                    'expected_output': data['answer'],          # Correct answer string
-                    
-                    # Empty fields for code tasks
-                    'function_name': '',
-                    'initial_code': '',
-                    'solution_code': ''
-                }
-            )
-            status = "Created" if created else "Updated"
-            self.stdout.write(f"{status} task: {task.title}")
+        # Correct answers in order
+        correct_answers = [
+            'Количество кластеров, которые мы хотим найти',
+            'Когда центроиды перестают менять своё положение',
+            'К начальному случайному положению центроидов',
+            'Кластерами сложной формы (дуги, кольца)'
+        ]
 
-        self.stdout.write(self.style.SUCCESS(f'Successfully processed {len(tasks_data)} quiz tasks!'))
+        # 3. Create/Update the Single Task
+        task, created = Task.objects.update_or_create(
+            slug='kmeans-final-quiz',
+            defaults={
+                'title': 'Итоговый тест по теории K-Means',
+                'description': '<p>Ответьте на все вопросы, чтобы проверить понимание алгоритма.</p>',
+                'task_type': 'choice',
+                'difficulty': 2,
+                'tags': tag,
+                'order': 5,
+                
+                # New Structure for Multi-Questions
+                'test_input': {'questions': quiz_questions},
+                'expected_output': correct_answers,
+                
+                'function_name': '',
+                'initial_code': '',
+                'solution_code': ''
+            }
+        )
+        
+        # Cleanup old single tasks if they exist (optional, keeping clean)
+        old_slugs = ['kmeans-quiz-k-meaning', 'kmeans-quiz-convergence', 'kmeans-quiz-init', 'kmeans-quiz-shape']
+        Task.objects.filter(slug__in=old_slugs).delete()
+
+        self.stdout.write(self.style.SUCCESS(f'Successfully created combined quiz: {task.title}'))

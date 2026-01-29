@@ -23,11 +23,22 @@ from .algorithms import (
 )
 from .presets import generate_preset
 
+# --- Security Configuration ---
+
+# Modules that students are allowed to import
+WHITELISTED_MODULES = {
+    'math', 'random', 'itertools', 'collections', 'heapq', 'bisect', 'copy',
+    'numpy', 'scipy', 'sklearn', 'pandas', 'matplotlib' 
+}
+
 # --- Security Helper ---
 def is_safe_code(code_str):
     """
-    Static analysis of user code to prevent dangerous operations.
-    Returns (True, "") or (False, error_message).
+    Static analysis:
+    1. Checks syntax.
+    2. Allows only specific imports (Whitelist).
+    3. Blocks dangerous functions (exec, eval, open).
+    4. Blocks private attributes (_attr).
     """
     try:
         tree = ast.parse(code_str)
@@ -35,17 +46,26 @@ def is_safe_code(code_str):
         return False, f"Syntax Error: {e}"
 
     for node in ast.walk(tree):
-        # 1. Ban direct imports (users must use provided 'np', 'math')
-        if isinstance(node, (ast.Import, ast.ImportFrom)):
-            return False, "Security Error: Direct imports are not allowed. Use pre-imported libraries (np, math)."
+        # 1. Validate Imports
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                base_module = alias.name.split('.')[0]
+                if base_module not in WHITELISTED_MODULES:
+                    return False, f"Security Error: Import of '{base_module}' is forbidden. Allowed: {', '.join(sorted(WHITELISTED_MODULES))}"
+        
+        if isinstance(node, ast.ImportFrom):
+            if node.module:
+                base_module = node.module.split('.')[0]
+                if base_module not in WHITELISTED_MODULES:
+                    return False, f"Security Error: Import from '{base_module}' is forbidden."
         
         # 2. Ban accessing private attributes (starting with _)
         if isinstance(node, ast.Attribute) and node.attr.startswith('_'):
              return False, "Security Error: Access to private attributes (starting with _) is forbidden."
              
-        # 3. Ban 'exec', 'eval', 'open' calls if they managed to sneak in
+        # 3. Ban dangerous calls
         if isinstance(node, ast.Call):
-            if isinstance(node.func, ast.Name) and node.func.id in ['exec', 'eval', 'open', 'help', 'exit', 'quit']:
+            if isinstance(node.func, ast.Name) and node.func.id in ['exec', 'eval', 'open', 'help', 'exit', 'quit', 'compile', 'globals', 'locals', 'vars']:
                 return False, f"Security Error: Function '{node.func.id}' is forbidden."
 
     return True, ""
@@ -203,41 +223,30 @@ def check_solution(request):
 
             # --- HANDLE CODE ---
             else:
-                # 1. Static Analysis Check
+                # 1. Static Analysis Check (Whitelist Imports)
                 is_safe, security_msg = is_safe_code(user_input)
                 if not is_safe:
                     return JsonResponse({'success': False, 'error': security_msg})
 
-                # 2. Restricted Execution Context (Whitelist)
-                # We supply useful Data Science libraries pre-imported
-                execution_context = {
-                    # Built-in basics
+                # 2. Construct Safe Builtins (Enable __import__)
+                safe_builtins = {
+                    '__import__': __import__, # Allows 'import numpy' to work
                     'abs': abs, 'len': len, 'range': range, 'sum': sum, 
                     'min': min, 'max': max, 'int': int, 'float': float, 'str': str, 'bool': bool,
-                    'sorted': sorted, 'zip': zip, 'map': map, 'filter': filter, 'enumerate': enumerate,
-                    'print': print, 'round': round, 'all': all, 'any': any, 'divmod': divmod,
                     'list': list, 'dict': dict, 'set': set, 'tuple': tuple,
-                    
-                    # Safe standard libraries
-                    'math': math,
-                    'random': random,
-                    'itertools': itertools,
-                    'collections': collections,
-                    
-                    # Data Science & Clustering libs
-                    'np': np,
-                    'numpy': np,
-                    'scipy': { 
-                        'spatial': { 'distance': scipy_dist } # Crucial for clustering (cdist, pdist)
-                    },
-                    'sklearn': {
-                        'metrics': sklearn_metrics,      # silhouette_score, etc.
-                        'cluster': sklearn_cluster,      # references to KMeans etc.
-                        'datasets': sklearn_datasets     # make_blobs etc.
-                    },
-                    
-                    # Explicitly block access to dangerous builtins
-                    '__builtins__': {} 
+                    'print': print, 'round': round, 'all': all, 'any': any, 'divmod': divmod,
+                    'sorted': sorted, 'zip': zip, 'map': map, 'filter': filter, 'enumerate': enumerate,
+                    'isinstance': isinstance, 'issubclass': issubclass,
+                }
+                
+                # 3. Execution Context
+                # We still provide pre-imported convenience libs for backward compatibility,
+                # but users can now overwrite them or import new ones.
+                execution_context = {
+                    '__builtins__': safe_builtins,
+                    'np': np,           # Convenience (Legacy)
+                    'math': math,       # Convenience (Legacy)
+                    'random': random,   # Convenience
                 }
                 
                 try:

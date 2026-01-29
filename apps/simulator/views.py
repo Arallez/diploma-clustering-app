@@ -1,7 +1,14 @@
 import json
 import math
 import ast
+import random
+import itertools
+import collections
 import numpy as np
+import scipy.spatial.distance as scipy_dist
+import sklearn.metrics as sklearn_metrics
+import sklearn.cluster as sklearn_cluster
+import sklearn.datasets as sklearn_datasets
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, get_object_or_404
@@ -202,14 +209,34 @@ def check_solution(request):
                     return JsonResponse({'success': False, 'error': security_msg})
 
                 # 2. Restricted Execution Context (Whitelist)
-                # Only these variables are available to the user script
+                # We supply useful Data Science libraries pre-imported
                 execution_context = {
-                    'np': np, 'math': math, 'List': list, 'Dict': dict, 'Set': set, 'Tuple': tuple,
+                    # Built-in basics
                     'abs': abs, 'len': len, 'range': range, 'sum': sum, 
                     'min': min, 'max': max, 'int': int, 'float': float, 'str': str, 'bool': bool,
                     'sorted': sorted, 'zip': zip, 'map': map, 'filter': filter, 'enumerate': enumerate,
                     'print': print, 'round': round, 'all': all, 'any': any, 'divmod': divmod,
-                    # Explicitly block access to 'open', '__import__', etc. by not including them
+                    'list': list, 'dict': dict, 'set': set, 'tuple': tuple,
+                    
+                    # Safe standard libraries
+                    'math': math,
+                    'random': random,
+                    'itertools': itertools,
+                    'collections': collections,
+                    
+                    # Data Science & Clustering libs
+                    'np': np,
+                    'numpy': np,
+                    'scipy': { 
+                        'spatial': { 'distance': scipy_dist } # Crucial for clustering (cdist, pdist)
+                    },
+                    'sklearn': {
+                        'metrics': sklearn_metrics,      # silhouette_score, etc.
+                        'cluster': sklearn_cluster,      # references to KMeans etc.
+                        'datasets': sklearn_datasets     # make_blobs etc.
+                    },
+                    
+                    # Explicitly block access to dangerous builtins
                     '__builtins__': {} 
                 }
                 

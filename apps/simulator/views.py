@@ -4,14 +4,14 @@ import ast
 import random
 import itertools
 import collections
-import sys  # Added for settrace (loop protection)
+import sys
 import numpy as np
 import scipy.spatial.distance as scipy_dist
 import sklearn.metrics as sklearn_metrics
 import sklearn.cluster as sklearn_cluster
 import sklearn.datasets as sklearn_datasets
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
+# from django.views.decorators.csrf import csrf_exempt  <-- Removed
 from django.shortcuts import render, get_object_or_404
 from .models import Task, TaskTag, UserTaskAttempt
 from .algorithms import (
@@ -134,7 +134,7 @@ def challenge_detail(request, slug):
 
 # --- API Endpoints ---
 
-@csrf_exempt
+# @csrf_exempt  <-- Removed, enabling standard Django security
 def get_preset(request):
     """
     Returns points for a selected preset (Blobs, Moons, etc.)
@@ -153,7 +153,7 @@ def get_preset(request):
             
     return JsonResponse({'success': False, 'error': 'Method not allowed'})
 
-@csrf_exempt
+# @csrf_exempt  <-- Removed
 def run_algorithm(request):
     """Unified endpoint for running all clustering algorithms"""
     if request.method == 'POST':
@@ -190,7 +190,7 @@ def run_algorithm(request):
             
     return JsonResponse({'success': False, 'error': 'Method not allowed'})
 
-@csrf_exempt
+# @csrf_exempt  <-- Removed
 def check_solution(request):
     """
     Checks user solution (Code execution or Quiz answer).
@@ -354,13 +354,13 @@ def check_solution(request):
     return JsonResponse({'success': False, 'error': 'Method not allowed'})
 
 # Legacy stubs
-@csrf_exempt
+# @csrf_exempt
 def get_dendrogram(request): return JsonResponse({'success': False})
-@csrf_exempt
+# @csrf_exempt
 def run_kmeans(request): return run_algorithm(request)
-@csrf_exempt
+# @csrf_exempt
 def run_dbscan(request): return run_algorithm(request)
-@csrf_exempt
+# @csrf_exempt
 def run_forel(request): return run_algorithm(request)
-@csrf_exempt
+# @csrf_exempt
 def run_agglomerative(request): return run_algorithm(request)

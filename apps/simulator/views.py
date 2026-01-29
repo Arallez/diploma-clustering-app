@@ -1,19 +1,16 @@
 import json
-import math
-import numpy as np
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, get_object_or_404
 from .models import Task, TaskTag, UserTaskAttempt
+from .services import SolutionValidator
 from .algorithms import (
     kmeans_step, 
     dbscan_step, 
     forel_step, 
     agglomerative_step,
-    compute_dendrogram_data,
     mean_shift_step
 )
-from .presets import generate_preset
 
 # --- Page Views ---
 
@@ -99,106 +96,22 @@ def run_algorithm(request):
 @csrf_exempt
 def check_solution(request):
     """
-    Checks user solution (Code execution or Quiz answer).
+    Checks user solution using SolutionValidator service.
     """
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
             slug = data.get('slug')
-            user_input = data.get('code') # Contains code or selected option(s)
+            user_input = data.get('code') 
             
             task = get_object_or_404(Task, slug=slug)
             
-            is_correct = False
-            result_details = {} # Detailed feedback for quiz
-            error_msg = None
-            
-            # --- HANDLE QUIZ (CHOICE) ---
-            if task.task_type == 'choice':
-                expected = task.expected_output
-                
-                # Normalize types for comparison
-                if isinstance(user_input, list) and isinstance(expected, list):
-                    # Multi-question comparison
-                    # Compare arrays strictly
-                    is_correct = (user_input == expected)
-                    
-                    # Generate detailed feedback (which index is wrong)
-                    # We send back an array of booleans [true, false, true]
-                    correctness_array = []
-                    for i in range(len(expected)):
-                        if i < len(user_input):
-                            is_match = (user_input[i] == expected[i])
-                            correctness_array.append(is_match)
-                        else:
-                            correctness_array.append(False)
-                            
-                    result_details = {'quiz_results': correctness_array}
-                    
-                else:
-                    # Single question comparison
-                    expected_str = str(expected).strip()
-                    submitted_str = str(user_input).strip()
-                    is_correct = (submitted_str == expected_str)
-                
-                if not is_correct:
-                    if isinstance(expected, list):
-                        error_msg = "Некоторые ответы неверны. Проверьте выделенные пункты."
-                    else:
-                        error_msg = f"Выбрано: {user_input}. Попробуйте еще раз."
-
-            # --- HANDLE CODE ---
-            else:
-                # Prepare Context
-                execution_context = {
-                    'np': np, 'math': math, 'List': list, 'Dict': dict,
-                    'abs': abs, 'len': len, 'range': range, 'sum': sum, 
-                    'min': min, 'max': max, 'int': int, 'float': float, 
-                    'sorted': sorted, 'zip': zip, 'map': map, 'filter': filter, 'enumerate': enumerate,
-                }
-                
-                try:
-                    exec(user_input, execution_context)
-                except Exception as e:
-                    return JsonResponse({'success': False, 'error': f'Syntax Error: {e}'})
-                    
-                func_name = task.function_name
-                if func_name not in execution_context:
-                    return JsonResponse({'success': False, 'error': f'Функция {func_name} не найдена.'})
-                    
-                user_func = execution_context[func_name]
-                test_input = task.test_input
-                expected = task.expected_output
-                
-                try:
-                    if isinstance(test_input, dict):
-                        result = user_func(**test_input)
-                    elif isinstance(test_input, list):
-                        try:
-                            result = user_func(*test_input)
-                        except TypeError:
-                            result = user_func(test_input)
-                    else:
-                        result = user_func(test_input)
-                except Exception as e:
-                    return JsonResponse({'success': False, 'error': f'Runtime Error: {e}'})
-                
-                # Compare
-                if isinstance(result, np.ndarray): result = result.tolist()
-                if isinstance(expected, np.ndarray): expected = expected.tolist()
-
-                if isinstance(expected, (list, dict)):
-                    is_correct = (str(result) == str(expected)) 
-                    if not is_correct:
-                        try: is_correct = np.allclose(result, expected, atol=1e-2)
-                        except: pass
-                else:
-                    is_correct = (result == expected)
-                    
-                error_msg = f"Ожидалось: {expected}, Получено: {result}" if not is_correct else None
+            # Delegate logic to Service Layer
+            is_correct, message, error_msg, details = SolutionValidator.validate(task, user_input)
 
             # --- SAVE ATTEMPT ---
             if request.user.is_authenticated:
+                # Store complex inputs as JSON string if needed
                 code_to_save = json.dumps(user_input, ensure_ascii=False) if isinstance(user_input, (list, dict)) else str(user_input)
                 
                 UserTaskAttempt.objects.create(
@@ -215,8 +128,9 @@ def check_solution(request):
             else:
                 response_data['error'] = error_msg
                 
-            # Merge extra details (like per-question results)
-            response_data.update(result_details)
+            # Merge extra details (like quiz results)
+            if details:
+                response_data.update(details)
             
             return JsonResponse(response_data)
                 

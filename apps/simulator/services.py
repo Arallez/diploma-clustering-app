@@ -13,10 +13,14 @@ class SolutionValidator:
     Изолирует логику проверки от HTTP-представлений.
     """
 
-    # Список разрешенных библиотек
+    # Расширенный список разрешенных библиотек для Data Science
     ALLOWED_MODULES = {
-        'math', 'numpy', 'random', 'collections', 
-        'itertools', 'functools', 'datetime', 're', 'copy'
+        # Стандартные
+        'math', 'random', 'collections', 'itertools', 'functools', 
+        'datetime', 're', 'copy', 'operator', 'string',
+        
+        # Научные и ML
+        'numpy', 'scikit-learn', 'sklearn', 'scipy', 'pandas'
     }
 
     @staticmethod
@@ -77,7 +81,7 @@ class SolutionValidator:
                 for alias in node.names:
                     root_module = alias.name.split('.')[0]
                     if root_module not in SolutionValidator.ALLOWED_MODULES:
-                        return False, f"Security Error: Импорт модуля '{root_module}' запрещен. Разрешены: {', '.join(SolutionValidator.ALLOWED_MODULES)}"
+                        return False, f"Security Error: Импорт модуля '{root_module}' запрещен. Разрешены: {', '.join(sorted(SolutionValidator.ALLOWED_MODULES))}"
             
             elif isinstance(node, ast.ImportFrom):
                 if node.module:
@@ -91,9 +95,9 @@ class SolutionValidator:
     def _safe_import(name, globals=None, locals=None, fromlist=(), level=0):
         """
         Безопасная обертка для __import__. 
-        Проверяет модуль еще раз перед загрузкой.
         """
-        if name.split('.')[0] in SolutionValidator.ALLOWED_MODULES:
+        root = name.split('.')[0]
+        if root in SolutionValidator.ALLOWED_MODULES:
             return __import__(name, globals, locals, fromlist, level)
         raise ImportError(f"Security: Import of '{name}' is restricted.")
 
@@ -102,7 +106,7 @@ class SolutionValidator:
         """
         Выполняет код пользователя в безопасном контексте.
         """
-        # 1. Проверка импортов через Белый список (Whitelist)
+        # 1. Проверка импортов через AST
         is_safe, error_msg = SolutionValidator._check_imports(user_code)
         if not is_safe:
             return False, "", error_msg, {}
@@ -114,14 +118,13 @@ class SolutionValidator:
             'list': list, 'dict': dict, 'set': set, 'tuple': tuple, 'bool': bool,
             'sorted': sorted, 'zip': zip, 'map': map, 'filter': filter, 
             'enumerate': enumerate, 'print': print, 'round': round,
-            'pow': pow, 'reversed': reversed, 'divmod': divmod,
-            '__import__': SolutionValidator._safe_import  # <--- CRITICAL FIX
+            'pow': pow, 'reversed': reversed, 'divmod': divmod, 'all': all, 'any': any,
+            '__import__': SolutionValidator._safe_import
         }
         
-        # Разрешаем использование этих модулей внутри exec, если пользователь их импортирует
         execution_context = {
             '__builtins__': safe_builtins,
-            'np': np, # Предоставляем np сразу
+            'np': np,
         }
 
         # 3. Выполнение кода
@@ -141,7 +144,7 @@ class SolutionValidator:
         expected = task.expected_output
         
         try:
-            # Smart call (args vs kwargs)
+            # Smart call logic
             if isinstance(test_input, dict) and not isinstance(test_input, list): 
                 try:
                     result = user_func(**test_input)
@@ -157,7 +160,7 @@ class SolutionValidator:
         except Exception as e:
             return False, "", f"Ошибка при вызове функции: {e}", {}
 
-        # Приведение типов
+        # Приведение типов для сравнения
         if hasattr(result, 'tolist'): result = result.tolist()
         if hasattr(expected, 'tolist'): expected = expected.tolist()
 

@@ -1,5 +1,6 @@
 import json
 import math
+import ast
 import numpy as np
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -14,6 +15,33 @@ from .algorithms import (
     mean_shift_step
 )
 from .presets import generate_preset
+
+# --- Security Helper ---
+def is_safe_code(code_str):
+    """
+    Static analysis of user code to prevent dangerous operations.
+    Returns (True, "") or (False, error_message).
+    """
+    try:
+        tree = ast.parse(code_str)
+    except SyntaxError as e:
+        return False, f"Syntax Error: {e}"
+
+    for node in ast.walk(tree):
+        # 1. Ban direct imports (users must use provided 'np', 'math')
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            return False, "Security Error: Direct imports are not allowed. Use pre-imported libraries (np, math)."
+        
+        # 2. Ban accessing private attributes (starting with _)
+        if isinstance(node, ast.Attribute) and node.attr.startswith('_'):
+             return False, "Security Error: Access to private attributes (starting with _) is forbidden."
+             
+        # 3. Ban 'exec', 'eval', 'open' calls if they managed to sneak in
+        if isinstance(node, ast.Call):
+            if isinstance(node.func, ast.Name) and node.func.id in ['exec', 'eval', 'open', 'help', 'exit', 'quit']:
+                return False, f"Security Error: Function '{node.func.id}' is forbidden."
+
+    return True, ""
 
 # --- Page Views ---
 
@@ -168,22 +196,31 @@ def check_solution(request):
 
             # --- HANDLE CODE ---
             else:
-                # Prepare Context
+                # 1. Static Analysis Check
+                is_safe, security_msg = is_safe_code(user_input)
+                if not is_safe:
+                    return JsonResponse({'success': False, 'error': security_msg})
+
+                # 2. Restricted Execution Context (Whitelist)
+                # Only these variables are available to the user script
                 execution_context = {
-                    'np': np, 'math': math, 'List': list, 'Dict': dict,
+                    'np': np, 'math': math, 'List': list, 'Dict': dict, 'Set': set, 'Tuple': tuple,
                     'abs': abs, 'len': len, 'range': range, 'sum': sum, 
-                    'min': min, 'max': max, 'int': int, 'float': float, 
+                    'min': min, 'max': max, 'int': int, 'float': float, 'str': str, 'bool': bool,
                     'sorted': sorted, 'zip': zip, 'map': map, 'filter': filter, 'enumerate': enumerate,
+                    'print': print, 'round': round, 'all': all, 'any': any, 'divmod': divmod,
+                    # Explicitly block access to 'open', '__import__', etc. by not including them
+                    '__builtins__': {} 
                 }
                 
                 try:
                     exec(user_input, execution_context)
                 except Exception as e:
-                    return JsonResponse({'success': False, 'error': f'Syntax Error: {e}'})
+                    return JsonResponse({'success': False, 'error': f'Syntax/Runtime Error: {e}'})
                     
                 func_name = task.function_name
                 if func_name not in execution_context:
-                    return JsonResponse({'success': False, 'error': f'Функция {func_name} не найдена.'})
+                    return JsonResponse({'success': False, 'error': f'Функция {func_name} не найдена. Проверьте имя функции.'})
                     
                 user_func = execution_context[func_name]
                 test_input = task.test_input
@@ -200,7 +237,7 @@ def check_solution(request):
                     else:
                         result = user_func(test_input)
                 except Exception as e:
-                    return JsonResponse({'success': False, 'error': f'Runtime Error: {e}'})
+                    return JsonResponse({'success': False, 'error': f'Function Call Error: {e}'})
                 
                 # Compare
                 if isinstance(result, np.ndarray): result = result.tolist()

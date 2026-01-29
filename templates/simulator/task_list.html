@@ -7,61 +7,27 @@
     <h1 class="page-title">📚 Практические Задачи</h1>
     <p class="page-subtitle">Научитесь писать алгоритмы кластеризации с нуля на Python</p>
 
-    <!-- Loop through Categories -->
-    {% for category in categories %}
-    <div class="algorithm-section">
-        <h2 class="algo-title">{{ category.title }}</h2>
-        <div class="task-grid">
-            {% for task in category.tasks.all %}
-            <a href="{% url 'simulator:challenge_detail' task.slug %}" class="task-card">
-                <div class="task-header">
-                    <span class="difficulty-badge level-{{ task.difficulty }}">
-                        {% if task.difficulty == 1 %}⭐ Novice
-                        {% elif task.difficulty == 2 %}⭐⭐ Beginner
-                        {% else %}⭐⭐⭐ Hard{% endif %}
-                    </span>
-                    <span class="task-order">#{{ task.order }}</span>
-                </div>
-                <h3 class="task-title">{{ task.title }}</h3>
-                <div class="task-meta">
-                    <span class="algo-tag">{{ task.get_algorithm_display }}</span>
-                </div>
-            </a>
-            {% endfor %}
+    <div class="task-grid">
+        {% for task in tasks %}
+        <a href="{% url 'simulator:challenge_detail' task.slug %}" class="task-card">
+            <div class="task-header">
+                <span class="difficulty-badge level-{{ task.difficulty }}">
+                    {% if task.difficulty == 1 %}⭐ Novice
+                    {% elif task.difficulty == 2 %}⭐⭐ Beginner
+                    {% else %}⭐⭐⭐ Hard{% endif %}
+                </span>
+                <span class="task-order">#{{ task.order }}</span>
+            </div>
+            <h3 class="task-title">{{ task.title }}</h3>
+            <div class="task-meta">
+                <span class="algo-tag">{{ task.get_algorithm_display }}</span>
+            </div>
+        </a>
+        {% empty %}
+        <div class="empty-state">
+            <p>Задач пока нет.</p>
         </div>
+        {% endfor %}
     </div>
-    {% endfor %}
-
-    <!-- Uncategorized Tasks (Fallback) -->
-    {% if uncategorized_tasks %}
-    <div class="algorithm-section">
-        <h2 class="algo-title">🔹 Разное / Без категории</h2>
-        <div class="task-grid">
-            {% for task in uncategorized_tasks %}
-            <a href="{% url 'simulator:challenge_detail' task.slug %}" class="task-card">
-                <div class="task-header">
-                    <span class="difficulty-badge level-{{ task.difficulty }}">
-                        {% if task.difficulty == 1 %}⭐ Novice
-                        {% elif task.difficulty == 2 %}⭐⭐ Beginner
-                        {% else %}⭐⭐⭐ Hard{% endif %}
-                    </span>
-                    <span class="task-order">#{{ task.order }}</span>
-                </div>
-                <h3 class="task-title">{{ task.title }}</h3>
-                <div class="task-meta">
-                    <span class="algo-tag">{{ task.get_algorithm_display }}</span>
-                </div>
-            </a>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
-
-    {% if not categories and not uncategorized_tasks %}
-    <div class="empty-state">
-        <p>Задач пока нет. Загляните позже!</p>
-    </div>
-    {% endif %}
-
 </div>
 {% endblock %}

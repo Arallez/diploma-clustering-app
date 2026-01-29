@@ -5,14 +5,17 @@ app_name = 'simulator'
 
 urlpatterns = [
     # Pages
-    path('', views.index, name='index'), # Renamed back to index
+    path('', views.index, name='index'),
     path('tasks/', views.task_list, name='task_list'),
     path('challenge/<slug:slug>/', views.challenge_detail, name='challenge_detail'),
     
     # Unified API endpoint
     path('run/', views.run_algorithm, name='run_algorithm'),
     
-    # Legacy/Individual API endpoints (for backward compatibility)
+    # Task Checking API (Restoring this!)
+    path('api/check-solution/', views.check_solution, name='check_solution'),
+
+    # Legacy/Individual API endpoints
     path('api/run-kmeans/', views.run_kmeans, name='run_kmeans'),
     path('api/run-dbscan/', views.run_dbscan, name='run_dbscan'),
     path('api/run-forel/', views.run_forel, name='run_forel'),

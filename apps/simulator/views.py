@@ -24,10 +24,7 @@ def index(request):
 def task_list(request):
     """List of educational tasks grouped by Tag/Block"""
     tags = TaskTag.objects.prefetch_related('tasks').order_by('order')
-    
-    # Also fetch tasks without tags if any
     uncategorized = Task.objects.filter(tags__isnull=True).order_by('order')
-    
     return render(request, 'simulator/task_list.html', {
         'tags': tags,
         'uncategorized': uncategorized
@@ -83,8 +80,6 @@ def run_algorithm(request):
                 
             return JsonResponse({'success': True, 'history': history})
         except Exception as e:
-            import traceback
-            traceback.print_exc()
             return JsonResponse({'success': False, 'error': str(e)})
             
     return JsonResponse({'success': False, 'error': 'Method not allowed'})
@@ -92,97 +87,97 @@ def run_algorithm(request):
 @csrf_exempt
 def check_solution(request):
     """
-    Checks user solution by running it against test data.
+    Checks user solution (Code execution or Quiz answer).
     """
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
             slug = data.get('slug')
-            user_code = data.get('code')
+            user_input = data.get('code') # Contains code or selected option
             
             task = get_object_or_404(Task, slug=slug)
             
-            # Prepare Execution Context (Globals)
-            execution_context = {
-                'np': np,
-                'math': math,
-                'List': list,
-                'Dict': dict,
-                'abs': abs,
-                'len': len,
-                'range': range,
-                'sum': sum,
-                'min': min,
-                'max': max,
-                'int': int,
-                'float': float,
-                'sorted': sorted,
-                'zip': zip,
-                'map': map,
-                'filter': filter,
-                'enumerate': enumerate,
-            }
-            
-            try:
-                exec(user_code, execution_context)
-            except Exception as e:
-                return JsonResponse({'success': False, 'error': f'Syntax Error: {e}'})
-                
-            func_name = task.function_name
-            if func_name not in execution_context:
-                return JsonResponse({'success': False, 'error': f'Функция {func_name} не найдена. Не меняйте название!'})
-                
-            user_func = execution_context[func_name]
-            
-            test_input = task.test_input
-            expected = task.expected_output
-            
-            try:
-                if isinstance(test_input, dict):
-                    result = user_func(**test_input)
-                elif isinstance(test_input, list):
-                    try:
-                        result = user_func(*test_input)
-                    except TypeError:
-                        result = user_func(test_input)
-                else:
-                    result = user_func(test_input)
-            except Exception as e:
-                return JsonResponse({'success': False, 'error': f'Runtime Error: {e}'})
-                
             is_correct = False
+            result_message = ""
             
-            if isinstance(result, np.ndarray):
-                result = result.tolist()
-            if isinstance(expected, np.ndarray):
-                expected = expected.tolist()
-
-            if isinstance(expected, (list, dict)):
-                is_correct = (str(result) == str(expected)) 
-                if not is_correct:
-                    try:
-                         is_correct = np.allclose(result, expected, atol=1e-2)
-                    except:
-                        pass
-            else:
-                is_correct = (result == expected)
+            # --- HANDLE QUIZ (CHOICE) ---
+            if task.task_type == 'choice':
+                expected = str(task.expected_output).strip()
+                submitted = str(user_input).strip()
                 
+                is_correct = (submitted == expected)
+                result_message = submitted
+                
+                if not is_correct:
+                    error_msg = f"Выбрано: {submitted}. Попробуйте еще раз."
+                else:
+                    error_msg = None
+
+            # --- HANDLE CODE ---
+            else:
+                # Prepare Context
+                execution_context = {
+                    'np': np, 'math': math, 'List': list, 'Dict': dict,
+                    'abs': abs, 'len': len, 'range': range, 'sum': sum, 
+                    'min': min, 'max': max, 'int': int, 'float': float, 
+                    'sorted': sorted, 'zip': zip, 'map': map, 'filter': filter, 'enumerate': enumerate,
+                }
+                
+                try:
+                    exec(user_input, execution_context)
+                except Exception as e:
+                    return JsonResponse({'success': False, 'error': f'Syntax Error: {e}'})
+                    
+                func_name = task.function_name
+                if func_name not in execution_context:
+                    return JsonResponse({'success': False, 'error': f'Функция {func_name} не найдена.'})
+                    
+                user_func = execution_context[func_name]
+                test_input = task.test_input
+                expected = task.expected_output
+                
+                try:
+                    if isinstance(test_input, dict):
+                        result = user_func(**test_input)
+                    elif isinstance(test_input, list):
+                        try:
+                            result = user_func(*test_input)
+                        except TypeError:
+                            result = user_func(test_input)
+                    else:
+                        result = user_func(test_input)
+                except Exception as e:
+                    return JsonResponse({'success': False, 'error': f'Runtime Error: {e}'})
+                
+                # Compare
+                if isinstance(result, np.ndarray): result = result.tolist()
+                if isinstance(expected, np.ndarray): expected = expected.tolist()
+
+                if isinstance(expected, (list, dict)):
+                    is_correct = (str(result) == str(expected)) 
+                    if not is_correct:
+                        try: is_correct = np.allclose(result, expected, atol=1e-2)
+                        except: pass
+                else:
+                    is_correct = (result == expected)
+                    
+                result_message = str(result)
+                error_msg = f"Ожидалось: {expected}, Получено: {result}" if not is_correct else None
+
+            # --- SAVE ATTEMPT ---
             if request.user.is_authenticated:
                 UserTaskAttempt.objects.create(
                     user=request.user,
                     task=task,
-                    code=user_code,
+                    code=user_input,
                     is_correct=is_correct,
-                    error_message=None if is_correct else f"Expected {expected}, got {result}"
+                    error_message=error_msg
                 )
                 
             if is_correct:
-                return JsonResponse({'success': True, 'message': f'Тест пройден! Ответ: {result}'})
+                return JsonResponse({'success': True, 'message': 'Правильно!'})
             else:
-                return JsonResponse({
-                    'success': False, 
-                    'error': f'Неверный ответ. Ожидалось: {expected}, Получено: {result}'
-                })
+                return JsonResponse({'success': False, 'error': error_msg})
                 
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
@@ -191,37 +186,9 @@ def check_solution(request):
 
 # Legacy stubs
 @csrf_exempt
-def get_preset(request):
-    if request.method == 'GET':
-        name = request.GET.get('name')
-        n_samples = int(request.GET.get('samples', 100))
-        try:
-            points = generate_preset(name, n_samples)
-            return JsonResponse({'success': True, 'points': points})
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})
-    return JsonResponse({'success': False, 'error': 'Method not allowed'})
-
+def get_preset(request): return JsonResponse({'success': False})
 @csrf_exempt
-def get_dendrogram(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            points = data.get('points', [])
-            dendro_data = compute_dendrogram_data(points)
-            return JsonResponse({
-                'success': True, 
-                'dendrogram': {
-                    'icoord': dendro_data['icoord'],
-                    'dcoord': dendro_data['dcoord'],
-                    'ivl': dendro_data['ivl'],
-                    'leaves': dendro_data['leaves']
-                }
-            })
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})
-    return JsonResponse({'success': False, 'error': 'Method not allowed'})
-
+def get_dendrogram(request): return JsonResponse({'success': False})
 @csrf_exempt
 def run_kmeans(request): return run_algorithm(request)
 @csrf_exempt

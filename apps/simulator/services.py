@@ -16,7 +16,7 @@ class SolutionValidator:
     # Список разрешенных библиотек
     ALLOWED_MODULES = {
         'math', 'numpy', 'random', 'collections', 
-        'itertools', 'functools', 'datetime', 're'
+        'itertools', 'functools', 'datetime', 're', 'copy'
     }
 
     @staticmethod
@@ -73,15 +73,12 @@ class SolutionValidator:
             return False, f"Синтаксическая ошибка: {e.msg} (line {e.lineno})"
 
         for node in ast.walk(tree):
-            # Проверка 'import x'
             if isinstance(node, ast.Import):
                 for alias in node.names:
-                    # Берем корневой модуль (например, из 'os.path' берем 'os')
                     root_module = alias.name.split('.')[0]
                     if root_module not in SolutionValidator.ALLOWED_MODULES:
                         return False, f"Security Error: Импорт модуля '{root_module}' запрещен. Разрешены: {', '.join(SolutionValidator.ALLOWED_MODULES)}"
             
-            # Проверка 'from x import y'
             elif isinstance(node, ast.ImportFrom):
                 if node.module:
                     root_module = node.module.split('.')[0]
@@ -89,6 +86,16 @@ class SolutionValidator:
                          return False, f"Security Error: Импорт из модуля '{root_module}' запрещен."
         
         return True, ""
+
+    @staticmethod
+    def _safe_import(name, globals=None, locals=None, fromlist=(), level=0):
+        """
+        Безопасная обертка для __import__. 
+        Проверяет модуль еще раз перед загрузкой.
+        """
+        if name.split('.')[0] in SolutionValidator.ALLOWED_MODULES:
+            return __import__(name, globals, locals, fromlist, level)
+        raise ImportError(f"Security: Import of '{name}' is restricted.")
 
     @staticmethod
     def _validate_code(task, user_code):
@@ -107,13 +114,14 @@ class SolutionValidator:
             'list': list, 'dict': dict, 'set': set, 'tuple': tuple, 'bool': bool,
             'sorted': sorted, 'zip': zip, 'map': map, 'filter': filter, 
             'enumerate': enumerate, 'print': print, 'round': round,
-            'pow': pow, 'reversed': reversed
+            'pow': pow, 'reversed': reversed, 'divmod': divmod,
+            '__import__': SolutionValidator._safe_import  # <--- CRITICAL FIX
         }
         
         # Разрешаем использование этих модулей внутри exec, если пользователь их импортирует
         execution_context = {
             '__builtins__': safe_builtins,
-            'np': np, # Предоставляем np сразу для удобства, даже если нет импорта
+            'np': np, # Предоставляем np сразу
         }
 
         # 3. Выполнение кода
@@ -122,7 +130,7 @@ class SolutionValidator:
         except Exception as e:
             return False, "", f"Runtime Error: {e}", {}
 
-        # 4. Поиск функции и проверка (остальная логика без изменений)
+        # 4. Поиск функции и проверка
         func_name = task.function_name
         if func_name not in execution_context:
             return False, "", f"Функция '{func_name}' не найдена.", {}
@@ -135,9 +143,6 @@ class SolutionValidator:
         try:
             # Smart call (args vs kwargs)
             if isinstance(test_input, dict) and not isinstance(test_input, list): 
-                # Простая эвристика: если это dict, но задача не ждет dict как аргумент, 
-                # то разворачиваем как kwargs.
-                # (В идеале можно анализировать сигнатуру функции, но для MVP хватит try-except)
                 try:
                     result = user_func(**test_input)
                 except TypeError:
@@ -152,7 +157,7 @@ class SolutionValidator:
         except Exception as e:
             return False, "", f"Ошибка при вызове функции: {e}", {}
 
-        # Приведение типов для numpy
+        # Приведение типов
         if hasattr(result, 'tolist'): result = result.tolist()
         if hasattr(expected, 'tolist'): expected = expected.tolist()
 
@@ -161,7 +166,6 @@ class SolutionValidator:
             is_correct = True
         else:
             try:
-                # Мягкое сравнение для чисел
                 if isinstance(expected, (int, float)) and isinstance(result, (int, float)):
                     is_correct = math.isclose(result, expected, rel_tol=1e-2)
                 elif isinstance(expected, list) and isinstance(result, list):

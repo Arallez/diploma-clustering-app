@@ -1,202 +1,87 @@
-import math
-import json
 import ast
-import numpy as np
-import random
-import collections
-import itertools
-import functools
+import sys
 
-# Try to import timeout protection, fallback if missing
-try:
-    from func_timeout import func_timeout, FunctionTimedOut
-    HAS_TIMEOUT_LIB = True
-except ImportError:
-    HAS_TIMEOUT_LIB = False
-    print("Warning: 'func_timeout' library not found. Code execution timeout protection is DISABLED.")
+# --- Security Configuration ---
 
-class SolutionValidator:
+WHITELISTED_MODULES = {
+    'math', 'random', 'itertools', 'collections', 'heapq', 'bisect', 'copy',
+    'numpy', 'scipy', 'sklearn', 'pandas', 'matplotlib' 
+}
+
+# --- Loop Protection ---
+
+class TimeLimitException(Exception):
+    pass
+
+def create_tracer(max_instructions=200000):
     """
-    Сервис для проверки решений пользователей.
-    Изолирует логику проверки от HTTP-представлений.
+    Creates a trace function that counts executed lines.
+    If the count exceeds max_instructions, it raises TimeLimitException.
+    This prevents 'while True' loops from freezing the server.
     """
+    count = 0
+    def tracer(frame, event, arg):
+        nonlocal count
+        if event == 'line':
+            count += 1
+            if count > max_instructions:
+                raise TimeLimitException("Time Limit Exceeded: Infinite loop detected or code is too slow.")
+        return tracer
+    return tracer
 
-    # Расширенный список разрешенных библиотек для Data Science
-    ALLOWED_MODULES = {
-        # Стандартные
-        'math', 'random', 'collections', 'itertools', 'functools', 
-        'datetime', 're', 'copy', 'operator', 'string',
+# --- Static Analysis ---
+
+def is_safe_code(code_str):
+    """
+    Static analysis:
+    1. Checks syntax.
+    2. Allows only specific imports (Whitelist).
+    3. Blocks dangerous functions (exec, eval, open).
+    4. Blocks private attributes (_attr).
+    """
+    try:
+        tree = ast.parse(code_str)
+    except SyntaxError as e:
+        return False, f"Syntax Error: {e}"
+
+    for node in ast.walk(tree):
+        # 1. Validate Imports
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                base_module = alias.name.split('.')[0]
+                if base_module not in WHITELISTED_MODULES:
+                    return False, f"Security Error: Import of '{base_module}' is forbidden. Allowed: {', '.join(sorted(WHITELISTED_MODULES))}"
         
-        # Научные и ML
-        'numpy', 'scikit-learn', 'sklearn', 'scipy', 'pandas'
+        if isinstance(node, ast.ImportFrom):
+            if node.module:
+                base_module = node.module.split('.')[0]
+                if base_module not in WHITELISTED_MODULES:
+                    return False, f"Security Error: Import from '{base_module}' is forbidden."
+        
+        # 2. Ban accessing private attributes (starting with _)
+        if isinstance(node, ast.Attribute) and node.attr.startswith('_'):
+             return False, "Security Error: Access to private attributes (starting with _) is forbidden."
+             
+        # 3. Ban dangerous calls
+        if isinstance(node, ast.Call):
+            if isinstance(node.func, ast.Name) and node.func.id in ['exec', 'eval', 'open', 'help', 'exit', 'quit', 'compile', 'globals', 'locals', 'vars']:
+                return False, f"Security Error: Function '{node.func.id}' is forbidden."
+
+    return True, ""
+
+# --- Execution Helpers ---
+
+def get_safe_builtins():
+    """
+    Returns a dictionary of allowed built-in functions.
+    Crucially, it includes __import__ to allow safe imports from the whitelist.
+    """
+    return {
+        '__import__': __import__, # Allows 'import numpy' to work (protected by is_safe_code)
+        'abs': abs, 'len': len, 'range': range, 'sum': sum, 
+        'min': min, 'max': max, 'int': int, 'float': float, 'str': str, 'bool': bool,
+        'list': list, 'dict': dict, 'set': set, 'tuple': tuple,
+        'print': print, 'round': round, 'all': all, 'any': any, 'divmod': divmod,
+        'sorted': sorted, 'zip': zip, 'map': map, 'filter': filter, 'enumerate': enumerate,
+        'isinstance': isinstance, 'issubclass': issubclass,
     }
-
-    @staticmethod
-    def validate(task, user_input):
-        """
-        Главный метод. Определяет тип задачи и вызывает нужный валидатор.
-        """
-        if task.task_type == 'choice':
-            return SolutionValidator._validate_quiz(task, user_input)
-        else:
-            return SolutionValidator._validate_code(task, user_input)
-
-    @staticmethod
-    def _validate_quiz(task, user_input):
-        expected = task.expected_output
-        is_correct = False
-        message = ""
-        error_msg = None
-        details = {}
-
-        if isinstance(user_input, list) and isinstance(expected, list):
-            is_correct = (user_input == expected)
-            message = "Ответы приняты"
-            
-            correctness_array = []
-            for i in range(len(expected)):
-                if i < len(user_input):
-                    correctness_array.append(user_input[i] == expected[i])
-                else:
-                    correctness_array.append(False)
-            details = {'quiz_results': correctness_array}
-            
-            if not is_correct:
-                error_msg = "Некоторые ответы неверны."
-        else:
-            expected_str = str(expected).strip()
-            submitted_str = str(user_input).strip()
-            is_correct = (submitted_str == expected_str)
-            message = submitted_str
-            
-            if not is_correct:
-                error_msg = f"Выбрано: {user_input}. Попробуйте еще раз."
-
-        return is_correct, message, error_msg, details
-
-    @staticmethod
-    def _check_imports(user_code):
-        """
-        Проверяет код на наличие запрещенных импортов через AST.
-        """
-        try:
-            tree = ast.parse(user_code)
-        except SyntaxError as e:
-            return False, f"Синтаксическая ошибка: {e.msg} (line {e.lineno})"
-
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Import):
-                for alias in node.names:
-                    root_module = alias.name.split('.')[0]
-                    if root_module not in SolutionValidator.ALLOWED_MODULES:
-                        return False, f"Security Error: Импорт модуля '{root_module}' запрещен. Разрешены: {', '.join(sorted(SolutionValidator.ALLOWED_MODULES))}"
-            
-            elif isinstance(node, ast.ImportFrom):
-                if node.module:
-                    root_module = node.module.split('.')[0]
-                    if root_module not in SolutionValidator.ALLOWED_MODULES:
-                         return False, f"Security Error: Импорт из модуля '{root_module}' запрещен."
-        
-        return True, ""
-
-    @staticmethod
-    def _safe_import(name, globals=None, locals=None, fromlist=(), level=0):
-        """
-        Безопасная обертка для __import__. 
-        """
-        root = name.split('.')[0]
-        if root in SolutionValidator.ALLOWED_MODULES:
-            return __import__(name, globals, locals, fromlist, level)
-        raise ImportError(f"Security: Import of '{name}' is restricted.")
-
-    @staticmethod
-    def _validate_code(task, user_code):
-        """
-        Выполняет код пользователя в безопасном контексте с тайм-аутом.
-        """
-        # 1. Проверка импортов через AST
-        is_safe, error_msg = SolutionValidator._check_imports(user_code)
-        if not is_safe:
-            return False, "", error_msg, {}
-
-        # 2. Подготовка песочницы
-        safe_builtins = {
-            'abs': abs, 'len': len, 'range': range, 'sum': sum, 
-            'min': min, 'max': max, 'int': int, 'float': float, 'str': str,
-            'list': list, 'dict': dict, 'set': set, 'tuple': tuple, 'bool': bool,
-            'sorted': sorted, 'zip': zip, 'map': map, 'filter': filter, 
-            'enumerate': enumerate, 'print': print, 'round': round,
-            'pow': pow, 'reversed': reversed, 'divmod': divmod, 'all': all, 'any': any,
-            '__import__': SolutionValidator._safe_import
-        }
-        
-        execution_context = {
-            '__builtins__': safe_builtins,
-            'np': np,
-        }
-
-        # 3. Выполнение кода с защитой от бесконечных циклов (Timeout)
-        try:
-            def run_user_code():
-                exec(user_code, execution_context)
-            
-            # Если библиотека установлена - используем защиту, если нет - просто запускаем
-            if HAS_TIMEOUT_LIB:
-                func_timeout(3.0, run_user_code)
-            else:
-                run_user_code()
-            
-        except NameError: 
-             return False, "", "Timeout Error (Lib Missing): Execution failed.", {}
-        except Exception as e:
-            if HAS_TIMEOUT_LIB and type(e).__name__ == 'FunctionTimedOut':
-                return False, "", "Timeout Error: Выполнение кода заняло слишком много времени ( > 3с ). Проверьте бесконечные циклы.", {}
-            return False, "", f"Runtime Error: {e}", {}
-
-        # 4. Поиск функции и проверка
-        func_name = task.function_name
-        if func_name not in execution_context:
-            return False, "", f"Функция '{func_name}' не найдена.", {}
-
-        user_func = execution_context[func_name]
-        
-        test_input = task.test_input
-        expected = task.expected_output
-        
-        try:
-            # Smart call logic
-            if isinstance(test_input, dict) and not isinstance(test_input, list): 
-                try:
-                    result = user_func(**test_input)
-                except TypeError:
-                    result = user_func(test_input)
-            elif isinstance(test_input, list):
-                try:
-                    result = user_func(*test_input)
-                except TypeError:
-                    result = user_func(test_input)
-            else:
-                result = user_func(test_input)
-        except Exception as e:
-            return False, "", f"Ошибка при вызове функции: {e}", {}
-
-        # Приведение типов для сравнения
-        if hasattr(result, 'tolist'): result = result.tolist()
-        if hasattr(expected, 'tolist'): expected = expected.tolist()
-
-        is_correct = False
-        if str(result) == str(expected):
-            is_correct = True
-        else:
-            try:
-                if isinstance(expected, (int, float)) and isinstance(result, (int, float)):
-                    is_correct = math.isclose(result, expected, rel_tol=1e-2)
-                elif isinstance(expected, list) and isinstance(result, list):
-                    is_correct = np.allclose(result, expected, atol=1e-2)
-            except:
-                pass
-
-        message = str(result)
-        error_msg = None if is_correct else f"Ожидалось: {expected}, Получено: {result}"
-
-        return is_correct, message, error_msg, {}

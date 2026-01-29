@@ -1,7 +1,7 @@
 import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from .algorithms import (
     kmeans_step, 
     dbscan_step, 
@@ -12,11 +12,26 @@ from .algorithms import (
 )
 from .presets import generate_preset
 
-def index(request):
+# --- Page Views ---
+
+def simulator_index(request):
+    """Main simulator page"""
     return render(request, 'simulator/index.html')
+
+def task_list(request):
+    """List of educational tasks (Placeholder restored)"""
+    # In a real app, this would fetch tasks from DB
+    return render(request, 'simulator/task_list.html', {'tasks': []})
+
+def challenge_detail(request, slug):
+    """Specific challenge page (Placeholder restored)"""
+    return render(request, 'simulator/challenge_detail.html', {'slug': slug})
+
+# --- API Endpoints ---
 
 @csrf_exempt
 def run_algorithm(request):
+    """Unified endpoint for running all clustering algorithms"""
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
@@ -43,7 +58,7 @@ def run_algorithm(request):
                 bandwidth = float(params.get('bandwidth', 1.0))
                 history = mean_shift_step(points, bandwidth)
             else:
-                return JsonResponse({'success': False, 'error': 'Unknown algorithm'})
+                return JsonResponse({'success': False, 'error': f'Unknown algorithm: {algo}'})
                 
             return JsonResponse({'success': True, 'history': history})
         except Exception as e:
@@ -52,6 +67,10 @@ def run_algorithm(request):
             return JsonResponse({'success': False, 'error': str(e)})
             
     return JsonResponse({'success': False, 'error': 'Method not allowed'})
+
+# Individual legacy endpoints (mapped to unified runner logic or kept for backward compatibility if needed)
+# Since we are updating urls.py next, we can skip individual views if we map them there, 
+# but better to have `run_algorithm` handle everything.
 
 @csrf_exempt
 def get_preset(request):
@@ -87,3 +106,15 @@ def get_dendrogram(request):
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
     return JsonResponse({'success': False, 'error': 'Method not allowed'})
+
+# Legacy stubs to satisfy old urls.py until we update it
+@csrf_exempt
+def run_kmeans(request): return run_algorithm(request)
+@csrf_exempt
+def run_dbscan(request): return run_algorithm(request)
+@csrf_exempt
+def run_forel(request): return run_algorithm(request)
+@csrf_exempt
+def run_agglomerative(request): return run_algorithm(request)
+@csrf_exempt
+def check_solution(request): return JsonResponse({'success': False, 'error': 'Not implemented'})

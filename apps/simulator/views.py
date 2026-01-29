@@ -25,9 +25,21 @@ def task_list(request):
     """List of educational tasks grouped by Tag/Block"""
     tags = TaskTag.objects.prefetch_related('tasks').order_by('order')
     uncategorized = Task.objects.filter(tags__isnull=True).order_by('order')
+    
+    # Get completed task IDs for the current user
+    completed_task_ids = set()
+    if request.user.is_authenticated:
+        completed_task_ids = set(
+            UserTaskAttempt.objects.filter(
+                user=request.user, 
+                is_correct=True
+            ).values_list('task_id', flat=True)
+        )
+    
     return render(request, 'simulator/task_list.html', {
         'tags': tags,
-        'uncategorized': uncategorized
+        'uncategorized': uncategorized,
+        'completed_task_ids': completed_task_ids
     })
 
 def challenge_detail(request, slug):
@@ -98,7 +110,8 @@ def check_solution(request):
             task = get_object_or_404(Task, slug=slug)
             
             is_correct = False
-            result_message = ""
+            result_details = {} # Detailed feedback for quiz
+            error_msg = None
             
             # --- HANDLE QUIZ (CHOICE) ---
             if task.task_type == 'choice':
@@ -107,23 +120,32 @@ def check_solution(request):
                 # Normalize types for comparison
                 if isinstance(user_input, list) and isinstance(expected, list):
                     # Multi-question comparison
+                    # Compare arrays strictly
                     is_correct = (user_input == expected)
-                    result_message = "Ответы приняты"
+                    
+                    # Generate detailed feedback (which index is wrong)
+                    # We send back an array of booleans [true, false, true]
+                    correctness_array = []
+                    for i in range(len(expected)):
+                        if i < len(user_input):
+                            is_match = (user_input[i] == expected[i])
+                            correctness_array.append(is_match)
+                        else:
+                            correctness_array.append(False)
+                            
+                    result_details = {'quiz_results': correctness_array}
+                    
                 else:
                     # Single question comparison
                     expected_str = str(expected).strip()
                     submitted_str = str(user_input).strip()
                     is_correct = (submitted_str == expected_str)
-                    result_message = submitted_str
                 
                 if not is_correct:
                     if isinstance(expected, list):
-                        # Simple error for multi-quiz
-                        error_msg = f"Некоторые ответы неверны. Попробуйте снова."
+                        error_msg = "Некоторые ответы неверны. Проверьте выделенные пункты."
                     else:
                         error_msg = f"Выбрано: {user_input}. Попробуйте еще раз."
-                else:
-                    error_msg = None
 
             # --- HANDLE CODE ---
             else:
@@ -173,12 +195,10 @@ def check_solution(request):
                 else:
                     is_correct = (result == expected)
                     
-                result_message = str(result)
                 error_msg = f"Ожидалось: {expected}, Получено: {result}" if not is_correct else None
 
             # --- SAVE ATTEMPT ---
             if request.user.is_authenticated:
-                # Store complex inputs as JSON string if needed
                 code_to_save = json.dumps(user_input, ensure_ascii=False) if isinstance(user_input, (list, dict)) else str(user_input)
                 
                 UserTaskAttempt.objects.create(
@@ -188,11 +208,17 @@ def check_solution(request):
                     is_correct=is_correct,
                     error_message=error_msg
                 )
-                
+            
+            response_data = {'success': is_correct}
             if is_correct:
-                return JsonResponse({'success': True, 'message': 'Правильно!'})
+                response_data['message'] = 'Правильно!'
             else:
-                return JsonResponse({'success': False, 'error': error_msg})
+                response_data['error'] = error_msg
+                
+            # Merge extra details (like per-question results)
+            response_data.update(result_details)
+            
+            return JsonResponse(response_data)
                 
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})

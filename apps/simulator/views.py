@@ -102,6 +102,7 @@ def check_solution(request):
                 'Dict': dict
             }
             
+            # 1. Execute User Code
             try:
                 exec(user_code, {}, local_scope)
             except Exception as e:
@@ -113,24 +114,49 @@ def check_solution(request):
                 
             user_func = local_scope[func_name]
             
+            # 2. Prepare Inputs
             test_input = task.test_input
             expected = task.expected_output
             
+            # 3. Smart Execution (Handle unpacking vs single arg)
             try:
                 if isinstance(test_input, dict):
+                    # Keyword arguments
                     result = user_func(**test_input)
                 elif isinstance(test_input, list):
-                    result = user_func(*test_input)
+                    # Try unpacking first (*args)
+                    try:
+                        result = user_func(*test_input)
+                    except TypeError:
+                        # Fallback: Pass the list as a single argument
+                        # This catches cases where input is [[0,0], [1,1]] and func expects points_list
+                        result = user_func(test_input)
                 else:
                     result = user_func(test_input)
             except Exception as e:
                 return JsonResponse({'success': False, 'error': f'Runtime Error: {e}'})
                 
+            # 4. Compare Results
             is_correct = False
+            
+            # Normalize results for comparison (numpy arrays to lists)
+            if isinstance(result, np.ndarray):
+                result = result.tolist()
+            if isinstance(expected, np.ndarray):
+                expected = expected.tolist()
+
             if isinstance(expected, (list, dict)):
-                is_correct = (str(result) == str(expected))
-                if not is_correct and isinstance(result, (list, tuple)) and isinstance(expected, (list, tuple)):
-                     is_correct = (list(result) == list(expected))
+                # Convert to string for simple comparison if deep comparison is complex
+                # But lists order might not matter? Assuming strict order for now.
+                is_correct = (str(result) == str(expected)) 
+                
+                # Double check for float precision issues using numpy
+                if not is_correct:
+                    try:
+                         # Try loose comparison for floats
+                         is_correct = np.allclose(result, expected, atol=1e-2)
+                    except:
+                        pass
             else:
                 is_correct = (result == expected)
                 

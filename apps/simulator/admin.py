@@ -1,13 +1,19 @@
 from django.contrib import admin
-from .models import Task, UserTaskAttempt
+from .models import Task, TaskTag, UserTaskAttempt
+
+@admin.register(TaskTag)
+class TaskTagAdmin(admin.ModelAdmin):
+    list_display = ('name', 'slug', 'order')
+    prepopulated_fields = {'slug': ('name',)}
+    ordering = ('order',)
 
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
-    list_display = ('title', 'algorithm', 'difficulty', 'order')
-    list_filter = ('algorithm', 'difficulty')
+    list_display = ('title', 'tags', 'difficulty', 'order')
+    list_filter = ('tags', 'difficulty')
     search_fields = ('title', 'description', 'slug')
     prepopulated_fields = {'slug': ('title',)}
-    ordering = ('algorithm', 'order')
+    ordering = ('tags__order', 'order')
 
 @admin.register(UserTaskAttempt)
 class UserTaskAttemptAdmin(admin.ModelAdmin):

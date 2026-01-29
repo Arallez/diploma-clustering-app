@@ -28,6 +28,7 @@
         display: flex;
         flex-direction: column;
         gap: 1rem;
+        overflow-y: auto; /* Allow scrolling for long quizzes */
     }
     
     .code-editor {
@@ -42,6 +43,7 @@
         resize: none;
         outline: none;
         line-height: 1.5;
+        min-height: 300px;
     }
     .code-editor:focus {
         border-color: #3b82f6;
@@ -56,19 +58,35 @@
         padding: 2rem;
         display: flex;
         flex-direction: column;
-        gap: 1rem;
+        gap: 1.5rem;
+    }
+
+    .question-block {
+        border-bottom: 1px solid #334155;
+        padding-bottom: 1.5rem;
+    }
+    .question-block:last-child {
+        border-bottom: none;
+    }
+
+    .question-text {
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+        color: #e2e8f0;
+        font-weight: 600;
     }
     
     .quiz-option {
         display: block;
         background: #0f172a;
-        padding: 1rem;
+        padding: 0.8rem;
         border-radius: 8px;
         border: 1px solid #334155;
         cursor: pointer;
         transition: all 0.2s;
-        color: #f1f5f9;
-        font-size: 1.1rem;
+        color: #cbd5e1;
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
     }
     
     .quiz-option:hover {
@@ -78,13 +96,14 @@
     
     .quiz-option input[type="radio"] {
         margin-right: 10px;
-        transform: scale(1.2);
+        transform: scale(1.1);
     }
     
     .quiz-option.selected {
         border-color: #3b82f6;
         background: #1e293b;
         box-shadow: 0 0 0 1px #3b82f6;
+        color: #fff;
     }
 
     /* Buttons */
@@ -92,6 +111,7 @@
         display: flex;
         justify-content: flex-end;
         gap: 1rem;
+        margin-top: 1rem;
     }
     
     .btn {
@@ -245,14 +265,33 @@ Output: {{ task.expected_output }}</code></pre>
         {% else %}
             <!-- Quiz Mode -->
             <div class="quiz-container">
-                <h3 style="color: #e2e8f0; margin-top: 0;">Выберите правильный ответ:</h3>
                 <form id="quiz-form">
-                    {% for option in task.test_input.options %}
-                    <label class="quiz-option">
-                        <input type="radio" name="quiz_answer" value="{{ option }}">
-                        {{ option }}
-                    </label>
-                    {% endfor %}
+                    
+                    {% if task.test_input.questions %}
+                        <!-- MULTI QUESTION MODE -->
+                        {% for question in task.test_input.questions %}
+                        <div class="question-block">
+                            <div class="question-text">{{ question.text|safe }}</div>
+                            {% for option in question.options %}
+                            <label class="quiz-option">
+                                <input type="radio" name="quiz_answer_{{ forloop.parentloop.counter0 }}" value="{{ option }}">
+                                {{ option }}
+                            </label>
+                            {% endfor %}
+                        </div>
+                        {% endfor %}
+                    
+                    {% else %}
+                        <!-- SINGLE QUESTION MODE (Legacy) -->
+                        <h3 style="color: #e2e8f0; margin-top: 0;">Выберите правильный ответ:</h3>
+                        {% for option in task.test_input.options %}
+                        <label class="quiz-option">
+                            <input type="radio" name="quiz_answer" value="{{ option }}">
+                            {{ option }}
+                        </label>
+                        {% endfor %}
+                    {% endif %}
+
                 </form>
             </div>
         {% endif %}
@@ -273,16 +312,18 @@ Output: {{ task.expected_output }}</code></pre>
 <script>
     const taskType = '{{ task.task_type }}';
     
-    // Highlight selected radio button
+    // Highlight selected radio buttons
     if (taskType === 'choice') {
-        const options = document.querySelectorAll('.quiz-option input');
-        options.forEach(opt => {
-            opt.addEventListener('change', function() {
-                document.querySelectorAll('.quiz-option').forEach(el => el.classList.remove('selected'));
-                if(this.checked) {
-                    this.parentElement.classList.add('selected');
-                }
-            });
+        document.addEventListener('change', function(e) {
+            if(e.target.matches('.quiz-option input[type="radio"]')) {
+                // Clear selection in current group
+                const groupName = e.target.name;
+                document.querySelectorAll(`input[name="${groupName}"]`).forEach(inp => {
+                    inp.closest('.quiz-option').classList.remove('selected');
+                });
+                // Select clicked
+                e.target.closest('.quiz-option').classList.add('selected');
+            }
         });
     }
 
@@ -298,16 +339,41 @@ Output: {{ task.expected_output }}</code></pre>
         const resultBox = document.getElementById('result-box');
         let payload = { slug: '{{ task.slug }}' };
         
-        // Gather data based on type
         if (taskType === 'code') {
             payload.code = document.getElementById('code-editor').value;
         } else {
-            const selected = document.querySelector('input[name="quiz_answer"]:checked');
-            if (!selected) {
-                alert('Пожалуйста, выберите вариант ответа.');
-                return;
+            // Check for multi-questions
+            const questions = document.querySelectorAll('.question-block');
+            
+            if (questions.length > 0) {
+                // Collect Multi Answers
+                let answers = [];
+                let allAnswered = true;
+                
+                questions.forEach((q, index) => {
+                    const selected = q.querySelector(`input[name="quiz_answer_${index}"]:checked`);
+                    if (selected) {
+                        answers.push(selected.value);
+                    } else {
+                        allAnswered = false;
+                    }
+                });
+                
+                if (!allAnswered) {
+                    alert('Пожалуйста, ответьте на все вопросы.');
+                    return;
+                }
+                payload.code = answers; // Send Array
+                
+            } else {
+                // Single Answer (Legacy)
+                const selected = document.querySelector('input[name="quiz_answer"]:checked');
+                if (!selected) {
+                    alert('Пожалуйста, выберите вариант ответа.');
+                    return;
+                }
+                payload.code = selected.value; // Send String
             }
-            payload.code = selected.value; // Reuse 'code' field for answer
         }
         
         // Show loading state

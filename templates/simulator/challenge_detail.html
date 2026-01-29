@@ -4,21 +4,26 @@
 
 {% block extra_css %}
 <style>
+    /* Layout */
     .challenge-layout {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 2rem;
-        height: calc(100vh - 100px);
-        margin-top: 1rem;
+        height: calc(100vh - 120px);
+        margin: 1rem 2rem;
     }
     
+    /* Left Panel */
     .task-desc {
         background: #1e293b;
         padding: 2rem;
         border-radius: 12px;
         overflow-y: auto;
+        color: #e2e8f0;
+        border: 1px solid #334155;
     }
     
+    /* Right Panel */
     .editor-container {
         display: flex;
         flex-direction: column;
@@ -32,23 +37,99 @@
         border-radius: 8px;
         padding: 1rem;
         color: #f8fafc;
-        font-family: 'Fira Code', monospace;
-        font-size: 14px;
+        font-family: 'Fira Code', 'Consolas', monospace;
+        font-size: 15px;
         resize: none;
         outline: none;
+        line-height: 1.5;
+    }
+    .code-editor:focus {
+        border-color: #3b82f6;
     }
     
+    /* Buttons */
     .actions {
         display: flex;
-        justify-content: space-between;
-        align-items: center;
+        justify-content: flex-end;
+        gap: 1rem;
     }
     
+    .btn {
+        padding: 0.7rem 1.4rem;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+        font-size: 1rem;
+    }
+    
+    .btn-primary {
+        background: #2563eb;
+        color: white;
+    }
+    .btn-primary:hover { background: #1d4ed8; }
+    
+    .btn-secondary {
+        background: #334155;
+        color: #e2e8f0;
+    }
+    .btn-secondary:hover { background: #475569; }
+    
+    /* Back Link */
+    .back-link {
+        display: inline-block;
+        margin-bottom: 1.5rem;
+        color: #94a3b8;
+        text-decoration: none;
+        font-weight: 500;
+        padding: 0.4rem 0.8rem;
+        background: #0f172a;
+        border-radius: 6px;
+        border: 1px solid #334155;
+        transition: all 0.2s;
+    }
+    .back-link:hover {
+        color: #f1f5f9;
+        border-color: #475569;
+        background: #1e293b;
+    }
+
+    /* Badges */
+    .badge-row {
+        display: flex;
+        gap: 0.8rem;
+        margin-top: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .difficulty-badge {
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: bold;
+    }
+    .level-1 { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .level-2 { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+    .level-3 { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+    
+    .algo-tag {
+        background: #0f172a;
+        color: #94a3b8;
+        padding: 0.3rem 0.8rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        border: 1px solid #334155;
+    }
+
+    /* Result Box */
     .result-box {
-        margin-top: 1rem;
+        margin-top: 0;
         padding: 1rem;
         border-radius: 8px;
-        display: none;
+        display: none; /* Hidden by default */
+        font-family: sans-serif;
+        line-height: 1.5;
     }
     
     .result-box.success {
@@ -72,7 +153,9 @@
     <!-- Left: Task Description -->
     <div class="task-desc">
         <a href="{% url 'simulator:task_list' %}" class="back-link">← Назад к списку</a>
-        <h1>{{ task.title }}</h1>
+        
+        <h1 style="margin: 0; font-size: 1.8rem; color: #f1f5f9;">{{ task.title }}</h1>
+        
         <div class="badge-row">
             <span class="difficulty-badge level-{{ task.difficulty }}">
                 {% if task.difficulty == 1 %}Easy
@@ -82,27 +165,27 @@
             <span class="algo-tag">{{ task.get_algorithm_display }}</span>
         </div>
         
-        <div class="description-content" style="margin-top: 1.5rem; line-height: 1.6;">
+        <div class="description-content" style="margin-top: 1.5rem; line-height: 1.7;">
             {{ task.description|safe }}
         </div>
         
         <div class="examples" style="margin-top: 2rem;">
-            <h3>Пример:</h3>
-            <pre style="background: #0f172a; padding: 1rem; border-radius: 6px;"><code>Input: {{ task.test_input }}
+            <h3 style="color: #cbd5e1;">Пример:</h3>
+            <pre style="background: #0f172a; padding: 1rem; border-radius: 6px; color: #e2e8f0; overflow-x: auto;"><code>Input: {{ task.test_input }}
 Output: {{ task.expected_output }}</code></pre>
         </div>
     </div>
 
     <!-- Right: Code Editor -->
     <div class="editor-container">
-        <textarea id="code-editor" class="code-editor" spellcheck="false">{{ previous_code }}</textarea>
+        <textarea id="code-editor" class="code-editor" spellcheck="false" placeholder="Напишите ваше решение здесь...">{{ previous_code }}</textarea>
         
+        <div id="result-box" class="result-box"></div>
+
         <div class="actions">
             <button class="btn btn-secondary" onclick="resetCode()">Сбросить</button>
             <button class="btn btn-primary" onclick="submitSolution()">Проверить решение ▶</button>
         </div>
-        
-        <div id="result-box" class="result-box"></div>
     </div>
 </div>
 {% endblock %}
@@ -114,6 +197,7 @@ Output: {{ task.expected_output }}</code></pre>
     function resetCode() {
         if(confirm('Сбросить код к начальному состоянию?')) {
             document.getElementById('code-editor').value = initialCode;
+            document.getElementById('result-box').style.display = 'none';
         }
     }
     
@@ -121,8 +205,12 @@ Output: {{ task.expected_output }}</code></pre>
         const code = document.getElementById('code-editor').value;
         const resultBox = document.getElementById('result-box');
         
-        resultBox.style.display = 'none';
+        // Show loading state
+        resultBox.style.display = 'block';
         resultBox.className = 'result-box';
+        resultBox.style.background = '#1e293b';
+        resultBox.style.color = '#94a3b8';
+        resultBox.innerHTML = '⏳ Проверка...';
         
         try {
             const response = await fetch('/simulator/api/check-solution/', {
@@ -140,14 +228,18 @@ Output: {{ task.expected_output }}</code></pre>
             
             if (data.success) {
                 resultBox.className = 'result-box success';
+                resultBox.style.display = 'block'; // Force show
                 resultBox.innerHTML = '✅ <b>Верно!</b> ' + data.message;
             } else {
                 resultBox.className = 'result-box error';
-                resultBox.innerHTML = '❌ <b>Ошибка:</b> ' + (data.error || data.message);
+                resultBox.style.display = 'block'; // Force show
+                resultBox.innerHTML = '❌ <b>Ошибка:</b> ' + (data.error || 'Неверный ответ');
             }
         } catch (e) {
+            console.error(e);
             resultBox.className = 'result-box error';
-            resultBox.innerHTML = '❌ Ошибка сети';
+            resultBox.style.display = 'block'; // Force show
+            resultBox.innerHTML = '❌ Ошибка сети: ' + e.message;
         }
     }
 </script>

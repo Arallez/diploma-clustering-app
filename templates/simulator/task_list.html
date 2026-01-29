@@ -1,33 +1,49 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Учебные Задачи{% endblock %}
+{% block title %}Задания{% endblock %}
+
+{% block extra_css %}
+<!-- Removed simulator.css - not needed here, only tasks.css -->
+<link rel="stylesheet" href="{% static 'css/tasks.css' %}?v=1.2">
+{% endblock %}
 
 {% block content %}
-<div class="tasks-container">
-    <h1 class="page-title">📚 Практические Задачи</h1>
-    <p class="page-subtitle">Научитесь писать алгоритмы кластеризации с нуля на Python</p>
+<div class="page-wrapper">
+  <!-- Navbar removed - handled by base.html -->
 
-    <div class="task-grid">
-        {% for task in tasks %}
-        <a href="{% url 'simulator:challenge_detail' task.slug %}" class="task-card">
-            <div class="task-header">
-                <span class="difficulty-badge level-{{ task.difficulty }}">
-                    {% if task.difficulty == 1 %}⭐ Novice
-                    {% elif task.difficulty == 2 %}⭐⭐ Beginner
-                    {% else %}⭐⭐⭐ Hard{% endif %}
-                </span>
-                <span class="task-order">#{{ task.order }}</span>
+  <div class="tasks-page">
+    <header class="tasks-header">
+      <h1 class="tasks-title">🎯 Практические задания</h1>
+    </header>
+
+    {% regroup tasks by algorithm as algorithm_groups %}
+    {% for group in algorithm_groups %}
+      <div class="algorithm-section">
+        <h2 class="algorithm-title">
+          {% if group.grouper == 'general' %}📚 Общие знания
+          {% elif group.grouper == 'kmeans' %}🔵 K-Means
+          {% elif group.grouper == 'dbscan' %}🔴 DBSCAN
+          {% elif group.grouper == 'hierarchical' %}🌳 Иерархическая
+          {% else %}{{ group.grouper }}
+          {% endif %}
+        </h2>
+        <div class="tasks-grid">
+          {% for task in group.list %}
+          <a href="{% url 'simulator:challenge_detail' task.slug %}" class="task-card">
+            <div class="task-badge difficulty-{{ task.difficulty }}">
+              {% if task.difficulty == 1 %}⭐ Easy
+              {% elif task.difficulty == 2 %}⭐⭐ Medium
+              {% else %}⭐⭐⭐ Hard
+              {% endif %}
             </div>
-            <h3 class="task-title">{{ task.title }}</h3>
-            <div class="task-meta">
-                <span class="algo-tag">{{ task.get_algorithm_display }}</span>
-            </div>
-        </a>
-        {% empty %}
-        <div class="empty-state">
-            <p>Задач пока нет.</p>
+            <div class="task-card-title">{{ task.title }}</div>
+            <div class="task-card-desc">{{ task.description|striptags|truncatewords:15 }}</div>
+          </a>
+          {% endfor %}
         </div>
-        {% endfor %}
-    </div>
+      </div>
+    {% endfor %}
+  </div>
 </div>
 {% endblock %}

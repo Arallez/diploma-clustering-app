@@ -4,7 +4,7 @@ import numpy as np
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, get_object_or_404
-from .models import Task, UserTaskAttempt
+from .models import Task, TaskTag, UserTaskAttempt
 from .algorithms import (
     kmeans_step, 
     dbscan_step, 
@@ -22,9 +22,16 @@ def index(request):
     return render(request, 'simulator/index.html')
 
 def task_list(request):
-    """List of educational tasks (Reverted to flat list)"""
-    tasks = Task.objects.all().order_by('algorithm', 'order')
-    return render(request, 'simulator/task_list.html', {'tasks': tasks})
+    """List of educational tasks grouped by Tag/Block"""
+    tags = TaskTag.objects.prefetch_related('tasks').order_by('order')
+    
+    # Also fetch tasks without tags if any
+    uncategorized = Task.objects.filter(tags__isnull=True).order_by('order')
+    
+    return render(request, 'simulator/task_list.html', {
+        'tags': tags,
+        'uncategorized': uncategorized
+    })
 
 def challenge_detail(request, slug):
     """Specific challenge page"""
@@ -96,7 +103,6 @@ def check_solution(request):
             task = get_object_or_404(Task, slug=slug)
             
             # Prepare Execution Context (Globals)
-            # This ensures functions defined in user_code can see these imports
             execution_context = {
                 'np': np,
                 'math': math,
@@ -117,9 +123,7 @@ def check_solution(request):
                 'enumerate': enumerate,
             }
             
-            # 1. Execute User Code
             try:
-                # Pass execution_context as globals so defined functions inherit it
                 exec(user_code, execution_context)
             except Exception as e:
                 return JsonResponse({'success': False, 'error': f'Syntax Error: {e}'})
@@ -130,31 +134,24 @@ def check_solution(request):
                 
             user_func = execution_context[func_name]
             
-            # 2. Prepare Inputs
             test_input = task.test_input
             expected = task.expected_output
             
-            # 3. Smart Execution (Handle unpacking vs single arg)
             try:
                 if isinstance(test_input, dict):
-                    # Keyword arguments
                     result = user_func(**test_input)
                 elif isinstance(test_input, list):
-                    # Try unpacking first (*args)
                     try:
                         result = user_func(*test_input)
                     except TypeError:
-                        # Fallback: Pass the list as a single argument
                         result = user_func(test_input)
                 else:
                     result = user_func(test_input)
             except Exception as e:
                 return JsonResponse({'success': False, 'error': f'Runtime Error: {e}'})
                 
-            # 4. Compare Results
             is_correct = False
             
-            # Normalize results for comparison (numpy arrays to lists)
             if isinstance(result, np.ndarray):
                 result = result.tolist()
             if isinstance(expected, np.ndarray):
@@ -162,10 +159,8 @@ def check_solution(request):
 
             if isinstance(expected, (list, dict)):
                 is_correct = (str(result) == str(expected)) 
-                
                 if not is_correct:
                     try:
-                         # Try loose comparison for floats
                          is_correct = np.allclose(result, expected, atol=1e-2)
                     except:
                         pass

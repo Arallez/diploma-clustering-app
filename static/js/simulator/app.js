@@ -1,5 +1,5 @@
-import { runKMeans, runDBSCAN, runForel, runAgglomerative, generatePreset, getDendrogram } from './api.js?v=4.4';
-import { initPlot, drawPoints, drawStep, convertClickToPoint } from './plot.js?v=4.4';
+import { runKMeans, runDBSCAN, runForel, runAgglomerative, runMeanShift, generatePreset, getDendrogram } from './api.js?v=4.6';
+import { initPlot, drawPoints, drawStep, convertClickToPoint } from './plot.js?v=4.6';
 
 const { createApp, ref, onMounted, watch } = Vue;
 
@@ -11,6 +11,7 @@ const app = createApp({
         const eps = ref(1.0);
         const minPts = ref(3);
         const radius = ref(1.0); // FOREL radius
+        const bandwidth = ref(1.0); // MeanShift bandwidth
         const points = ref([]);
         const history = ref([]);
         const currentStep = ref(0);
@@ -61,6 +62,8 @@ const app = createApp({
                     data = await runForel(points.value, parseFloat(radius.value));
                 } else if (algorithm.value === 'agglomerative') {
                     data = await runAgglomerative(points.value, k.value);
+                } else if (algorithm.value === 'meanshift') {
+                    data = await runMeanShift(points.value, parseFloat(bandwidth.value));
                 }
 
                 if (data && data.success) {
@@ -177,7 +180,7 @@ const app = createApp({
         });
 
         return {
-            algorithm, k, eps, minPts, radius, points, history, currentStep, isRunning,
+            algorithm, k, eps, minPts, radius, bandwidth, points, history, currentStep, isRunning,
             selectedPreset, loadPreset, showDendrogram,
             runAlgorithm, nextStep, prevStep, setStep, clearPoints, handleCanvasClick,
             viewDendrogram, closeDendrogram

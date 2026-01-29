@@ -22,6 +22,7 @@
                     <option value="dbscan">DBSCAN</option>
                     <option value="forel">FOREL (ФОРЭЛЬ) ⭐</option>
                     <option value="agglomerative">Иерархическая (Agglomerative)</option>
+                    <option value="meanshift">MeanShift (Сдвиг среднего)</option>
                 </select>
             </div>
 
@@ -89,6 +90,16 @@
                 </div>
             </div>
 
+             <!-- Controls for MeanShift -->
+            <div class="control-group" v-if="algorithm === 'meanshift'">
+                <span class="control-label">Bandwidth (Ширина окна)</span>
+                <div class="k-controls">
+                    <button class="btn btn-outline" @click="bandwidth = Math.max(0.1, ((parseFloat(bandwidth) || 1.0) - 0.1).toFixed(1))">-</button>
+                    <input type="number" v-model.number="bandwidth" class="cluster-input" step="0.1" min="0.1" max="5.0">
+                    <button class="btn btn-outline" @click="bandwidth = Math.min(5.0, ((parseFloat(bandwidth) || 1.0) + 0.1).toFixed(1))">+</button>
+                </div>
+            </div>
+
             <div class="control-group" style="margin-top: 0.5rem;">
                 <button class="btn btn-outline" @click="clearPoints" style="margin-bottom: 0.25rem; width: 100%;">Очистить поле</button>
                 <button class="btn" @click="runAlgorithm" :disabled="points.length === 0 || isRunning" style="width: 100%;">
@@ -114,6 +125,9 @@
                 <div v-else-if="algorithm === 'agglomerative'">
                     <strong>💡 Иерархическая:</strong> Объединяет ближайшие кластеры снизу вверх до заданного числа.
                 </div>
+                <div v-else-if="algorithm === 'meanshift'">
+                    <strong>💡 MeanShift:</strong> Ищет "моды" плотности. Окно сдвигается к среднему значению соседей.
+                </div>
             </div>
         </aside>
 
@@ -125,6 +139,7 @@
                 <div class="stat-chip">Точки: <span class="stat-value">{{ points.length }}</span></div>
                 <div class="stat-chip" v-if="algorithm === 'kmeans' || algorithm === 'agglomerative'">K: <span class="stat-value">{{ k }}</span></div>
                 <div class="stat-chip" v-else-if="algorithm === 'forel'">R: <span class="stat-value">{{ radius }}</span></div>
+                <div class="stat-chip" v-else-if="algorithm === 'meanshift'">BW: <span class="stat-value">{{ bandwidth }}</span></div>
                 <div class="stat-chip" v-else>Eps: <span class="stat-value">{{ eps }}</span></div>
                 <div class="stat-chip">Шаги: <span class="stat-value">{{ history.length ? history.length : 0 }}</span></div>
             </div>
@@ -176,5 +191,5 @@
 
 <!-- New Modular Architecture -->
 <!-- Added version parameter to force cache refresh -->
-<script type="module" src="/static/js/simulator/app.js?v=4.6"></script>
+<script type="module" src="/static/js/simulator/app.js?v=4.7"></script>
 {% endblock %}

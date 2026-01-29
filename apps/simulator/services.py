@@ -6,6 +6,7 @@ import random
 import collections
 import itertools
 import functools
+from typing import List, Dict, Any, Tuple, Union, Optional
 
 # Try to import timeout protection, fallback if missing
 try:
@@ -32,9 +33,16 @@ class SolutionValidator:
     }
 
     @staticmethod
-    def validate(task, user_input):
+    def validate(task: Any, user_input: Union[str, List[Any], Dict[str, Any]]) -> Tuple[bool, str, Optional[str], Dict[str, Any]]:
         """
-        Главный метод. Определяет тип задачи и вызывает нужный валидатор.
+        Главный метод валидации.
+        
+        Args:
+            task: Объект задачи (Model instance)
+            user_input: Ввод пользователя (код или ответы теста)
+            
+        Returns:
+            Tuple[is_correct, message, error_msg, details]
         """
         if task.task_type == 'choice':
             return SolutionValidator._validate_quiz(task, user_input)
@@ -42,7 +50,7 @@ class SolutionValidator:
             return SolutionValidator._validate_code(task, user_input)
 
     @staticmethod
-    def _validate_quiz(task, user_input):
+    def _validate_quiz(task: Any, user_input: Any) -> Tuple[bool, str, Optional[str], Dict[str, Any]]:
         expected = task.expected_output
         is_correct = False
         message = ""
@@ -75,7 +83,7 @@ class SolutionValidator:
         return is_correct, message, error_msg, details
 
     @staticmethod
-    def _check_imports(user_code):
+    def _check_imports(user_code: str) -> Tuple[bool, str]:
         """
         Проверяет код на наличие запрещенных импортов через AST.
         """
@@ -100,7 +108,7 @@ class SolutionValidator:
         return True, ""
 
     @staticmethod
-    def _safe_import(name, globals=None, locals=None, fromlist=(), level=0):
+    def _safe_import(name: str, globals: Any = None, locals: Any = None, fromlist: Tuple = (), level: int = 0) -> Any:
         """
         Безопасная обертка для __import__. 
         """
@@ -110,7 +118,7 @@ class SolutionValidator:
         raise ImportError(f"Security: Import of '{name}' is restricted.")
 
     @staticmethod
-    def _validate_code(task, user_code):
+    def _validate_code(task: Any, user_code: str) -> Tuple[bool, str, Optional[str], Dict[str, Any]]:
         """
         Выполняет код пользователя в безопасном контексте с тайм-аутом.
         """
@@ -147,7 +155,6 @@ class SolutionValidator:
                 run_user_code()
             
         except NameError: 
-             # На случай, если FunctionTimedOut не импортирован (хотя мы проверили HAS_TIMEOUT_LIB)
              return False, "", "Timeout Error (Lib Missing): Execution failed.", {}
         except Exception as e:
             # Перехват FunctionTimedOut (если он есть) или других ошибок

@@ -2,6 +2,7 @@ import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, get_object_or_404
+from .models import Task
 from .algorithms import (
     kmeans_step, 
     dbscan_step, 
@@ -19,13 +20,26 @@ def index(request):
     return render(request, 'simulator/index.html')
 
 def task_list(request):
-    """List of educational tasks (Placeholder restored)"""
-    # In a real app, this would fetch tasks from DB
-    return render(request, 'simulator/task_list.html', {'tasks': []})
+    """List of educational tasks"""
+    # Optimized query to fetch all tasks grouped by algorithm in the template
+    tasks = Task.objects.all().order_by('algorithm', 'order')
+    return render(request, 'simulator/task_list.html', {'tasks': tasks})
 
 def challenge_detail(request, slug):
-    """Specific challenge page (Placeholder restored)"""
-    return render(request, 'simulator/challenge_detail.html', {'slug': slug})
+    """Specific challenge page"""
+    task = get_object_or_404(Task, slug=slug)
+    
+    # Get user's previous successful attempt if exists
+    previous_code = ""
+    if request.user.is_authenticated:
+        last_attempt = request.user.task_attempts.filter(task=task, is_correct=True).first()
+        if last_attempt:
+            previous_code = last_attempt.code
+    
+    return render(request, 'simulator/challenge_detail.html', {
+        'task': task,
+        'previous_code': previous_code or task.initial_code
+    })
 
 # --- API Endpoints ---
 

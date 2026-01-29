@@ -1,120 +1,99 @@
+/* Tasks Page Styles */
+.page-wrapper {
+    background-color: #0f172a;
+    min-height: 100vh;
+    font-family: 'Inter', sans-serif;
+    color: #f8fafc;
+}
+
 .tasks-page {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 40px 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
 }
 
 .tasks-header {
-  margin-bottom: 32px;
+    text-align: center;
+    margin-bottom: 3rem;
+    padding: 2rem 0;
+    border-bottom: 1px solid #1e293b;
 }
 
 .tasks-title {
-  font-size: 32px;
-  font-weight: 700;
-  margin: 0;
-  color: #e2e8f0;
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(to right, #60a5fa, #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0;
 }
 
 .algorithm-section {
-  margin-bottom: 48px;
+    margin-bottom: 4rem;
 }
 
 .algorithm-title {
-  font-size: 24px;
-  font-weight: 700;
-  margin: 0 0 20px 0;
-  color: #cbd5e1;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+    font-size: 1.5rem;
+    color: #e2e8f0;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .tasks-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
 }
 
 .task-card {
-  background: rgba(30, 41, 59, 0.6);
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  border-radius: 16px;
-  padding: 24px;
-  text-decoration: none;
-  color: #e2e8f0;
-  transition: all 0.2s;
-  display: block;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    box-sizing: border-box;
+    position: relative;
+    overflow: hidden;
 }
 
 .task-card:hover {
-  background: rgba(30, 41, 59, 0.8);
-  border-color: rgba(148, 163, 184, 0.3);
-  transform: translateY(-2px);
-}
-
-.task-badge {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
-  margin-bottom: 12px;
-}
-
-.task-badge.difficulty-1 {
-  background: rgba(16, 185, 129, 0.15);
-  color: #10b981;
-}
-
-.task-badge.difficulty-2 {
-  background: rgba(251, 191, 36, 0.15);
-  color: #fbbf24;
-}
-
-.task-badge.difficulty-3 {
-  background: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
+    transform: translateY(-5px);
+    border-color: #60a5fa;
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
 }
 
 .task-card-title {
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 8px;
-  color: #fff;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #f1f5f9;
+    margin-bottom: 0.5rem;
 }
 
 .task-card-desc {
-  font-size: 14px;
-  color: #94a3b8;
-  line-height: 1.5;
+    font-size: 0.9rem;
+    color: #94a3b8;
+    line-height: 1.5;
+    flex-grow: 1;
 }
 
-.empty-state {
-  text-align: center;
-  padding: 80px 20px;
+.task-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
-.empty-icon {
-  font-size: 64px;
-  margin-bottom: 16px;
-}
-
-.empty-text {
-  font-size: 20px;
-  font-weight: 600;
-  color: #e2e8f0;
-  margin-bottom: 8px;
-}
-
-.empty-hint {
-  font-size: 14px;
-  color: #64748b;
-}
-
-.empty-hint code {
-  background: rgba(148, 163, 184, 0.12);
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-family: 'Fira Code', monospace;
-  color: #94a3b8;
-}
+.difficulty-1 { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+.difficulty-2 { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+.difficulty-3 { background: rgba(239, 68, 68, 0.2); color: #f87171; }

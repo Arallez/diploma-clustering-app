@@ -3,6 +3,10 @@
 {% block title %}{{ task.title }} | Задачи{% endblock %}
 
 {% block extra_css %}
+<!-- CodeMirror CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
+
 <style>
     /* Layout */
     .challenge-layout {
@@ -31,21 +35,18 @@
         overflow-y: auto; /* Allow scrolling for long quizzes */
     }
     
-    .code-editor {
+    /* CodeMirror Customization */
+    .CodeMirror {
         flex: 1;
-        background: #0f172a;
-        border: 1px solid #334155;
         border-radius: 8px;
-        padding: 1rem;
-        color: #f8fafc;
+        border: 1px solid #334155;
         font-family: 'Fira Code', 'Consolas', monospace;
         font-size: 15px;
-        resize: none;
-        outline: none;
-        line-height: 1.5;
+        line-height: 1.6;
+        height: auto; /* Flex container handles height */
         min-height: 300px;
     }
-    .code-editor:focus {
+    .CodeMirror-focused {
         border-color: #3b82f6;
     }
     
@@ -327,7 +328,8 @@ Output: {{ task.expected_output }}</code></pre>
         
         {% if task.task_type == 'code' %}
             <!-- Code Editor Mode -->
-            <textarea id="code-editor" class="code-editor" spellcheck="false" placeholder="Напишите ваше решение здесь...">{{ previous_code }}</textarea>
+            <!-- The textarea is now hidden by CodeMirror, but we keep it for fallback/init -->
+            <textarea id="code-editor" class="code-editor" spellcheck="false">{{ previous_code }}</textarea>
         {% else %}
             <!-- Quiz Mode -->
             <div class="quiz-container">
@@ -394,8 +396,33 @@ Output: {{ task.expected_output }}</code></pre>
 {% endblock %}
 
 {% block extra_js %}
+<!-- CodeMirror Scripts -->
+{% if task.task_type == 'code' %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closebrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/matchbrackets.min.js"></script>
+{% endif %}
+
 <script>
     const taskType = '{{ task.task_type }}';
+    let editor = null;
+    
+    // Init CodeMirror
+    if (taskType === 'code') {
+        const textarea = document.getElementById('code-editor');
+        editor = CodeMirror.fromTextArea(textarea, {
+            mode: 'python',
+            theme: 'dracula',
+            lineNumbers: true,
+            indentUnit: 4,
+            matchBrackets: true,
+            autoCloseBrackets: true,
+        });
+        
+        // Ensure it resizes correctly
+        editor.setSize('100%', '100%');
+    }
     
     // Highlight selected radio buttons
     if (taskType === 'choice') {
@@ -421,7 +448,11 @@ Output: {{ task.expected_output }}</code></pre>
 
     function confirmReset() {
         const initialCode = `{{ task.initial_code|escapejs }}`;
-        document.getElementById('code-editor').value = initialCode;
+        if (editor) {
+            editor.setValue(initialCode);
+        } else {
+            document.getElementById('code-editor').value = initialCode;
+        }
         document.getElementById('result-box').style.display = 'none';
         closeModal();
     }
@@ -460,7 +491,8 @@ Output: {{ task.expected_output }}</code></pre>
         });
 
         if (taskType === 'code') {
-            payload.code = document.getElementById('code-editor').value;
+            // Get value from CodeMirror instead of textarea
+            payload.code = editor ? editor.getValue() : document.getElementById('code-editor').value;
         } else {
             // Check for multi-questions
             const questions = document.querySelectorAll('.question-block');

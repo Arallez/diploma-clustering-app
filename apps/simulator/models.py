@@ -49,7 +49,11 @@ class Task(models.Model):
         verbose_name="Тег (Блок)"
     )
     
-    order = models.IntegerField(default=0, verbose_name="Порядок")
+    order = models.IntegerField(
+        default=0, 
+        verbose_name="Порядок",
+        help_text="Позиция внутри тега (должна быть уникальной)"
+    )
     
     # Fields for CODE tasks
     function_name = models.CharField(max_length=100, blank=True, null=True, help_text="Только для задач с кодом")
@@ -67,6 +71,14 @@ class Task(models.Model):
 
     class Meta:
         ordering = ['tags__order', 'order']
+        # Запрет дублирования позиций внутри одного тега
+        constraints = [
+            models.UniqueConstraint(
+                fields=['tags', 'order'],
+                name='unique_task_order_per_tag',
+                violation_error_message="Задание с такой позицией уже существует в этом теге."
+            )
+        ]
 
 
 class UserTaskAttempt(models.Model):

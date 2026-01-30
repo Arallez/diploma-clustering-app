@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ material.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Главная</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'materials_list' %}">Материалы</a></li>
+            <li class="breadcrumb-item active">{{ material.title }}</li>
+        </ol>
+    </nav>
+    
+    <article>
+        <h1>{{ material.title }}</h1>
+        <p class="text-muted">Обновлено: {{ material.updated_at|date:"d F Y, H:i" }}</p>
+        
+        <hr>
+        
+        <div class="material-content">
+            {{ material.content|safe }}
+        </div>
+    </article>
+    
+    <hr class="my-5">
+    
+    <div class="d-flex justify-content-between">
+        <a href="{% url 'materials_list' %}" class="btn btn-outline-secondary">← Назад к списку</a>
+        <a href="{% url 'simulator:index' %}" class="btn btn-primary">Перейти в симулятор →</a>
+    </div>
+</div>
+{% endblock %}

@@ -104,9 +104,11 @@ def dbscan_step(points, eps, min_pts):
             # Snapshot after forming a cluster
             history.append({
                 'labels': labels.tolist(),
-                'current': None,\
+                'current': None,
                 'neighbors': []
-            })\n            \n    # Final state
+            })
+            
+    # Final state
     history.append({
         'labels': labels.tolist(),
         'current': None,
@@ -153,8 +155,15 @@ def forel_step(points, r):
                 
                 # Remove clustered points
                 remaining_mask = np.ones(len(remaining_indices), dtype=bool)
-                remaining_mask[neighbors_mask] = False\n                remaining_indices = remaining_indices[remaining_mask]\n                \n                cluster_id += 1
-                break\n            \n            center = new_center\n            \n    # Final state
+                remaining_mask[neighbors_mask] = False
+                remaining_indices = remaining_indices[remaining_mask]
+                
+                cluster_id += 1
+                break
+            
+            center = new_center
+            
+    # Final state
     history.append({
         'labels': labels.tolist(),
         'center': None,
@@ -167,7 +176,6 @@ def forel_step(points, r):
 def agglomerative_step(points, n_clusters):
     """
     Optimized Agglomerative Clustering using Scipy Linkage.
-    Instead of O(N^3) manual merging, we use O(N^2) linkage and reconstruct history.
     """
     X = normalize_points(points)
     n = len(X)
@@ -180,23 +188,7 @@ def agglomerative_step(points, n_clusters):
     
     history = []
     
-    # 2. Reconstruct steps from N clusters down to n_clusters
-    # Z has shape (n-1, 4). Each row is a merge.
-    # We want to show the state from, say, N clusters down to k.
-    
-    # Showing EVERY step (N-1 steps) is too long for animation if N=300.
-    # Let's show only the last 20 merges or just the final state?
-    # The user expects an animation. Let's sample the history if it's too long.
-    
-    # We can use `fcluster` to get labels for any threshold or number of clusters.
-    
-    # Let's capture the state at k=N, k=N-1, ..., k=n_clusters
-    # But for N=300, that's 300 frames. Too slow to generate JSON?
-    # No, 300 frames of 300 ints is fine (~300KB).
-    
-    # Optimization: Only generate frames for the last 50 merges + some initial ones.
-    # Or just generate all, Python is fast enough for this loop.
-    
+    # 2. Reconstruct steps from start_k down to target_k
     start_k = min(n, 50) # Start showing animation from 50 clusters to target k
     target_k = max(1, n_clusters)
     
@@ -230,18 +222,10 @@ def mean_shift_step(points, bandwidth=1.0):
     max_iters = 100
     stop_thresh = 1e-3 * bandwidth
     
-    # Optimization: Pre-calculate constants
-    # Flat kernel: weights are 1 if dist <= bw, else 0
-    
     for it in range(max_iters):
         old_centroids = np.copy(centroids)
         
-        # Vectorized distance calculation (N x N) - Fast for N=300
-        # dists[i, j] = dist(centroid[i], centroid[j]) 
-        # Wait, MeanShift usually shifts X points towards modes.
-        # Here we shift 'centroids' (initialized as X).
-        
-        # cdist computes distance between each pair of inputs
+        # Vectorized distance calculation (N x N)
         dists = cdist(centroids, centroids)
         
         # Weights matrix (N x N)
@@ -253,18 +237,16 @@ def mean_shift_step(points, bandwidth=1.0):
         # Avoid division by zero
         denoms[denoms == 0] = 1.0
         
-        # New centroids = Weighted average of neighbors
-        # (N x N) dot (N x 2) -> (N x 2)
+        # New centroids
         new_centroids = np.dot(weights, centroids) / denoms
         
-        # Visualization: Group nearby centroids to show "clusters" forming
-        # Rounding is a fast hack to find unique positions
+        # Visualization: Group nearby centroids
         rounded = np.round(new_centroids, decimals=1)
         unique_pos, inverse_indices = np.unique(rounded, axis=0, return_inverse=True)
         
         step_data = {
             'centroids': [{'x': float(c[0]), 'y': float(c[1])} for c in unique_pos],
-            'labels': inverse_indices.tolist() # Points mapping to unique centers
+            'labels': inverse_indices.tolist()
         }
         history.append(step_data)
         

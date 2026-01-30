@@ -12,7 +12,8 @@ from .algorithms import (
     dbscan_step, 
     forel_step, 
     agglomerative_step,
-    mean_shift_step
+    mean_shift_step,
+    compute_dendrogram_data  # <--- Imported this
 )
 from .presets import generate_preset
 from .services import (
@@ -119,6 +120,27 @@ def run_algorithm(request):
                 return JsonResponse({'success': False, 'error': f'Unknown algorithm: {algo}'})
                 
             return JsonResponse({'success': True, 'history': history})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+            
+    return JsonResponse({'success': False, 'error': 'Method not allowed'})
+
+@csrf_exempt # <--- Exempting this too
+def get_dendrogram(request):
+    """
+    Returns dendrogram data for plotting.
+    """
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            points = data.get('points', [])
+            
+            ddata = compute_dendrogram_data(points)
+            
+            if 'error' in ddata:
+                return JsonResponse({'success': False, 'error': ddata['error']})
+            
+            return JsonResponse({'success': True, 'dendrogram': ddata})
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
             
@@ -279,8 +301,6 @@ def check_solution(request):
     return JsonResponse({'success': False, 'error': 'Method not allowed'})
 
 # Legacy stubs
-@csrf_exempt
-def get_dendrogram(request): return JsonResponse({'success': False})
 @csrf_exempt
 def run_kmeans(request): return run_algorithm(request)
 @csrf_exempt

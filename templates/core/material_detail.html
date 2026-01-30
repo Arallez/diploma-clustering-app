@@ -1,77 +1,47 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}{{ material.title }}{% endblock %}
 
 {% block extra_css %}
-<style>
-    .material-body {
-        font-family: 'Inter', sans-serif;
-        line-height: 1.6;
-        color: #333;
-    }
-    .material-body h2 {
-        margin-top: 1.5rem;
-        margin-bottom: 1rem;
-        color: #2c3e50;
-        border-bottom: 1px solid #eee;
-        padding-bottom: 0.5rem;
-    }
-    .material-body h3 {
-        margin-top: 1.2rem;
-        margin-bottom: 0.8rem;
-        color: #34495e;
-    }
-    .material-body ul, .material-body ol {
-        margin-bottom: 1rem;
-        padding-left: 20px;
-    }
-    .material-body li {
-        margin-bottom: 0.5rem;
-    }
-    .material-body p {
-        margin-bottom: 1rem;
-    }
-    .material-body strong {
-        color: #2c3e50;
-    }
-</style>
+<!-- Custom styles for materials (No Bootstrap) -->
+<link rel="stylesheet" href="{% static 'css/materials.css' %}">
 {% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'home' %}">Главная</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'materials_list' %}">Материалы</a></li>
-            <li class="breadcrumb-item active">{{ material.title }}</li>
-        </ol>
+<div class="page-container">
+    <nav class="breadcrumbs">
+        <a href="{% url 'home' %}">Главная</a>
+        <span>/</span>
+        <a href="{% url 'materials_list' %}">Материалы</a>
+        <span>/</span>
+        <span style="color: #e2e8f0;">{{ material.title }}</span>
     </nav>
     
-    <article class="bg-white p-5 rounded shadow-sm">
-        <h1 class="display-5 mb-3">{{ material.title }}</h1>
-        <p class="text-muted border-bottom pb-3">
-            <small>Обновлено: {{ material.updated_at|date:"d F Y" }}</small>
-        </p>
+    <article class="content-panel">
+        <header class="article-header">
+            <h1 class="article-title">{{ material.title }}</h1>
+            <div class="article-meta">
+                Обновлено: {{ material.updated_at|date:"d F Y" }}
+            </div>
+        </header>
         
-        <!-- Raw content hidden, rendered by JS -->
+        <!-- Raw content hidden -->
         <div id="raw-content" style="display:none;">{{ material.content }}</div>
         
         <!-- Rendered Markdown Container -->
-        <div id="rendered-content" class="material-body"></div>
+        <div id="rendered-content" class="markdown-body"></div>
     </article>
     
-    <div class="d-flex justify-content-between mt-5">
-        <a href="{% url 'materials_list' %}" class="btn btn-outline-secondary">← Назад к списку</a>
+    <div class="page-actions">
+        <a href="{% url 'materials_list' %}" class="btn btn-outline">← Назад к списку</a>
         <a href="{% url 'simulator:index' %}" class="btn btn-primary">Перейти в симулятор →</a>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<!-- Marked.js for Markdown -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-
-<!-- MathJax for LaTeX -->
 <script>
 window.MathJax = {
   tex: {
@@ -90,16 +60,13 @@ window.MathJax = {
         const rawContent = document.getElementById('raw-content').innerText;
         const renderContainer = document.getElementById('rendered-content');
         
-        // Configure marked
         marked.setOptions({
             breaks: true,
             gfm: true
         });
 
-        // Render Markdown
         renderContainer.innerHTML = marked.parse(rawContent);
         
-        // Trigger MathJax typeset if available
         if (window.MathJax && window.MathJax.typesetPromise) {
             window.MathJax.typesetPromise([renderContainer]);
         }

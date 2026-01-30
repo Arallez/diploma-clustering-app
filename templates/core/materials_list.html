@@ -1,52 +1,40 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Учебные материалы{% endblock %}
 
+{% block extra_css %}
+<!-- Custom styles for materials (No Bootstrap) -->
+<link rel="stylesheet" href="{% static 'css/materials.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="container py-5">
-    <div class="mb-5 text-center">
-        <h1 class="display-4 fw-bold mb-3">📚 Учебные материалы</h1>
-        <p class="lead text-muted">Теоретические основы, математика и алгоритмы кластеризации</p>
+<div class="page-container">
+    <div class="page-header">
+        <h1 class="page-title">📚 Учебные материалы</h1>
+        <div class="page-subtitle">Теоретические основы, математика и алгоритмы кластеризации</div>
     </div>
     
     {% if materials %}
-        <div class="row g-4">
+        <div class="materials-grid">
             {% for material in materials %}
-            <div class="col-md-6 col-lg-4">
-                <a href="{% url 'material_detail' material.slug %}" class="text-decoration-none text-dark h-100 d-block">
-                    <div class="card h-100 shadow-sm hover-shadow transition-all border-0">
-                        <div class="card-body p-4 d-flex flex-column">
-                            <div class="mb-3">
-                                <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill">
-                                    Теория #{{ material.order }}
-                                </span>
-                            </div>
-                            <h3 class="card-title h4 fw-bold mb-3">{{ material.title }}</h3>
-                            <div class="mt-auto d-flex justify-content-between align-items-center text-muted small border-top pt-3">
-                                <span>🗓 {{ material.updated_at|date:"d.m.Y" }}</span>
-                                <span class="text-primary fw-medium">Читать →</span>
-                            </div>
-                        </div>
-                    </div>
-                </a>
-            </div>
+            <a href="{% url 'material_detail' material.slug %}" class="material-card">
+                <div class="card-badge">
+                    Теория #{{ material.order }}
+                </div>
+                <h3 class="card-title">{{ material.title }}</h3>
+                <div class="card-footer">
+                    <span>🗓 {{ material.updated_at|date:"d.m.Y" }}</span>
+                    <span class="read-link">Читать →</span>
+                </div>
+            </a>
             {% endfor %}
         </div>
     {% else %}
-        <div class="alert alert-info py-4 text-center rounded-3 shadow-sm">
-            <h4 class="alert-heading mb-2">🤷‍♂️ Пока пусто</h4>
-            <p class="mb-0">Материалы еще не добавлены. Зайдите в <a href="/admin/" class="alert-link">админку</a>, чтобы добавить первую статью.</p>
+        <div class="content-panel" style="text-align: center; padding: 60px;">
+            <h3>🤷‍♂️ Пока пусто</h3>
+            <p style="color: #94a3b8;">Материалы еще не добавлены. Зайдите в админку.</p>
         </div>
     {% endif %}
 </div>
-
-<style>
-    .hover-shadow:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 1rem 3rem rgba(0,0,0,.1) !important;
-    }
-    .transition-all {
-        transition: all 0.3s ease;
-    }
-</style>
 {% endblock %}

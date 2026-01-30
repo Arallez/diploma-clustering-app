@@ -4,7 +4,8 @@
 {% block title %}Учебные материалы{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/materials.css' %}">
+<!-- Reuse tasks styles for consistency -->
+<link rel="stylesheet" href="{% static 'css/tasks.css' %}?v=1.0">
 {% endblock %}
 
 {% block content %}
@@ -24,7 +25,10 @@
       <!-- Материалы по темам -->
       {% for tag in tags %}
         <div class="algorithm-section">
-          <h2 class="algorithm-title">{{ tag.name }}</h2>
+          <h2 class="algorithm-title">
+            <!-- Icon/Dot matching tasks style if needed, or just text -->
+            {{ tag.name }}
+          </h2>
           <div class="tasks-grid">
             {% for material in tag.materials.all %}
             <a href="{% url 'material_detail' material.slug %}" class="task-card">

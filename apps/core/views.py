@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
@@ -7,6 +7,7 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from .forms import UserRegisterForm
 from apps.simulator.models import Task, UserTaskAttempt
+from .models import Material
 
 def home(request):
     return render(request, 'core/home.html')
@@ -70,3 +71,13 @@ def profile(request):
     }
     
     return render(request, 'core/profile.html', context)
+
+def materials_list(request):
+    """Список всех учебных материалов"""
+    materials = Material.objects.all().order_by('order', 'created_at')
+    return render(request, 'core/materials_list.html', {'materials': materials})
+
+def material_detail(request, slug):
+    """Детальная страница материала"""
+    material = get_object_or_404(Material, slug=slug)
+    return render(request, 'core/material_detail.html', {'material': material})

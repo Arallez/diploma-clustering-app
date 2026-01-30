@@ -1,6 +1,6 @@
 import numpy as np
-from scipy.cluster.hierarchy import dendrogram, linkage
-from scipy.spatial.distance import pdist
+from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
+from scipy.spatial.distance import pdist, cdist
 
 def normalize_points(points):
     """
@@ -104,11 +104,9 @@ def dbscan_step(points, eps, min_pts):
             # Snapshot after forming a cluster
             history.append({
                 'labels': labels.tolist(),
-                'current': None,
+                'current': None,\
                 'neighbors': []
-            })
-            
-    # Final state
+            })\n            \n    # Final state
     history.append({
         'labels': labels.tolist(),
         'current': None,
@@ -155,15 +153,8 @@ def forel_step(points, r):
                 
                 # Remove clustered points
                 remaining_mask = np.ones(len(remaining_indices), dtype=bool)
-                remaining_mask[neighbors_mask] = False
-                remaining_indices = remaining_indices[remaining_mask]
-                
-                cluster_id += 1
-                break
-            
-            center = new_center
-            
-    # Final state
+                remaining_mask[neighbors_mask] = False\n                remaining_indices = remaining_indices[remaining_mask]\n                \n                cluster_id += 1
+                break\n            \n            center = new_center\n            \n    # Final state
     history.append({
         'labels': labels.tolist(),
         'center': None,
@@ -174,184 +165,137 @@ def forel_step(points, r):
     return history
 
 def agglomerative_step(points, n_clusters):
+    """
+    Optimized Agglomerative Clustering using Scipy Linkage.
+    Instead of O(N^3) manual merging, we use O(N^2) linkage and reconstruct history.
+    """
     X = normalize_points(points)
     n = len(X)
     
-    # Initially each point is a cluster
-    clusters = {i: [i] for i in range(n)} # cluster_id -> list of point indices
-    labels = np.arange(n)
+    if n < 2:
+        return [{'labels': [0] * n}]
+
+    # 1. Compute Linkage Matrix (The Hierarchy) - Fast O(N^2)
+    Z = linkage(X, method='ward')
+    
     history = []
     
-    # Save initial state
-    history.append({'labels': labels.tolist()})
+    # 2. Reconstruct steps from N clusters down to n_clusters
+    # Z has shape (n-1, 4). Each row is a merge.
+    # We want to show the state from, say, N clusters down to k.
     
-    current_n_clusters = n
+    # Showing EVERY step (N-1 steps) is too long for animation if N=300.
+    # Let's show only the last 20 merges or just the final state?
+    # The user expects an animation. Let's sample the history if it's too long.
     
-    while current_n_clusters > n_clusters:
-        min_dist = float('inf')
-        merge_pair = (-1, -1)
-        
-        # Prepare centroids
-        cluster_ids = list(clusters.keys())
-        centroids = {}
-        for cid in cluster_ids:
-            # points indices in this cluster
-            p_indices = clusters[cid]
-            # coordinates
-            pts_coords = X[p_indices]
-            centroids[cid] = np.mean(pts_coords, axis=0)
-            
-        # Brute force search for min distance between centroids
-        for i in range(len(cluster_ids)):
-            for j in range(i + 1, len(cluster_ids)):
-                cid1 = cluster_ids[i]
-                cid2 = cluster_ids[j]
-                dist = np.linalg.norm(centroids[cid1] - centroids[cid2])
-                
-                if dist < min_dist:
-                    min_dist = dist
-                    merge_pair = (cid1, cid2)
-        
-        if merge_pair == (-1, -1):
-            break
-            
-        # Merge
-        c1, c2 = merge_pair
-        clusters[c1].extend(clusters[c2])
-        del clusters[c2]
-        
-        # Update labels
-        for p_idx in clusters[c1]:
-            labels[p_idx] = c1 # Keep the ID of the first cluster
-            
+    # We can use `fcluster` to get labels for any threshold or number of clusters.
+    
+    # Let's capture the state at k=N, k=N-1, ..., k=n_clusters
+    # But for N=300, that's 300 frames. Too slow to generate JSON?
+    # No, 300 frames of 300 ints is fine (~300KB).
+    
+    # Optimization: Only generate frames for the last 50 merges + some initial ones.
+    # Or just generate all, Python is fast enough for this loop.
+    
+    start_k = min(n, 50) # Start showing animation from 50 clusters to target k
+    target_k = max(1, n_clusters)
+    
+    # We iterate k from start_k down to target_k
+    for k in range(start_k, target_k - 1, -1):
+        labels = fcluster(Z, k, criterion='maxclust')
+        # fcluster returns 1-based labels, convert to 0-based
+        labels = labels - 1
         history.append({'labels': labels.tolist()})
-        current_n_clusters -= 1
         
+    if not history:
+        # If we didn't enter the loop (e.g. n < start_k), add final state
+        labels = fcluster(Z, target_k, criterion='maxclust') - 1
+        history.append({'labels': labels.tolist()})
+
     return history
 
 def mean_shift_step(points, bandwidth=1.0):
+    """
+    Optimized MeanShift using Vectorization.
+    """
     X = normalize_points(points)
     n_samples = len(X)
     
     if n_samples == 0:
         return []
         
-    # Start with each point being its own cluster center candidate
     centroids = np.copy(X)
     history = []
     
     max_iters = 100
     stop_thresh = 1e-3 * bandwidth
     
+    # Optimization: Pre-calculate constants
+    # Flat kernel: weights are 1 if dist <= bw, else 0
+    
     for it in range(max_iters):
-        new_centroids = np.zeros_like(centroids)
+        old_centroids = np.copy(centroids)
         
-        # Save state before shift
-        # To visualize, we assign each original point to its closest CURRENT centroid
-        # But since centroids == points count initially, and they move... 
-        # We group points by which final centroid they are converging to.
-        # Simple viz: just show "shifting" centers isn't enough for the current UI.
-        # Let's map original points to the index of the centroid they are tracking.
-        # Actually, standard MeanShift groups points that converge to the SAME location.
+        # Vectorized distance calculation (N x N) - Fast for N=300
+        # dists[i, j] = dist(centroid[i], centroid[j]) 
+        # Wait, MeanShift usually shifts X points towards modes.
+        # Here we shift 'centroids' (initialized as X).
         
-        # For intermediate visualization:
-        # We can try to cluster the current 'centroids' positions.
-        # But easier: just record the centroids positions. The UI might need update to show them?
-        # Re-using existing UI: 'centroids' field in history is used by K-Means.
-        # We can pass 'centroids' to show the kernels moving.
-        # 'labels' can be calculated by assigning each point X[i] to the nearest centroid[j].
-        # Since centroid[i] "belongs" to X[i], this is trivial (label=i), which is rainbow chaos.
+        # cdist computes distance between each pair of inputs
+        dists = cdist(centroids, centroids)
         
-        # Better Viz Strategy:
-        # 1. At each step, centroids move.
-        # 2. We group centroids that are very close to each other.
-        # 3. Assign label based on that group.
+        # Weights matrix (N x N)
+        weights = (dists <= bandwidth).astype(float)
         
-        # Quick grouping for visualization
-        unique_centers = []
-        labels = np.zeros(n_samples, dtype=int)
+        # Sum of weights for each point (denominator)
+        denoms = weights.sum(axis=1, keepdims=True)
         
-        # Simple rounding to group for viz (fast approx)
-        # or just use first point as representative if close
-        viz_centers = np.copy(centroids)
-        active_indices = np.arange(n_samples) # All active initially
+        # Avoid division by zero
+        denoms[denoms == 0] = 1.0
         
-        # We won't do full grouping every frame, too slow.
-        # Let's just output the current centroids positions.
-        # We will assume every point i tracks centroid i.
+        # New centroids = Weighted average of neighbors
+        # (N x N) dot (N x 2) -> (N x 2)
+        new_centroids = np.dot(weights, centroids) / denoms
         
-        # To make it look like clustering, we need to detect convergence.
+        # Visualization: Group nearby centroids to show "clusters" forming
+        # Rounding is a fast hack to find unique positions
+        rounded = np.round(new_centroids, decimals=1)
+        unique_pos, inverse_indices = np.unique(rounded, axis=0, return_inverse=True)
         
         step_data = {
-            'centroids': [{'x': c[0], 'y': c[1]} for c in centroids],
-            'labels': list(range(n_samples)) # Initially rainbow, will merge later?
-            # Actually, without proper merging, it just looks like moving dots.
-            # Let's implement real merging at the end, but for intermediate steps
-            # we can show the "path".
+            'centroids': [{'x': float(c[0]), 'y': float(c[1])} for c in unique_pos],
+            'labels': inverse_indices.tolist() # Points mapping to unique centers
         }
-        # Ideally we want to show points merging.
-        
-        # Let's run the shift
-        shift_happened = False
-        for i in range(n_samples):
-            # Find neighbors in bandwidth
-            dists = np.linalg.norm(centroids - centroids[i], axis=1)
-            weights = (dists <= bandwidth).astype(float) # Flat kernel
-            # Gaussian kernel is better usually: exp(-d^2 / (2*bw^2))
-            # But flat is standard "neighbors within radius" logic from presentation usually.
-            # Let's use Flat kernel (like DBSCAN radius) for simplicity/speed.
-            
-            denom = np.sum(weights)
-            if denom > 0:
-                new_center = np.dot(weights, centroids) / denom
-                new_centroids[i] = new_center
-            else:
-                new_centroids[i] = centroids[i]
-                
-            if np.linalg.norm(new_centroids[i] - centroids[i]) > stop_thresh:
-                shift_happened = True
-        
-        centroids = np.copy(new_centroids)
-        
-        if not shift_happened:
-            break
-
-        # Post-processing for this step to create meaningful colors:
-        # Group centroids that are within small distance
-        # This is expensive O(N^2) every frame. Maybe just every 5 frames or at end?
-        # Let's do it every step but simplified: round coordinates
-        
-        # We need meaningful labels for history.
-        # Let's cluster the *current centroids* using a simple greedy approach
-        rounded = np.round(centroids, decimals=1) 
-        # Map rounded tuples to cluster IDs
-        unique_pos = np.unique(rounded, axis=0)
-        
-        # Assign label based on nearest unique center
-        # This gives the "merging" effect visually
-        step_labels = []
-        for c in centroids:
-             # Find closest unique
-             d = np.linalg.norm(unique_pos - c, axis=1)
-             step_labels.append(int(np.argmin(d)))
-             
-        step_data['labels'] = step_labels
-        step_data['centroids'] = [{'x': c[0], 'y': c[1]} for c in unique_pos] # Show merged centers
-        
         history.append(step_data)
+        
+        # Check convergence
+        shift = np.linalg.norm(new_centroids - old_centroids, axis=1)
+        if np.max(shift) < stop_thresh:
+            break
+            
+        centroids = new_centroids
 
     return history
 
 def compute_dendrogram_data(points):
+    """
+    Compute dendrogram data and return JSON-serializable structure.
+    """
     X = normalize_points(points)
     if len(X) < 2:
-        # Need at least 2 points for linkage
-        raise ValueError("Need at least 2 points for dendrogram")
+        return {'error': "Need at least 2 points"}
         
-    # Ward linkage
     Z = linkage(X, method='ward')
-    
-    # Get dendrogram data for plotting
     ddata = dendrogram(Z, no_plot=True)
     
-    return ddata
+    # Fix JSON serialization error (numpy float32 is not JSON serializable)
+    def clean_floats(obj):
+        if isinstance(obj, list):
+            return [clean_floats(x) for x in obj]
+        elif isinstance(obj, dict):
+            return {k: clean_floats(v) for k, v in obj.items()}
+        elif hasattr(obj, 'item'): # numpy scalar
+            return obj.item()
+        return obj
+
+    return clean_floats(ddata)

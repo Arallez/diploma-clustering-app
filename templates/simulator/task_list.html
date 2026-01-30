@@ -33,7 +33,8 @@
     </header>
 
     <!-- Dynamic Tags (Blocks) -->
-    {% for tag in tags %}\n      <div class="algorithm-section">
+    {% for tag in tags %}
+      <div class="algorithm-section">
         <h2 class="algorithm-title">
           {{ tag.name }}
         </h2>
@@ -60,7 +61,7 @@
     {% if uncategorized %}
     <div class="algorithm-section">
       <h2 class="algorithm-title">📂 Разное</h2>
-      <div class=\"tasks-grid\">
+      <div class="tasks-grid">
         {% for task in uncategorized %}
         <a href="{% url 'simulator:challenge_detail' task.slug %}" class="task-card {% if task.id in completed_task_ids %}completed{% endif %}">
           <div class="task-badge difficulty-{{ task.difficulty }}">

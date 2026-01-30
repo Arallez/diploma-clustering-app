@@ -4,7 +4,7 @@
 {% block title %}Задания{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/tasks.css' %}?v=1.2">
+<link rel="stylesheet" href="{% static 'css/tasks.css' %}?v=1.3">
 <style>
     /* Add style for completed tasks */
     .task-card.completed {
@@ -62,8 +62,7 @@
     <div class="algorithm-section">
       <h2 class="algorithm-title">📂 Разное</h2>
       <div class="tasks-grid">
-        {% for task in uncategorized %}
-        <a href="{% url 'simulator:challenge_detail' task.slug %}" class="task-card {% if task.id in completed_task_ids %}completed{% endif %}">
+        {% for task in uncategorized %}\n        <a href="{% url 'simulator:challenge_detail' task.slug %}" class="task-card {% if task.id in completed_task_ids %}completed{% endif %}">
           <div class="task-badge difficulty-{{ task.difficulty }}">
             {% if task.difficulty == 1 %}⭐ Novice
             {% elif task.difficulty == 2 %}⭐⭐ Beginner

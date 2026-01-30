@@ -1,12 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Prefetch
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from .forms import UserRegisterForm
-from apps.simulator.models import Task, UserTaskAttempt
+from apps.simulator.models import Task, UserTaskAttempt, TaskTag
 from .models import Material
 
 def home(request):
@@ -73,9 +73,22 @@ def profile(request):
     return render(request, 'core/profile.html', context)
 
 def materials_list(request):
-    """Список всех учебных материалов"""
-    materials = Material.objects.all().order_by('order', 'created_at')
-    return render(request, 'core/materials_list.html', {'materials': materials})
+    """Список учебных материалов, сгруппированных по темам (тегам)"""
+    
+    # 1. Теги, у которых есть материалы (distinct нужен т.к. фильтруем по ManyToMany)
+    # Prefetch нужен, чтобы получить связанные материалы внутри каждого тега без лишних запросов
+    tags = TaskTag.objects.filter(materials__isnull=False).distinct().prefetch_related(
+        Prefetch('materials', queryset=Material.objects.order_by('order'))
+    ).order_by('order')
+
+    # 2. Материалы без тегов (Общие)
+    untagged_materials = Material.objects.filter(tags__isnull=True).order_by('order')
+
+    context = {
+        'tags': tags,
+        'untagged_materials': untagged_materials,
+    }
+    return render(request, 'core/materials_list.html', context)
 
 def material_detail(request, slug):
     """Детальная страница материала"""

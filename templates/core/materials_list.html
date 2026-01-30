@@ -4,71 +4,60 @@
 {% block title %}Учебные материалы{% endblock %}
 
 {% block extra_css %}
-<!-- Custom styles for materials (No Bootstrap) -->
 <link rel="stylesheet" href="{% static 'css/materials.css' %}">
 {% endblock %}
 
 {% block content %}
-<div class="page-container">
-    <div class="page-header">
-        <h1 class="page-title">📚 Учебные материалы</h1>
-        <div class="page-subtitle">Теоретические основы, математика и алгоритмы кластеризации</div>
-    </div>
+<div class="page-wrapper">
+  <div class="tasks-page">
+    <header class="tasks-header">
+      <h1 class="tasks-title">📚 Учебные материалы</h1>
+      <p style="color: #94a3b8; margin: 0.5rem 0 0; font-size: 1.05rem;">Теоретические основы, математика и алгоритмы кластеризации</p>
+    </header>
     
     {% if not tags and not untagged_materials %}
-        <div class="content-panel" style="text-align: center; padding: 60px;">
-            <h3>🤷‍♂️ Пока пусто</h3>
-            <p style="color: #94a3b8;">Материалы еще не добавлены. Зайдите в админку.</p>
-        </div>
+      <div class="empty-state" style="text-align: center; color: #94a3b8; padding: 2rem;">
+        <p>Материалы еще не добавлены. Зайдите в админку.</p>
+      </div>
     {% else %}
-        
-        <!-- Материалы по темам -->
-        {% for tag in tags %}
-            <h2 style="color: #94a3b8; margin: 40px 0 24px; font-size: 1.4rem; border-bottom: 1px solid #334155; padding-bottom: 12px; display: flex; align-items: center; gap: 10px;">
-                <span style="background: rgba(59, 130, 246, 0.2); width: 8px; height: 8px; border-radius: 50%; display: inline-block;"></span>
-                {{ tag.name }}
-            </h2>
-            <div class="materials-grid">
-                {% for material in tag.materials.all %}
-                <a href="{% url 'material_detail' material.slug %}" class="material-card">
-                    <div class="card-badge">
-                        Теория #{{ material.order }}
-                    </div>
-                    <h3 class="card-title">{{ material.title }}</h3>
-                    <div class="card-footer">
-                        <span>🗓 {{ material.updated_at|date:"d.m.Y" }}</span>
-                        <span class="read-link">Читать →</span>
-                    </div>
-                </a>
-                {% endfor %}
-            </div>
-        {% endfor %}
+      
+      <!-- Материалы по темам -->
+      {% for tag in tags %}
+        <div class="algorithm-section">
+          <h2 class="algorithm-title">{{ tag.name }}</h2>
+          <div class="tasks-grid">
+            {% for material in tag.materials.all %}
+            <a href="{% url 'material_detail' material.slug %}" class="task-card">
+              <div class="task-badge" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa;">
+                Теория #{{ material.order }}
+              </div>
+              <div class="task-card-title">{{ material.title }}</div>
+              <div class="task-card-desc">Обновлено {{ material.updated_at|date:"d.m.Y" }}</div>
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
 
-        <!-- Общие материалы (без тегов) -->
-        {% if untagged_materials %}
-            {% if tags %}
-                <h2 style="color: #94a3b8; margin: 50px 0 24px; font-size: 1.4rem; border-bottom: 1px solid #334155; padding-bottom: 12px; display: flex; align-items: center; gap: 10px;">
-                    <span style="background: rgba(148, 163, 184, 0.2); width: 8px; height: 8px; border-radius: 50%; display: inline-block;"></span>
-                    Общие материалы
-                </h2>
-            {% endif %}
-            
-            <div class="materials-grid">
-                {% for material in untagged_materials %}
-                <a href="{% url 'material_detail' material.slug %}" class="material-card">
-                    <div class="card-badge" style="background: rgba(148, 163, 184, 0.15); color: #cbd5e1; border-color: rgba(148, 163, 184, 0.25);">
-                        Теория #{{ material.order }}
-                    </div>
-                    <h3 class="card-title">{{ material.title }}</h3>
-                    <div class="card-footer">
-                        <span>🗓 {{ material.updated_at|date:"d.m.Y" }}</span>
-                        <span class="read-link">Читать →</span>
-                    </div>
-                </a>
-                {% endfor %}
-            </div>
-        {% endif %}
+      <!-- Общие материалы (без тегов) -->
+      {% if untagged_materials %}
+        <div class="algorithm-section">
+          <h2 class="algorithm-title">📂 Общие материалы</h2>
+          <div class="tasks-grid">
+            {% for material in untagged_materials %}
+            <a href="{% url 'material_detail' material.slug %}" class="task-card">
+              <div class="task-badge" style="background: rgba(148, 163, 184, 0.2); color: #cbd5e1;">
+                Теория #{{ material.order }}
+              </div>
+              <div class="task-card-title">{{ material.title }}</div>
+              <div class="task-card-desc">Обновлено {{ material.updated_at|date:"d.m.Y" }}</div>
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
 
     {% endif %}
+  </div>
 </div>
 {% endblock %}

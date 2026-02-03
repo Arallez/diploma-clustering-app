@@ -78,7 +78,7 @@
 }
 
 .run-btn {
-    background: #7c3aed; /* Purple for Verification */
+    background: #3b82f6; /* Revert to Blue */
     color: white;
     border: none;
     padding: 8px 16px;
@@ -90,7 +90,7 @@
     gap: 6px;
     transition: background 0.2s;
 }
-.run-btn:hover { background: #6d28d9; }
+.run-btn:hover { background: #2563eb; }
 
 /* Output Panel */
 .output-panel {
@@ -174,8 +174,8 @@
 }
 
 .quiz-option.selected {
-    border-color: #7c3aed; /* Purple Match */
-    background: rgba(124, 58, 237, 0.15);
+    border-color: #3b82f6; /* Revert to Blue */
+    background: rgba(59, 130, 246, 0.15);
     color: #fff;
 }
 
@@ -183,14 +183,14 @@
     cursor: pointer;
     width: 18px;
     height: 18px;
-    accent-color: #7c3aed; /* Purple Match */
+    accent-color: #3b82f6; /* Revert to Blue */
 }
 
 .submit-quiz-btn {
     width: 100%;
     margin-top: 30px;
     padding: 15px;
-    background: #7c3aed; /* Purple Match */
+    background: #3b82f6; /* Revert to Blue */
     border: none;
     color: white;
     border-radius: 8px;
@@ -200,7 +200,7 @@
     box-shadow: 0 4px 6px rgba(0,0,0,0.2);
     transition: background 0.2s;
 }
-.submit-quiz-btn:hover { background: #6d28d9; }
+.submit-quiz-btn:hover { background: #2563eb; }
 
 .quiz-result-message {
     margin-top: 25px;

@@ -4,8 +4,8 @@
 {% block title %}{{ task.title }}{% endblock %}
 
 {% block extra_css %}
-<!-- We reuse tasks.css for layout -->
-<link rel="stylesheet" href="{% static 'css/tasks.css' %}?v=1.2">
+<!-- Reuse tasks.css for layout -->
+<link rel="stylesheet" href="{% static 'css/tasks.css' %}?v=1.3">
 <style>
     /* Specific layout for challenge page */
     .challenge-container {
@@ -16,10 +16,11 @@
     }
 
     .task-sidebar {
-        background: #fff;
-        border-right: 1px solid #e2e8f0;
+        background: #1e293b; /* Dark Slate instead of White */
+        border-right: 1px solid #334155;
         padding: 20px;
         overflow-y: auto;
+        color: #f8fafc;
     }
 
     .editor-area {
@@ -27,6 +28,8 @@
         flex-direction: column;
         height: 100%;
         background: #1e1e1e; /* VS Code dark bg */
+        border-radius: 8px;
+        overflow: hidden;
     }
 
     #monaco-editor {
@@ -44,7 +47,7 @@
     }
 
     .run-btn {
-        background: #28a745;
+        background: #3b82f6;
         color: white;
         border: none;
         padding: 8px 16px;
@@ -54,22 +57,23 @@
         display: flex;
         align-items: center;
         gap: 6px;
+        transition: background 0.2s;
     }
-    .run-btn:hover { background: #218838; }
+    .run-btn:hover { background: #2563eb; }
 
     .output-panel {
         height: 150px;
-        background: #000;
-        color: #ddd;
+        background: #0f172a;
+        color: #cbd5e1;
         font-family: 'Fira Code', monospace;
         padding: 10px;
         overflow-y: auto;
-        border-top: 1px solid #444;
+        border-top: 1px solid #334155;
         font-size: 0.9rem;
     }
     
-    .output-success { color: #28a745; }
-    .output-error { color: #dc3545; }
+    .output-success { color: #4ade80; }
+    .output-error { color: #f87171; }
 
     /* Quiz Styles */
     .quiz-options {
@@ -82,16 +86,18 @@
         display: flex;
         align-items: center;
         gap: 10px;
-        padding: 10px;
-        border: 1px solid #e2e8f0;
+        padding: 15px;
+        border: 1px solid #334155;
         border-radius: 6px;
         cursor: pointer;
         transition: all 0.2s;
+        background: #0f172a;
+        color: #e2e8f0;
     }
-    .quiz-option:hover { background: #f8fafc; }
+    .quiz-option:hover { background: #1e293b; }
     .quiz-option.selected {
         border-color: #3b82f6;
-        background: #eff6ff;
+        background: rgba(59, 130, 246, 0.1);
     }
     .quiz-option input { cursor: pointer; }
 </style>
@@ -103,21 +109,21 @@
     <div class="challenge-container">
         <!-- Left: Task Description -->
         <div class="task-sidebar">
-            <a href="{% url 'simulator:task_list' %}" style="color: #64748b; text-decoration: none; margin-bottom: 20px; display: block;">← Назад к списку</a>
+            <a href="{% url 'simulator:task_list' %}" style="color: #94a3b8; text-decoration: none; margin-bottom: 20px; display: block;">← Назад к списку</a>
             
-            <h1 style="font-size: 1.5rem; margin-bottom: 10px;">{{ task.title }}</h1>
+            <h1 style="font-size: 1.5rem; margin-bottom: 10px; color: #fff;">{{ task.title }}</h1>
             
             <div class="task-badge difficulty-{{ task.difficulty }}">
                 {% if task.difficulty == 1 %}Novice{% elif task.difficulty == 2 %}Beginner{% else %}Hard{% endif %}
             </div>
 
-            <div class="markdown-body" style="font-size: 0.95rem; line-height: 1.6; color: #334155; margin-top: 20px;">
+            <div class="markdown-body" style="font-size: 0.95rem; line-height: 1.6; color: #cbd5e1; margin-top: 20px;">
                 {{ task.description|safe }}
             </div>
 
             {% if task.task_type == 'code' %}
-            <div style="margin-top: 20px; padding: 10px; background: #eff6ff; border-radius: 6px; border: 1px solid #dbeafe;">
-                <strong style="color: #1e40af;">Задача:</strong><br>
+            <div style="margin-top: 20px; padding: 10px; background: rgba(59, 130, 246, 0.1); border-radius: 6px; border: 1px solid rgba(59, 130, 246, 0.2);">
+                <strong style="color: #60a5fa;">Задача:</strong><br>
                 Реализуйте функцию <code>{{ task.function_name }}</code>, которая принимает аргументы и возвращает результат.
             </div>
             {% endif %}
@@ -141,22 +147,19 @@
             
             {% else %}
                 <!-- Quiz Mode -->
-                <div style="flex: 1; background: #f8fafc; padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                    <div style="background: white; padding: 30px; border-radius: 12px; shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 600px; width: 100%;">
-                        <h3 style="margin-bottom: 20px;">Выберите правильный ответ:</h3>
+                <div style="flex: 1; background: #0f172a; padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <div style="background: #1e293b; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); max-width: 600px; width: 100%; border: 1px solid #334155;">
+                        <h3 style="margin-bottom: 20px; color: #fff;">Выберите правильный ответ:</h3>
                         
                         <div class="quiz-options" id="quiz-container">
                             <!-- Options will be rendered by JS if complex, or simple HTML here -->
-                            {% if task.expected_output|length > 1 and task.test_input %} 
-                                <!-- Multi-choice checkbox logic handled by JS below -->
-                            {% endif %}
                         </div>
 
-                        <button class="btn btn-primary" onclick="submitQuiz()" style="width: 100%; margin-top: 20px; padding: 12px;">
+                        <button class="btn btn-primary" onclick="submitQuiz()" style="width: 100%; margin-top: 20px; padding: 12px; background: #3b82f6; border:none; color:white; border-radius:4px; font-weight:600; cursor:pointer;">
                             Ответить
                         </button>
                         
-                        <div id="quiz-result" style="margin-top: 20px; text-align: center; font-weight: 600;"></div>
+                        <div id="quiz-result" style="margin-top: 20px; text-align: center; font-weight: 600; min-height: 24px;"></div>
                     </div>
                 </div>
             {% endif %}
@@ -195,9 +198,12 @@
         });
     } else {
         // --- 2. Init Quiz (Only for Choice tasks) ---
-        // Parse options from hidden input (assuming test_input contains options list)
         try {
-            const rawOptions = document.getElementById('quiz-options').value.replace(/'/g, '"'); // Fix simple quotes
+            // Need to handle potential single quotes in Python string repr
+            let rawOptions = document.getElementById('quiz-options').value;
+            // Basic cleanup to try and make it valid JSON
+            rawOptions = rawOptions.replace(/'/g, '"'); 
+            
             const options = JSON.parse(rawOptions);
             const container = document.getElementById('quiz-container');
             
@@ -215,12 +221,15 @@
                     }
                     // Visual select
                     document.querySelectorAll('.quiz-option').forEach(el => el.classList.remove('selected'));
-                    if (div.querySelector('input').checked) div.classList.add('selected');
+                    document.querySelectorAll('input[name="quiz_option"]:checked').forEach(cb => {
+                        cb.closest('.quiz-option').classList.add('selected');
+                    });
                 };
                 container.appendChild(div);
             });
         } catch(e) {
             console.error("Quiz options parse error", e);
+            document.getElementById('quiz-container').innerHTML = `<p style="color:red">Ошибка загрузки вариантов ответа: ${e}</p>`;
         }
     }
 
@@ -233,7 +242,8 @@
         outputDiv.innerHTML = "⏳ Проверка на сервере...";
         
         try {
-            const response = await fetch('/simulator/api/check_solution/', {
+            // CORRECT URL: hyphen instead of underscore!
+            const response = await fetch('/simulator/api/check-solution/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -242,15 +252,22 @@
                 body: JSON.stringify({ slug, code })
             });
             
-            const data = await response.json();
-            
-            if (data.success) {
-                outputDiv.innerHTML = `<div class="output-success">✅ ${data.message}</div>`;
-            } else {
-                outputDiv.innerHTML = `<div class="output-error">❌ Ошибка: ${data.error}</div>`;
+            const text = await response.text();
+            try {
+                const data = JSON.parse(text);
+                if (data.success) {
+                    outputDiv.innerHTML = `<div class="output-success">✅ ${data.message}</div>`;
+                } else {
+                    outputDiv.innerHTML = `<div class="output-error">❌ Ошибка: ${data.error || 'Неизвестная ошибка'}</div>`;
+                }
+            } catch (jsonError) {
+                // If response is HTML (500 error, etc.)
+                outputDiv.innerHTML = `<div class="output-error">🔥 Ошибка сервера (HTML):<br>${text.substring(0, 200)}...</div>`;
+                console.error("Server HTML response:", text);
             }
+            
         } catch (e) {
-            outputDiv.innerHTML = `<div class="output-error">Server Error: ${e}</div>`;
+            outputDiv.innerHTML = `<div class="output-error">Network/Client Error: ${e}</div>`;
         }
     }
 
@@ -259,31 +276,38 @@
         const slug = document.getElementById('task-slug').value;
         const resultDiv = document.getElementById('quiz-result');
         
-        // Collect selected answers
         const selected = Array.from(document.querySelectorAll('input[name="quiz_option"]:checked'))
                               .map(cb => cb.value);
         
-        // If single choice expected (hacky check, ideally backend tells us)
-        // For now, send list if multiple, string if one? 
-        // Let's send list, backend handles strict comparison.
-        
+        if (selected.length === 0) {
+            resultDiv.innerHTML = `<span style="color:#fbbf24">⚠️ Выберите хотя бы один вариант</span>`;
+            return;
+        }
+
         try {
-            const response = await fetch('/simulator/api/check_solution/', {
+            // CORRECT URL here too
+            const response = await fetch('/simulator/api/check-solution/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': document.cookie.match(/csrftoken=([^;]+)/)?.[1]
                 },
-                body: JSON.stringify({ slug, code: selected }) // We send answer in 'code' field
+                body: JSON.stringify({ slug, code: selected })
             });
             
-            const data = await response.json();
-            
-            if (data.success) {
-                resultDiv.innerHTML = `<span style="color:green">✅ ${data.message}</span>`;
-            } else {
-                resultDiv.innerHTML = `<span style="color:red">❌ ${data.error}</span>`;
+            const text = await response.text();
+            try {
+                const data = JSON.parse(text);
+                if (data.success) {
+                    resultDiv.innerHTML = `<span style="color:#4ade80">✅ ${data.message}</span>`;
+                } else {
+                    resultDiv.innerHTML = `<span style="color:#f87171">❌ ${data.error}</span>`;
+                }
+            } catch (jsonErr) {
+                 resultDiv.innerHTML = `<span style="color:red">Ошибка сервера (HTML)</span>`;
+                 console.error(text);
             }
+
         } catch (e) {
             resultDiv.innerText = "Error: " + e;
         }

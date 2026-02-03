@@ -4,142 +4,10 @@
 {% block title %}{{ task.title }}{% endblock %}
 
 {% block extra_css %}
-<!-- Reuse tasks.css for layout -->
-<link rel="stylesheet" href="{% static 'css/tasks.css' %}?v=1.7">
-<style>
-    /* Specific layout for challenge page */
-    .challenge-container {
-        display: grid;
-        grid-template-columns: 350px 1fr;
-        gap: 20px;
-        height: calc(100vh - 100px); /* Fill viewport minus header */
-    }
-
-    .task-sidebar {
-        background: #1e293b; /* Dark Slate */
-        border-right: 1px solid #334155;
-        padding: 20px;
-        overflow-y: auto;
-        color: #f8fafc;
-    }
-
-    .editor-area {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        background: #1e1e1e; /* VS Code dark bg */
-        border-radius: 8px;
-        overflow: hidden;
-    }
-
-    #monaco-editor {
-        flex: 1; /* Takes all available space */
-    }
-
-    .controls {
-        height: 50px;
-        background: #2d2d2d;
-        display: flex;
-        align-items: center;
-        padding: 0 15px;
-        justify-content: flex-end;
-        border-top: 1px solid #3e3e3e;
-    }
-
-    .run-btn {
-        background: #3b82f6;
-        color: white;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 4px;
-        font-weight: 600;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        transition: background 0.2s;
-    }
-    .run-btn:hover { background: #2563eb; }
-
-    .output-panel {
-        height: 150px;
-        background: #0f172a;
-        color: #cbd5e1;
-        font-family: 'Fira Code', monospace;
-        padding: 10px;
-        overflow-y: auto;
-        border-top: 1px solid #334155;
-        font-size: 0.9rem;
-    }
-    
-    .output-success { color: #4ade80; }
-    .output-error { color: #f87171; }
-
-    /* Quiz Styles */
-    .quiz-container-inner {
-        max-width: 800px;
-        margin: 0 auto;
-        width: 100%;
-    }
-
-    .quiz-question-block {
-        margin-bottom: 30px;
-        background: #1e293b; /* Card bg */
-        padding: 25px;
-        border-radius: 12px;
-        border: 1px solid #334155;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        transition: border-color 0.3s ease;
-    }
-    
-    .quiz-question-text {
-        color: #f1f5f9;
-        font-weight: 700;
-        margin-bottom: 20px;
-        font-size: 1.15rem;
-        line-height: 1.5;
-        border-bottom: 1px solid #334155;
-        padding-bottom: 15px;
-    }
-    
-    .quiz-options-group {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-    
-    .quiz-option {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 14px 16px;
-        border: 1px solid #475569;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        background: #0f172a;
-        color: #e2e8f0;
-        font-size: 1rem;
-    }
-    
-    .quiz-option:hover { 
-        background: #1e293b; 
-        border-color: #94a3b8;
-    }
-    
-    .quiz-option.selected {
-        border-color: #3b82f6;
-        background: rgba(59, 130, 246, 0.15);
-        color: #fff;
-    }
-    
-    .quiz-option input { 
-        cursor: pointer;
-        width: 18px;
-        height: 18px;
-        accent-color: #3b82f6;
-    }
-</style>
+<!-- Base styles -->
+<link rel="stylesheet" href="{% static 'css/tasks.css' %}?v=1.0">
+<!-- Page specific styles -->
+<link rel="stylesheet" href="{% static 'simulator/css/challenge.css' %}?v=1.0">
 {% endblock %}
 
 {% block content %}
@@ -148,21 +16,21 @@
     <div class="challenge-container">
         <!-- Left: Task Description -->
         <div class="task-sidebar">
-            <a href="{% url 'simulator:task_list' %}" style="color: #94a3b8; text-decoration: none; margin-bottom: 20px; display: block;">← Назад к списку</a>
+            <a href="{% url 'simulator:task_list' %}" class="task-back-link">← Назад к списку</a>
             
-            <h1 style="font-size: 1.5rem; margin-bottom: 10px; color: #fff;">{{ task.title }}</h1>
+            <h1 class="task-title">{{ task.title }}</h1>
             
             <div class="task-badge difficulty-{{ task.difficulty }}">
                 {% if task.difficulty == 1 %}Novice{% elif task.difficulty == 2 %}Beginner{% else %}Hard{% endif %}
             </div>
 
-            <div class="markdown-body" style="font-size: 0.95rem; line-height: 1.6; color: #cbd5e1; margin-top: 20px;">
+            <div class="markdown-body task-description">
                 {{ task.description|safe }}
             </div>
 
             {% if task.task_type == 'code' %}
-            <div style="margin-top: 20px; padding: 10px; background: rgba(59, 130, 246, 0.1); border-radius: 6px; border: 1px solid rgba(59, 130, 246, 0.2);">
-                <strong style="color: #60a5fa;">Задача:</strong><br>
+            <div class="task-hint-box">
+                <strong class="task-hint-label">Задача:</strong><br>
                 Реализуйте функцию <code>{{ task.function_name }}</code>.
             </div>
             {% endif %}
@@ -175,7 +43,7 @@
                 <div id="monaco-editor"></div>
                 
                 <div class="controls">
-                    <button id="runBtn" class="run-btn" onclick="submitCode()">
+                    <button id="runBtn" class="run-btn">
                         <span>▶ Запустить код</span>
                     </button>
                 </div>
@@ -186,19 +54,19 @@
             
             {% else %}
                 <!-- Quiz Mode -->
-                <div style="flex: 1; background: #0f172a; padding: 40px; overflow-y: auto;">
+                <div class="quiz-wrapper">
                     <div class="quiz-container-inner">
-                        <h2 style="margin-bottom: 30px; color: #fff; text-align: center;">Проверка знаний</h2>
+                        <h2 class="quiz-header">Проверка знаний</h2>
                         
                         <div id="quiz-container">
-                            <!-- Questions rendered here -->
+                            <!-- Questions rendered via JS -->
                         </div>
 
-                        <button class="btn btn-primary" onclick="submitQuiz()" style="width: 100%; margin-top: 30px; padding: 15px; background: #3b82f6; border:none; color:white; border-radius:8px; font-weight:700; cursor:pointer; font-size: 1.1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
+                        <button id="submitQuizBtn" class="submit-quiz-btn">
                             Отправить ответы
                         </button>
                         
-                        <div id="quiz-result" style="margin-top: 25px; text-align: center; font-weight: 600; min-height: 24px; font-size: 1.1rem;"></div>
+                        <div id="quiz-result" class="quiz-result-message"></div>
                     </div>
                 </div>
             {% endif %}
@@ -207,264 +75,19 @@
 
 </div>
 
-<!-- Hidden Inputs -->
+<!-- Hidden Inputs (Data Transfer) -->
 <input type="hidden" id="initial-code" value="{{ previous_code|escape }}">
 <input type="hidden" id="task-slug" value="{{ task.slug }}">
 <input type="hidden" id="task-type" value="{{ task.task_type }}">
 
-<!-- Safer JSON passing -->
+<!-- Safe JSON Data Transfer -->
 {{ task.test_input|json_script:"quiz-data" }}
 
 {% endblock %}
 
 {% block extra_js %}
+<!-- Monaco Loader -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs/loader.min.js"></script>
-<script>
-    let editor;
-    const taskType = document.getElementById('task-type').value;
-
-    // --- 1. Init Editor (Only for Code tasks) ---
-    if (taskType === 'code') {
-        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs' }});
-        require(['vs/editor/editor.main'], function() {
-            editor = monaco.editor.create(document.getElementById('monaco-editor'), {
-                value: document.getElementById('initial-code').value,
-                language: 'python',
-                theme: 'vs-dark',
-                fontSize: 14,
-                minimap: { enabled: false },
-                automaticLayout: true
-            });
-        });
-    } else {
-        // --- 2. Init Quiz (Wrapped JSON support) ---
-        try {
-            let quizData = JSON.parse(document.getElementById('quiz-data').textContent);
-            
-            // AGGRESSIVE UNWRAP
-            let attempts = 5;
-            while (typeof quizData === 'string' && attempts > 0) {
-                try {
-                    quizData = JSON.parse(quizData);
-                } catch (e) {
-                    let clean = quizData.replace(/\u00A0/g, ' ').replace(/'/g, '"');
-                    try { quizData = JSON.parse(clean); } catch (e2) { break; }
-                }
-                attempts--;
-            }
-            
-            // Handle nested "questions" key
-            if (quizData && !Array.isArray(quizData) && quizData.questions && Array.isArray(quizData.questions)) {
-                quizData = quizData.questions;
-            }
-
-            // Normalize
-            if (!Array.isArray(quizData)) {
-                if (typeof quizData === 'object' && quizData !== null) quizData = Object.values(quizData);
-                else quizData = [quizData];
-            }
-            
-            const container = document.getElementById('quiz-container');
-            container.innerHTML = ''; 
-            
-            // Check structure
-            const hasQuestions = quizData.some(item => typeof item === 'object' && item.options && Array.isArray(item.options));
-            
-            if (hasQuestions) {
-                // --- MULTI-QUESTION MODE ---
-                quizData.forEach((q, qIdx) => {
-                    if (typeof q !== 'object') return; 
-
-                    const block = document.createElement('div');
-                    block.className = 'quiz-question-block';
-                    block.dataset.type = 'question';
-                    
-                    const title = document.createElement('div');
-                    title.className = 'quiz-question-text';
-                    title.innerHTML = q.text || `Вопрос ${qIdx + 1}`;
-                    block.appendChild(title);
-
-                    const optsGroup = document.createElement('div');
-                    optsGroup.className = 'quiz-options-group';
-
-                    const options = q.options || [];
-                    options.forEach((opt, oIdx) => {
-                        const div = document.createElement('div');
-                        div.className = 'quiz-option';
-                        const inputName = `q_${qIdx}`;
-                        const inputId = `q${qIdx}_o${oIdx}`;
-                        
-                        div.innerHTML = `
-                            <input type="radio" name="${inputName}" value="${opt}" id="${inputId}">
-                            <label for="${inputId}" style="flex:1; cursor:pointer;">${opt}</label>
-                        `;
-                        div.onclick = (e) => {
-                            if(e.target.tagName !== 'INPUT') {
-                                div.querySelector('input').checked = true;
-                            }
-                            optsGroup.querySelectorAll('.quiz-option').forEach(el => el.classList.remove('selected'));
-                            div.classList.add('selected');
-                        };
-                        optsGroup.appendChild(div);
-                    });
-                    block.appendChild(optsGroup);
-                    container.appendChild(block);
-                });
-            } else {
-                // --- SINGLE QUESTION MODE ---
-                const optsGroup = document.createElement('div');
-                optsGroup.className = 'quiz-options-group';
-                
-                quizData.forEach((opt, idx) => {
-                    let text = opt;
-                    let val = opt;
-                    if (typeof opt === 'object' && opt !== null) {
-                         text = opt.text || opt.label || opt.value || JSON.stringify(opt);
-                         val = opt.value || text;
-                         if (typeof val === 'object') val = JSON.stringify(val);
-                    }
-                    const div = document.createElement('div');
-                    div.className = 'quiz-option';
-                    div.innerHTML = `
-                        <input type="checkbox" name="quiz_option" value='${val}' id="opt_${idx}">
-                        <label for="opt_${idx}" style="flex:1; cursor:pointer;">${text}</label>
-                    `;
-                    div.onclick = (e) => {
-                        if(e.target.tagName !== 'INPUT') {
-                            const cb = div.querySelector('input');
-                            cb.checked = !cb.checked;
-                        }
-                        if(div.querySelector('input').checked) div.classList.add('selected');
-                        else div.classList.remove('selected');
-                    };
-                    optsGroup.appendChild(div);
-                });
-                container.appendChild(optsGroup);
-            }
-
-        } catch(e) {
-            console.error("Quiz render error", e);
-            document.getElementById('quiz-container').innerHTML = `<p style="color:#f87171">Ошибка отображения теста: ${e.message}</p>`;
-        }
-    }
-
-    // --- 3. Submit Code ---
-    async function submitCode() {
-        const code = editor.getValue();
-        const slug = document.getElementById('task-slug').value;
-        const outputDiv = document.getElementById('output');
-        
-        outputDiv.innerHTML = "⏳ Проверка на сервере...";
-        
-        try {
-            const response = await fetch('/simulator/api/check-solution/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': document.cookie.match(/csrftoken=([^;]+)/)?.[1]
-                },
-                body: JSON.stringify({ slug, code })
-            });
-            
-            const text = await response.text();
-            try {
-                const data = JSON.parse(text);
-                if (data.success) {
-                    outputDiv.innerHTML = `<div class="output-success">✅ ${data.message}</div>`;
-                } else {
-                    outputDiv.innerHTML = `<div class="output-error">❌ Ошибка: ${data.error || 'Неизвестная ошибка'}</div>`;
-                }
-            } catch (jsonError) {
-                outputDiv.innerHTML = `<div class="output-error">🔥 Ошибка сервера (HTML):<br>${text.substring(0, 200)}...</div>`;
-            }
-            
-        } catch (e) {
-            outputDiv.innerHTML = `<div class="output-error">Network/Client Error: ${e}</div>`;
-        }
-    }
-
-    // --- 4. Submit Quiz ---
-    async function submitQuiz() {
-        const slug = document.getElementById('task-slug').value;
-        const resultDiv = document.getElementById('quiz-result');
-        let payload = null;
-
-        const questionBlocks = document.querySelectorAll('.quiz-question-block');
-        
-        if (questionBlocks.length > 0) {
-            payload = [];
-            let allAnswered = true;
-            
-            questionBlocks.forEach((block, idx) => {
-                const checked = block.querySelector('input[type="radio"]:checked');
-                if (checked) {
-                    payload.push(checked.value);
-                } else {
-                    allAnswered = false;
-                    payload.push(null);
-                }
-            });
-
-            if (!allAnswered) {
-                resultDiv.innerHTML = `<span style="color:#fbbf24">⚠️ Пожалуйста, ответьте на все вопросы</span>`;
-                return;
-            }
-
-        } else {
-            payload = Array.from(document.querySelectorAll('input[name="quiz_option"]:checked'))
-                           .map(cb => cb.value);
-            
-            if (payload.length === 0) {
-                resultDiv.innerHTML = `<span style="color:#fbbf24">⚠️ Выберите хотя бы один вариант</span>`;
-                return;
-            }
-        }
-
-        try {
-            const response = await fetch('/simulator/api/check-solution/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': document.cookie.match(/csrftoken=([^;]+)/)?.[1]
-                },
-                body: JSON.stringify({ slug, code: payload })
-            });
-            
-            const text = await response.text();
-            try {
-                const data = JSON.parse(text);
-                
-                // --- FIX: VISUAL FEEDBACK ON SUCCESS ---
-                // Always update visuals if detailed results are present, regardless of overall success
-                if (data.quiz_results && Array.isArray(data.quiz_results) && questionBlocks.length > 0) {
-                    data.quiz_results.forEach((isRight, idx) => {
-                        if (questionBlocks[idx]) {
-                            questionBlocks[idx].style.borderColor = isRight ? '#4ade80' : '#f87171';
-                            questionBlocks[idx].style.borderWidth = isRight ? '1px' : '2px';
-                            // Optional: Add icon or visual marker
-                            if (!isRight) questionBlocks[idx].style.boxShadow = "0 0 10px rgba(248, 113, 113, 0.2)";
-                            else questionBlocks[idx].style.boxShadow = "none";
-                        }
-                    });
-                }
-
-                if (data.success) {
-                    resultDiv.innerHTML = `<span style="color:#4ade80">✅ ${data.message}</span>`;
-                } else {
-                    if (data.quiz_results) {
-                        resultDiv.innerHTML = `<span style="color:#f87171">❌ Некоторые ответы неверны. Проверьте выделенные блоки.</span>`;
-                    } else {
-                        resultDiv.innerHTML = `<span style="color:#f87171">❌ ${data.error}</span>`;
-                    }
-                }
-            } catch (jsonErr) {
-                 resultDiv.innerHTML = `<span style="color:red">Ошибка сервера (HTML)</span>`;
-                 console.error(text);
-            }
-
-        } catch (e) {
-            resultDiv.innerText = "Error: " + e;
-        }
-    }
-</script>
+<!-- Page Logic -->
+<script src="{% static 'simulator/js/challenge.js' %}?v=1.0"></script>
 {% endblock %}

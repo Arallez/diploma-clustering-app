@@ -218,11 +218,23 @@
             container.innerHTML = ''; // Clear existing
 
             options.forEach((opt, idx) => {
+                // Determine text and value to display
+                let displayText = opt;
+                let value = opt;
+
+                if (typeof opt === 'object' && opt !== null) {
+                    // Try common keys if opt is an object like {"text": "A"} or {"option": "A"}
+                    displayText = opt.text || opt.label || opt.value || opt.option || opt.answer || JSON.stringify(opt);
+                    // Use text as value if 'value' key is missing, or stringify if needed
+                    value = opt.value || displayText;
+                    if (typeof value === 'object') value = JSON.stringify(value);
+                }
+
                 const div = document.createElement('div');
                 div.className = 'quiz-option';
                 div.innerHTML = `
-                    <input type="checkbox" name="quiz_option" value="${opt}" id="opt_${idx}">
-                    <label for="opt_${idx}" style="flex:1; cursor:pointer;">${opt}</label>
+                    <input type="checkbox" name="quiz_option" value='${value}' id="opt_${idx}">
+                    <label for="opt_${idx}" style="flex:1; cursor:pointer;">${displayText}</label>
                 `;
                 div.onclick = (e) => {
                     if(e.target.tagName !== 'INPUT') {

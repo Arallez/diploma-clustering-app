@@ -4,306 +4,288 @@
 {% block title %}{{ task.title }}{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/tasks.css' %}?v=1.3">
+<!-- We reuse tasks.css for layout -->
+<link rel="stylesheet" href="{% static 'css/tasks.css' %}?v=1.2">
 <style>
+    /* Specific layout for challenge page */
     .challenge-container {
         display: grid;
         grid-template-columns: 350px 1fr;
         gap: 20px;
-        height: calc(100vh - 100px);
+        height: calc(100vh - 100px); /* Fill viewport minus header */
     }
+
     .task-sidebar {
-        background: rgba(30, 41, 59, 0.5);
-        border-right: 1px solid #334155;
+        background: #fff;
+        border-right: 1px solid #e2e8f0;
         padding: 20px;
         overflow-y: auto;
     }
+
     .editor-area {
         display: flex;
         flex-direction: column;
         height: 100%;
+        background: #1e1e1e; /* VS Code dark bg */
     }
+
     #monaco-editor {
-        flex: 1;
-        border: 1px solid #334155;
+        flex: 1; /* Takes all available space */
     }
-    .output-panel {
-        height: 150px;
-        background: #0f172a;
-        border-top: 1px solid #334155;
-        padding: 10px;
-        font-family: 'Fira Code', monospace;
-        font-size: 0.9rem;
-        overflow-y: auto;
-        color: #94a3b8;
-    }
-    .output-success { color: #4ade80; }
-    .output-error { color: #f87171; }
-    
-    .run-btn {
-        background: #3b82f6;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-weight: 600;
-        margin-top: 10px;
+
+    .controls {
+        height: 50px;
+        background: #2d2d2d;
         display: flex;
         align-items: center;
-        gap: 8px;
-        opacity: 1;
-        transition: opacity 0.2s;
+        padding: 0 15px;
+        justify-content: flex-end;
+        border-top: 1px solid #3e3e3e;
     }
-    .run-btn:disabled {
-        background: #475569;
-        cursor: not-allowed;
-        opacity: 0.7;
+
+    .run-btn {
+        background: #28a745;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
     }
-    .spinner {
-        width: 16px;
-        height: 16px;
-        border: 2px solid #fff;
-        border-top-color: transparent;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        display: none;
+    .run-btn:hover { background: #218838; }
+
+    .output-panel {
+        height: 150px;
+        background: #000;
+        color: #ddd;
+        font-family: 'Fira Code', monospace;
+        padding: 10px;
+        overflow-y: auto;
+        border-top: 1px solid #444;
+        font-size: 0.9rem;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    .output-success { color: #28a745; }
+    .output-error { color: #dc3545; }
+
+    /* Quiz Styles */
+    .quiz-options {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 20px;
+    }
+    .quiz-option {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .quiz-option:hover { background: #f8fafc; }
+    .quiz-option.selected {
+        border-color: #3b82f6;
+        background: #eff6ff;
+    }
+    .quiz-option input { cursor: pointer; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="page-wrapper" style="padding: 20px;">
+<div class="page-wrapper" style="padding: 20px; max-width: 100%;">
+    
     <div class="challenge-container">
-        <!-- Sidebar: Task Description -->
+        <!-- Left: Task Description -->
         <div class="task-sidebar">
-            <a href="{% url 'simulator:task_list' %}" style="color: #94a3b8; text-decoration: none; margin-bottom: 20px; display: block;">← Назад к списку</a>
+            <a href="{% url 'simulator:task_list' %}" style="color: #64748b; text-decoration: none; margin-bottom: 20px; display: block;">← Назад к списку</a>
             
-            <h1 style="font-size: 1.5rem; margin-bottom: 10px; color: #fff;">{{ task.title }}</h1>
+            <h1 style="font-size: 1.5rem; margin-bottom: 10px;">{{ task.title }}</h1>
             
             <div class="task-badge difficulty-{{ task.difficulty }}">
                 {% if task.difficulty == 1 %}Novice{% elif task.difficulty == 2 %}Beginner{% else %}Hard{% endif %}
             </div>
 
-            <div class="markdown-body" style="font-size: 0.95rem; line-height: 1.6; color: #e2e8f0; margin-top: 20px;">
+            <div class="markdown-body" style="font-size: 0.95rem; line-height: 1.6; color: #334155; margin-top: 20px;">
                 {{ task.description|safe }}
             </div>
 
             {% if task.task_type == 'code' %}
-            <div style="margin-top: 20px; padding: 10px; background: rgba(59, 130, 246, 0.1); border-radius: 6px; border: 1px solid rgba(59, 130, 246, 0.2);">
-                <strong style="color: #60a5fa;">Задача:</strong><br>
-                Реализуйте функцию <code>{{ task.function_name }}</code>.
+            <div style="margin-top: 20px; padding: 10px; background: #eff6ff; border-radius: 6px; border: 1px solid #dbeafe;">
+                <strong style="color: #1e40af;">Задача:</strong><br>
+                Реализуйте функцию <code>{{ task.function_name }}</code>, которая принимает аргументы и возвращает результат.
             </div>
             {% endif %}
         </div>
 
-        <!-- Main: Editor -->
+        <!-- Right: Editor or Quiz -->
         <div class="editor-area">
-            <div id="monaco-editor"></div>
-            
-            <div class="controls" style="padding: 10px; background: #1e293b; display: flex; align-items: center; justify-content: space-between;">
-                <span style="color: #64748b; font-size: 0.8rem;" id="env-status">Загрузка Pyodide...</span>
-                <button id="runBtn" class="run-btn" onclick="runCode()" disabled>
-                    <div class="spinner" id="spinner"></div>
-                    <span id="btnText">Загрузка среды...</span>
-                </button>
-            </div>
+            {% if task.task_type == 'code' %}
+                <!-- Code Editor Mode -->
+                <div id="monaco-editor"></div>
+                
+                <div class="controls">
+                    <button id="runBtn" class="run-btn" onclick="submitCode()">
+                        <span>▶ Запустить код</span>
+                    </button>
+                </div>
 
-            <div id="output" class="output-panel">
-                <span style="color: #64748b;">Ожидание готовности интерпретатора...</span>
-            </div>
+                <div id="output" class="output-panel">
+                    // Здесь будет результат выполнения...
+                </div>
+            
+            {% else %}
+                <!-- Quiz Mode -->
+                <div style="flex: 1; background: #f8fafc; padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <div style="background: white; padding: 30px; border-radius: 12px; shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 600px; width: 100%;">
+                        <h3 style="margin-bottom: 20px;">Выберите правильный ответ:</h3>
+                        
+                        <div class="quiz-options" id="quiz-container">
+                            <!-- Options will be rendered by JS if complex, or simple HTML here -->
+                            {% if task.expected_output|length > 1 and task.test_input %} 
+                                <!-- Multi-choice checkbox logic handled by JS below -->
+                            {% endif %}
+                        </div>
+
+                        <button class="btn btn-primary" onclick="submitQuiz()" style="width: 100%; margin-top: 20px; padding: 12px;">
+                            Ответить
+                        </button>
+                        
+                        <div id="quiz-result" style="margin-top: 20px; text-align: center; font-weight: 600;"></div>
+                    </div>
+                </div>
+            {% endif %}
         </div>
     </div>
+
 </div>
 
-<!-- Hidden data for JS -->
+<!-- Hidden Inputs -->
 <input type="hidden" id="initial-code" value="{{ previous_code|escape }}">
 <input type="hidden" id="task-slug" value="{{ task.slug }}">
-<input type="hidden" id="function-name" value="{{ task.function_name }}">
-<input type="hidden" id="test-input" value="{{ task.test_input_json }}">
-<input type="hidden" id="expected-output" value="{{ task.expected_output_json }}">
+<input type="hidden" id="task-type" value="{{ task.task_type }}">
+<!-- For Quiz -->
+<input type="hidden" id="quiz-options" value="{{ task.test_input|safe }}"> 
 
 {% endblock %}
 
 {% block extra_js %}
-<!-- Monaco Editor -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs/loader.min.js"></script>
-<!-- Pyodide CDN -->
-<script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
-
 <script>
     let editor;
-    let pyodide = null;
-    const outputDiv = document.getElementById('output');
-    const runBtn = document.getElementById('runBtn');
-    const btnText = document.getElementById('btnText');
-    const spinner = document.getElementById('spinner');
-    const envStatus = document.getElementById('env-status');
+    const taskType = document.getElementById('task-type').value;
 
-    // 1. Initialize Monaco Editor
-    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs' }});
-    require(['vs/editor/editor.main'], function() {
-        editor = monaco.editor.create(document.getElementById('monaco-editor'), {
-            value: document.getElementById('initial-code').value,
-            language: 'python',
-            theme: 'vs-dark',
-            fontSize: 14,
-            minimap: { enabled: false },
-            automaticLayout: true
-        });
-    });
-
-    // 2. Initialize Pyodide with clearer feedback
-    async function initPyodide() {
-        console.log("Starting Pyodide initialization...");
-        try {
-            // Explicitly set indexURL to avoid auto-detection issues
-            pyodide = await loadPyodide({
-                indexURL: "https://cdn.jsdelivr.net/pyodide/v0.25.0/full/"
+    // --- 1. Init Editor (Only for Code tasks) ---
+    if (taskType === 'code') {
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs' }});
+        require(['vs/editor/editor.main'], function() {
+            editor = monaco.editor.create(document.getElementById('monaco-editor'), {
+                value: document.getElementById('initial-code').value,
+                language: 'python',
+                theme: 'vs-dark',
+                fontSize: 14,
+                minimap: { enabled: false },
+                automaticLayout: true
             });
-            console.log("Pyodide core loaded.");
-            
-            envStatus.innerText = "Загрузка NumPy...";
-            await pyodide.loadPackage("numpy");
-            console.log("NumPy loaded.");
-
-            // Enable UI
-            envStatus.innerText = "Python 3.11 (Ready)";
-            outputDiv.innerHTML = "✅ Среда готова. Напишите код и нажмите 'Запустить'.";
-            runBtn.disabled = false;
-            btnText.innerText = "▶ Запустить проверку";
-            
-        } catch (err) {
-            console.error("Pyodide init error:", err);
-            envStatus.innerText = "Ошибка загрузки";
-            outputDiv.innerHTML = `<span class="output-error">⚠️ Ошибка загрузки Pyodide:<br>${err}<br>Проверьте соединение с интернетом (CDN).</span>`;
-            btnText.innerText = "Ошибка среды";
-        }
-    }
-    
-    // Start init
-    if (typeof loadPyodide === 'function') {
-        initPyodide();
+        });
     } else {
-        // Retry if script hasn't loaded yet
-        window.onload = function() {
-            if (typeof loadPyodide === 'function') {
-                initPyodide();
-            } else {
-                outputDiv.innerHTML = "Не удалось загрузить скрипт Pyodide с CDN.";
-            }
-        }
-    }
-
-    // 3. Run Code Function
-    async function runCode() {
-        if (!pyodide) return;
-
-        const userCode = editor.getValue();
-        const functionName = document.getElementById('function-name').value;
-        let testInput = JSON.parse(document.getElementById('test-input').value || 'null');
-        let expectedOutput = JSON.parse(document.getElementById('expected-output').value || 'null');
-
-        // UI State: Running
-        runBtn.disabled = true;
-        spinner.style.display = 'block';
-        btnText.innerText = "Проверка...";
-        outputDiv.innerHTML = "🚀 Выполнение...";
-
+        // --- 2. Init Quiz (Only for Choice tasks) ---
+        // Parse options from hidden input (assuming test_input contains options list)
         try {
-            // A. Reset stdout capture
-            pyodide.runPython(`
-import sys
-from io import StringIO
-sys.stdout = StringIO()
-            `);
+            const rawOptions = document.getElementById('quiz-options').value.replace(/'/g, '"'); // Fix simple quotes
+            const options = JSON.parse(rawOptions);
+            const container = document.getElementById('quiz-container');
             
-            // B. Run User Code
-            await pyodide.runPythonAsync(userCode);
-            
-            // Get prints
-            let stdout = pyodide.runPython("sys.stdout.getvalue()");
-            
-            // C. Run Test Logic
-            pyodide.globals.set("test_input_js", testInput);
-            
-            let testCode = `
-import numpy as np
-
-if '${functionName}' not in globals():
-    raise Exception(f"Функция '${functionName}' не найдена!")
-
-func = globals()['${functionName}']
-inp = test_input_js
-
-# Call logic
-if isinstance(inp, list):
-    try:
-        result = func(*inp)
-    except TypeError:
-        result = func(inp)
-else:
-    result = func(inp)
-
-result
-            `;
-            
-            let result = await pyodide.runPythonAsync(testCode);
-            
-            // D. Compare
-            let jsResult = result;
-            if (result && result.toJs) {
-                jsResult = result.toJs();
-            }
-            
-            let isCorrect = JSON.stringify(jsResult) === JSON.stringify(expectedOutput);
-            if (!isCorrect && typeof jsResult === 'number' && typeof expectedOutput === 'number') {
-                isCorrect = Math.abs(jsResult - expectedOutput) < 0.01;
-            }
-
-            // E. Show Result
-            let statusHtml = isCorrect 
-                ? `<div class="output-success">✅ <strong>Правильно!</strong></div>`
-                : `<div class="output-error">❌ <strong>Ошибка!</strong><br>Ожидалось: ${JSON.stringify(expectedOutput)}<br>Получено: ${JSON.stringify(jsResult)}</div>`;
-            
-            outputDiv.innerHTML = `${statusHtml}<br><div><strong>Консоль:</strong><br>${stdout}</div>`;
-
-            // F. Save
-            if (isCorrect) {
-                saveProgress(userCode, true);
-            }
-
-        } catch (err) {
-            outputDiv.innerHTML = `<span class="output-error">⚠️ Ошибка выполнения:<br>${err}</span>`;
-        } finally {
-            runBtn.disabled = false;
-            spinner.style.display = 'none';
-            btnText.innerText = "▶ Запустить проверку";
+            options.forEach((opt, idx) => {
+                const div = document.createElement('div');
+                div.className = 'quiz-option';
+                div.innerHTML = `
+                    <input type="checkbox" name="quiz_option" value="${opt}" id="opt_${idx}">
+                    <label for="opt_${idx}" style="flex:1; cursor:pointer;">${opt}</label>
+                `;
+                div.onclick = (e) => {
+                    if(e.target.tagName !== 'INPUT') {
+                        const cb = div.querySelector('input');
+                        cb.checked = !cb.checked;
+                    }
+                    // Visual select
+                    document.querySelectorAll('.quiz-option').forEach(el => el.classList.remove('selected'));
+                    if (div.querySelector('input').checked) div.classList.add('selected');
+                };
+                container.appendChild(div);
+            });
+        } catch(e) {
+            console.error("Quiz options parse error", e);
         }
     }
 
-    async function saveProgress(code, isCorrect) {
+    // --- 3. Submit Code ---
+    async function submitCode() {
+        const code = editor.getValue();
         const slug = document.getElementById('task-slug').value;
-        const csrfToken = document.cookie.match(/csrftoken=([^;]+)/)?.[1];
-
+        const outputDiv = document.getElementById('output');
+        
+        outputDiv.innerHTML = "⏳ Проверка на сервере...";
+        
         try {
-            await fetch('/simulator/api/check_solution/', {
+            const response = await fetch('/simulator/api/check_solution/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
+                    'X-CSRFToken': document.cookie.match(/csrftoken=([^;]+)/)?.[1]
                 },
-                body: JSON.stringify({
-                    slug: slug,
-                    code: code,
-                    is_client_side_check: true, 
-                    is_correct: isCorrect
-                })
+                body: JSON.stringify({ slug, code })
             });
-            console.log("Saved.");
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                outputDiv.innerHTML = `<div class="output-success">✅ ${data.message}</div>`;
+            } else {
+                outputDiv.innerHTML = `<div class="output-error">❌ Ошибка: ${data.error}</div>`;
+            }
         } catch (e) {
-            console.error("Save error:", e);
+            outputDiv.innerHTML = `<div class="output-error">Server Error: ${e}</div>`;
+        }
+    }
+
+    // --- 4. Submit Quiz ---
+    async function submitQuiz() {
+        const slug = document.getElementById('task-slug').value;
+        const resultDiv = document.getElementById('quiz-result');
+        
+        // Collect selected answers
+        const selected = Array.from(document.querySelectorAll('input[name="quiz_option"]:checked'))
+                              .map(cb => cb.value);
+        
+        // If single choice expected (hacky check, ideally backend tells us)
+        // For now, send list if multiple, string if one? 
+        // Let's send list, backend handles strict comparison.
+        
+        try {
+            const response = await fetch('/simulator/api/check_solution/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.cookie.match(/csrftoken=([^;]+)/)?.[1]
+                },
+                body: JSON.stringify({ slug, code: selected }) // We send answer in 'code' field
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                resultDiv.innerHTML = `<span style="color:green">✅ ${data.message}</span>`;
+            } else {
+                resultDiv.innerHTML = `<span style="color:red">❌ ${data.error}</span>`;
+            }
+        } catch (e) {
+            resultDiv.innerText = "Error: " + e;
         }
     }
 </script>

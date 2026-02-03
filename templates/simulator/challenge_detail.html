@@ -1,596 +1,286 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}{{ task.title }} | Задачи{% endblock %}
+{% block title %}{{ task.title }}{% endblock %}
 
 {% block extra_css %}
-<!-- CodeMirror CSS -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
-
+<link rel="stylesheet" href="{% static 'css/tasks.css' %}?v=1.2">
 <style>
-    /* Layout */
-    .challenge-layout {
+    .challenge-container {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 2rem;
-        height: calc(100vh - 120px);
-        margin: 1rem 2rem;
+        grid-template-columns: 350px 1fr;
+        gap: 20px;
+        height: calc(100vh - 100px);
     }
-    
-    /* Left Panel */
-    .task-desc {
-        background: #1e293b;
-        padding: 2rem;
-        border-radius: 12px;
+    .task-sidebar {
+        background: rgba(30, 41, 59, 0.5);
+        border-right: 1px solid #334155;
+        padding: 20px;
         overflow-y: auto;
-        color: #e2e8f0;
-        border: 1px solid #334155;
     }
-    
-    /* Right Panel */
-    .editor-container {
+    .editor-area {
         display: flex;
         flex-direction: column;
-        gap: 1rem;
-        overflow-y: auto; /* Allow scrolling for long quizzes */
+        height: 100%;
     }
-    
-    /* CodeMirror Customization */
-    .CodeMirror {
+    #monaco-editor {
         flex: 1;
-        border-radius: 8px;
         border: 1px solid #334155;
-        font-family: 'Fira Code', 'Consolas', monospace;
-        font-size: 15px;
-        line-height: 1.6;
-        height: auto; /* Flex container handles height */
-        min-height: 300px;
     }
-    .CodeMirror-focused {
-        border-color: #3b82f6;
-    }
-    
-    /* Quiz Styles */
-    .quiz-container {
-        flex: 1;
-        background: #1e293b;
-        border: 1px solid #334155;
-        border-radius: 8px;
-        padding: 2rem;
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-    }
-
-    .question-block {
-        border: 1px solid transparent; /* Placeholder for validation border */
-        padding: 1rem;
-        border-radius: 8px;
-        transition: all 0.3s;
-    }
-    
-    .question-block.wrong {
-        border-color: #ef4444;
-        background: rgba(239, 68, 68, 0.1);
-    }
-    
-    .question-block.correct {
-        border-color: #10b981;
-        background: rgba(16, 185, 129, 0.1);
-    }
-
-    .question-text {
-        font-size: 1.1rem;
-        margin-bottom: 1rem;
-        color: #e2e8f0;
-        font-weight: 600;
-    }
-    
-    .quiz-option {
-        display: block;
+    .output-panel {
+        height: 150px;
         background: #0f172a;
-        padding: 0.8rem;
-        border-radius: 8px;
-        border: 1px solid #334155;
-        cursor: pointer;
-        transition: all 0.2s;
-        color: #cbd5e1;
-        font-size: 1rem;
-        margin-bottom: 0.5rem;
+        border-top: 1px solid #334155;
+        padding: 10px;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.9rem;
+        overflow-y: auto;
+        color: #94a3b8;
     }
+    .output-success { color: #4ade80; }
+    .output-error { color: #f87171; }
     
-    .quiz-option:hover {
-        border-color: #3b82f6;
-        background: #1e293b;
-    }
-    
-    .quiz-option input[type="radio"] {
-        margin-right: 10px;
-        transform: scale(1.1);
-    }
-    
-    .quiz-option.selected {
-        border-color: #3b82f6;
-        background: #1e293b;
-        box-shadow: 0 0 0 1px #3b82f6;
-        color: #fff;
-    }
-
-    /* Buttons */
-    .actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: 1rem;
-        margin-top: 1rem;
-    }
-    
-    .btn {
-        padding: 0.7rem 1.4rem;
-        border-radius: 6px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s;
+    .run-btn {
+        background: #3b82f6;
+        color: white;
         border: none;
-        font-size: 1rem;
-    }
-    
-    .btn-primary {
-        background: #2563eb;
-        color: white;
-    }
-    .btn-primary:hover { background: #1d4ed8; }
-    
-    .btn-secondary {
-        background: #334155;
-        color: #e2e8f0;
-    }
-    .btn-secondary:hover { background: #475569; }
-    
-    .btn-danger {
-        background: #b91c1c;
-        color: white;
-    }
-    .btn-danger:hover { background: #991b1b; }
-    
-    /* Back Link */
-    .back-link {
-        display: inline-block;
-        margin-bottom: 1.5rem;
-        color: #94a3b8;
-        text-decoration: none;
-        font-weight: 500;
-        padding: 0.4rem 0.8rem;
-        background: #0f172a;
+        padding: 10px 20px;
         border-radius: 6px;
-        border: 1px solid #334155;
-        transition: all 0.2s;
-    }
-    .back-link:hover {
-        color: #f1f5f9;
-        border-color: #475569;
-        background: #1e293b;
-    }
-
-    /* Badges */
-    .badge-row {
-        display: flex;
-        gap: 0.8rem;
-        margin-top: 0.5rem;
-        margin-bottom: 1.5rem;
-    }
-    
-    .difficulty-badge {
-        padding: 0.3rem 0.8rem;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: bold;
-    }
-    .level-1 { background: rgba(16, 185, 129, 0.2); color: #34d399; }
-    .level-2 { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
-    .level-3 { background: rgba(239, 68, 68, 0.2); color: #f87171; }
-    
-    .algo-tag {
-        background: #0f172a;
-        color: #94a3b8;
-        padding: 0.3rem 0.8rem;
-        border-radius: 6px;
-        font-size: 0.85rem;
-        border: 1px solid #334155;
-    }
-
-    /* Result Box */
-    .result-box {
-        margin-top: 0;
-        padding: 1rem;
-        border-radius: 8px;
-        display: none; /* Hidden by default */
-        font-family: sans-serif;
-        line-height: 1.5;
-    }
-    
-    .result-box.success {
-        display: block;
-        background: #064e3b;
-        color: #a7f3d0;
-        border: 1px solid #059669;
-    }
-    
-    .result-box.error {
-        display: block;
-        background: #450a0a;
-        color: #fca5a5;
-        border: 1px solid #b91c1c;
-    }
-
-    /* --- Custom Modal --- */
-    .modal-overlay {
-        position: fixed;
-        top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.7);
+        cursor: pointer;
+        font-weight: 600;
+        margin-top: 10px;
         display: flex;
         align-items: center;
-        justify-content: center;
-        z-index: 1000;
-        backdrop-filter: blur(2px);
+        gap: 8px;
     }
-    .modal-content {
-        background: #1e293b;
-        border: 1px solid #334155;
-        padding: 2rem;
-        border-radius: 12px;
-        width: 400px;
-        max-width: 90%;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-        animation: slideDown 0.3s ease-out;
+    .run-btn:disabled {
+        background: #64748b;
+        cursor: wait;
     }
-    @keyframes slideDown {
-        from { transform: translateY(-20px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
+    .spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid #fff;
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        display: none;
     }
-    .modal-title { font-size: 1.25rem; font-weight: bold; color: #f1f5f9; margin-bottom: 0.5rem; }
-    .modal-text { color: #94a3b8; margin-bottom: 1.5rem; line-height: 1.5; }
-    .modal-actions { display: flex; justify-content: flex-end; gap: 0.75rem; }
-
-    /* --- Custom Toast --- */
-    .toast {
-        position: fixed;
-        bottom: 2rem;
-        right: 2rem;
-        background: #b91c1c;
-        color: white;
-        padding: 1rem 1.5rem;
-        border-radius: 8px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        z-index: 2000;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        animation: slideIn 0.3s ease-out;
-        max-width: 350px;
-    }
-    @keyframes slideIn {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
-    }
-
-    /* Navbar Fix */
-    header .btn-outline, .navbar .btn-outline {
-        border: 1px solid #475569 !important;
-        padding: 0.5rem 1rem !important;
-        border-radius: 6px !important;
-        color: #e2e8f0 !important;
-        text-decoration: none !important;
-    }
-    header .btn-outline:hover, .navbar .btn-outline:hover {
-        background-color: #334155 !important;
-        color: #fff !important;
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="challenge-layout">
-    <!-- Left: Task Description -->
-    <div class="task-desc">
-        <a href="{% url 'simulator:task_list' %}" class="back-link">← Назад к списку</a>
-        
-        <h1 style="margin: 0; font-size: 1.8rem; color: #f1f5f9;">{{ task.title }}</h1>
-        
-        <div class="badge-row">
-            <span class="difficulty-badge level-{{ task.difficulty }}">
-                {% if task.difficulty == 1 %}Easy
-                {% elif task.difficulty == 2 %}Medium
-                {% else %}Hard{% endif %}
-            </span>
-            {% if task.tags %}
-                <span class="algo-tag">{{ task.tags.name }}</span>
-            {% endif %}
-            <span class="algo-tag" style="background: #334155; color: white;">
-                {% if task.task_type == 'code' %}💻 Код{% else %}📝 Тест{% endif %}
-            </span>
-        </div>
-        
-        <div class="description-content" style="margin-top: 1.5rem; line-height: 1.7;">
-            {{ task.description|safe }}
-        </div>
-        
-        {% if task.task_type == 'code' %}
-        <div class="examples" style="margin-top: 2rem;">
-            <h3 style="color: #cbd5e1;">Пример:</h3>
-            <pre style="background: #0f172a; padding: 1rem; border-radius: 6px; color: #e2e8f0; overflow-x: auto;"><code>Input: {{ task.test_input }}
-Output: {{ task.expected_output }}</code></pre>
-        </div>
-        {% endif %}
-    </div>
-
-    <!-- Right: Interface (Code or Choice) -->
-    <div class="editor-container">
-        
-        {% if task.task_type == 'code' %}
-            <!-- Code Editor Mode -->
-            <!-- The textarea is now hidden by CodeMirror, but we keep it for fallback/init -->
-            <textarea id="code-editor" class="code-editor" spellcheck="false">{{ previous_code }}</textarea>
-        {% else %}
-            <!-- Quiz Mode -->
-            <div class="quiz-container">
-                <form id="quiz-form">
-                    
-                    {% if task.test_input.questions %}
-                        <!-- MULTI QUESTION MODE -->
-                        {% for question in task.test_input.questions %}
-                        <div class="question-block" id="q-block-{{ forloop.counter0 }}">
-                            <div class="question-text">{{ question.text|safe }}</div>
-                            {% for option in question.options %}
-                            <label class="quiz-option">
-                                <input type="radio" name="quiz_answer_{{ forloop.parentloop.counter0 }}" value="{{ option }}">
-                                {{ option }}
-                            </label>
-                            {% endfor %}
-                        </div>
-                        {% endfor %}
-                    
-                    {% else %}
-                        <!-- SINGLE QUESTION MODE (Legacy) -->
-                        <h3 style="color: #e2e8f0; margin-top: 0;">Выберите правильный ответ:</h3>
-                        {% for option in task.test_input.options %}
-                        <label class="quiz-option">
-                            <input type="radio" name="quiz_answer" value="{{ option }}">
-                            {{ option }}
-                        </label>
-                        {% endfor %}
-                    {% endif %}
-
-                </form>
+<div class="page-wrapper" style="padding: 20px;">
+    <div class="challenge-container">
+        <!-- Sidebar: Task Description -->
+        <div class="task-sidebar">
+            <a href="{% url 'simulator:task_list' %}" style="color: #94a3b8; text-decoration: none; margin-bottom: 20px; display: block;">← Назад к списку</a>
+            
+            <h1 style="font-size: 1.5rem; margin-bottom: 10px; color: #fff;">{{ task.title }}</h1>
+            
+            <div class="task-badge difficulty-{{ task.difficulty }}">
+                {% if task.difficulty == 1 %}Novice{% elif task.difficulty == 2 %}Beginner{% else %}Hard{% endif %}
             </div>
-        {% endif %}
-        
-        <div id="result-box" class="result-box"></div>
 
-        <div class="actions">
+            <div class="markdown-body" style="font-size: 0.95rem; line-height: 1.6; color: #e2e8f0; margin-top: 20px;">
+                {{ task.description|safe }}
+            </div>
+
             {% if task.task_type == 'code' %}
-                <button class="btn btn-secondary" onclick="openResetModal()">Сбросить</button>
+            <div style="margin-top: 20px; padding: 10px; background: rgba(59, 130, 246, 0.1); border-radius: 6px; border: 1px solid rgba(59, 130, 246, 0.2);">
+                <strong style="color: #60a5fa;">Задача:</strong><br>
+                Реализуйте функцию <code>{{ task.function_name }}</code>.
+            </div>
             {% endif %}
-            <button class="btn btn-primary" onclick="submitSolution()">Проверить решение ▶</button>
+        </div>
+
+        <!-- Main: Editor -->
+        <div class="editor-area">
+            <div id="monaco-editor"></div>
+            
+            <div class="controls" style="padding: 10px; background: #1e293b; display: flex; align-items: center; justify-content: space-between;">
+                <span style="color: #64748b; font-size: 0.8rem;">Python 3.11 (Pyodide Client-Side)</span>
+                <button id="runBtn" class="run-btn" onclick="runCode()">
+                    <div class="spinner" id="spinner"></div>
+                    <span id="btnText">▶ Запустить проверку</span>
+                </button>
+            </div>
+
+            <div id="output" class="output-panel">
+                Ожидание запуска...
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Custom Confirmation Modal -->
-<div id="custom-modal" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
-        <div class="modal-title">⚠️ Сбросить решение?</div>
-        <div class="modal-text">Вы действительно хотите удалить свой код и вернуть начальное состояние? Это действие нельзя отменить.</div>
-        <div class="modal-actions">
-            <button class="btn btn-secondary" onclick="closeModal()">Отмена</button>
-            <button class="btn btn-danger" onclick="confirmReset()">Сбросить</button>
-        </div>
-    </div>
-</div>
-
-<!-- Custom Toast Notification -->
-<div id="custom-toast" class="toast" style="display: none;">
-    <span style="font-size: 1.2rem;">⚠️</span>
-    <span id="toast-message">Текст уведомления</span>
-</div>
+<!-- Hidden data for JS -->
+<input type="hidden" id="initial-code" value="{{ previous_code|escape }}">
+<input type="hidden" id="task-slug" value="{{ task.slug }}">
+<input type="hidden" id="function-name" value="{{ task.function_name }}">
+<!-- We need expected output and test input in JSON format for client-side check -->
+<input type="hidden" id="test-input" value="{{ task.test_input_json }}">
+<input type="hidden" id="expected-output" value="{{ task.expected_output_json }}">
 
 {% endblock %}
 
 {% block extra_js %}
-<!-- CodeMirror Scripts -->
-{% if task.task_type == 'code' %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closebrackets.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/matchbrackets.min.js"></script>
-{% endif %}
+<!-- Monaco Editor -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs/loader.min.js"></script>
+<!-- Pyodide (WebAssembly Python) -->
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
 
 <script>
-    const taskType = '{{ task.task_type }}';
-    let editor = null;
-    
-    // Init CodeMirror
-    if (taskType === 'code') {
-        const textarea = document.getElementById('code-editor');
-        editor = CodeMirror.fromTextArea(textarea, {
-            mode: 'python',
-            theme: 'dracula',
-            lineNumbers: true,
-            indentUnit: 4,
-            matchBrackets: true,
-            autoCloseBrackets: true,
+    let editor;
+    let pyodide = null;
+    const outputDiv = document.getElementById('output');
+    const runBtn = document.getElementById('runBtn');
+    const spinner = document.getElementById('spinner');
+
+    // 1. Initialize Monaco Editor
+    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs' }});
+    require(['vs/editor/editor.main'], function() {
+        editor = monaco.editor.create(document.getElementById('monaco-editor'), {
+            value: document.getElementById('initial-code').value,
+            language: 'python',
+            theme: 'vs-dark',
+            fontSize: 14,
+            minimap: { enabled: false },
+            automaticLayout: true
         });
-        
-        // Ensure it resizes correctly
-        editor.setSize('100%', '100%');
-    }
-    
-    // Highlight selected radio buttons
-    if (taskType === 'choice') {
-        document.addEventListener('change', function(e) {
-            if(e.target.matches('.quiz-option input[type="radio"]')) {
-                const groupName = e.target.name;
-                document.querySelectorAll(`input[name="${groupName}"]`).forEach(inp => {
-                    inp.closest('.quiz-option').classList.remove('selected');
-                });
-                e.target.closest('.quiz-option').classList.add('selected');
-            }
-        });
-    }
+    });
 
-    // --- Custom UI Functions ---
-    function openResetModal() {
-        document.getElementById('custom-modal').style.display = 'flex';
-    }
-
-    function closeModal() {
-        document.getElementById('custom-modal').style.display = 'none';
-    }
-
-    function confirmReset() {
-        const initialCode = `{{ task.initial_code|escapejs }}`;
-        if (editor) {
-            editor.setValue(initialCode);
-        } else {
-            document.getElementById('code-editor').value = initialCode;
-        }
-        document.getElementById('result-box').style.display = 'none';
-        closeModal();
-    }
-
-    function showToast(message) {
-        const toast = document.getElementById('custom-toast');
-        const msgEl = document.getElementById('toast-message');
-        msgEl.textContent = message;
-        toast.style.display = 'flex';
-        
-        // Hide after 3 seconds
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            setTimeout(() => {
-                toast.style.display = 'none';
-                toast.style.opacity = '1';
-            }, 300);
-        }, 3000);
-    }
-
-    // Close modal on click outside
-    window.onclick = function(event) {
-        const modal = document.getElementById('custom-modal');
-        if (event.target == modal) {
-            closeModal();
-        }
-    }
-
-    // --- CSRF Helper ---
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-
-    async function submitSolution() {
-        const resultBox = document.getElementById('result-box');
-        let payload = { slug: '{{ task.slug }}' };
-        
-        // Reset previous validation styles
-        document.querySelectorAll('.question-block').forEach(el => {
-            el.classList.remove('correct', 'wrong');
-        });
-
-        if (taskType === 'code') {
-            // Get value from CodeMirror instead of textarea
-            payload.code = editor ? editor.getValue() : document.getElementById('code-editor').value;
-        } else {
-            // Check for multi-questions
-            const questions = document.querySelectorAll('.question-block');
-            
-            if (questions.length > 0) {
-                let answers = [];
-                let allAnswered = true;
-                
-                questions.forEach((q, index) => {
-                    const selected = q.querySelector(`input[name="quiz_answer_${index}"]:checked`);
-                    if (selected) {
-                        answers.push(selected.value);
-                    } else {
-                        allAnswered = false;
-                    }
-                });
-                
-                if (!allAnswered) {
-                    showToast('Пожалуйста, ответьте на все вопросы.');
-                    return;
-                }
-                payload.code = answers; 
-                
-            } else {
-                // Single Answer
-                const selected = document.querySelector('input[name="quiz_answer"]:checked');
-                if (!selected) {
-                    showToast('Пожалуйста, выберите вариант ответа.');
-                    return;
-                }
-                payload.code = selected.value;
-            }
-        }
-        
-        // Show loading state
-        resultBox.style.display = 'block';
-        resultBox.className = 'result-box';
-        resultBox.style.background = '#1e293b';
-        resultBox.style.color = '#94a3b8';
-        resultBox.innerHTML = '⏳ Проверка...';
-        
+    // 2. Initialize Pyodide
+    async function initPyodide() {
+        outputDiv.innerHTML = "⏳ Загрузка Python среды (Pyodide)...";
         try {
-            const csrftoken = getCookie('csrftoken'); // Get Token
-            const response = await fetch('/simulator/api/check-solution/', {
+            pyodide = await loadPyodide();
+            // Load numpy if needed (clustering tasks usually need it)
+            await pyodide.loadPackage("numpy");
+            outputDiv.innerHTML = "✅ Среда готова. Напишите код и нажмите 'Запустить'.";
+        } catch (err) {
+            outputDiv.innerHTML = `<span class="output-error">Ошибка загрузки Pyodide: ${err}</span>`;
+        }
+    }
+    initPyodide(); // Start loading immediately
+
+    // 3. Run Code Function
+    async function runCode() {
+        if (!pyodide) {
+            alert("Python среда еще загружается, подождите...");
+            return;
+        }
+
+        const userCode = editor.getValue();
+        const functionName = document.getElementById('function-name').value;
+        // Parse JSON safely. If simple string/number, use as is.
+        let testInput = JSON.parse(document.getElementById('test-input').value || 'null');
+        let expectedOutput = JSON.parse(document.getElementById('expected-output').value || 'null');
+
+        runBtn.disabled = true;
+        spinner.style.display = 'block';
+        document.getElementById('btnText').innerText = "Проверка...";
+        outputDiv.innerHTML = "🚀 Выполнение...";
+
+        try {
+            // A. Run User Code
+            // Capture stdout
+            pyodide.runPython(`
+import sys
+from io import StringIO
+sys.stdout = StringIO()
+            `);
+            
+            await pyodide.runPythonAsync(userCode);
+            
+            let stdout = pyodide.runPython("sys.stdout.getvalue()");
+            
+            // B. Run Test Case
+            // We need to inject the test call
+            // Prepare inputs for Python
+            pyodide.globals.set("test_input_js", testInput);
+            
+            let testCode = `
+import numpy as np
+
+# Try to find the user function
+if '${functionName}' not in globals():
+    raise Exception(f"Функция '${functionName}' не найдена!")
+
+func = globals()['${functionName}']
+inp = test_input_js
+
+# Call logic handling list args vs single arg
+if isinstance(inp, list):
+    try:
+        result = func(*inp)
+    except TypeError:
+        result = func(inp)
+else:
+    result = func(inp)
+
+result
+            `;
+            
+            let result = await pyodide.runPythonAsync(testCode);
+            
+            // C. Compare Results (in JS)
+            // Convert PyProxy to JS object if needed
+            let jsResult = result;
+            if (result && result.toJs) {
+                jsResult = result.toJs();
+            }
+            
+            // Simple comparison (needs improvement for arrays/numpy)
+            let isCorrect = JSON.stringify(jsResult) === JSON.stringify(expectedOutput);
+            
+            // Also try loose comparison if strict fails
+            if (!isCorrect && typeof jsResult === 'number' && typeof expectedOutput === 'number') {
+                isCorrect = Math.abs(jsResult - expectedOutput) < 0.01;
+            }
+
+            // Display Result
+            let statusHtml = isCorrect 
+                ? `<div class="output-success">✅ <strong>Правильно!</strong></div>`
+                : `<div class="output-error">❌ <strong>Ошибка!</strong><br>Ожидалось: ${JSON.stringify(expectedOutput)}<br>Получено: ${JSON.stringify(jsResult)}</div>`;
+            
+            outputDiv.innerHTML = `${statusHtml}<br><div><strong>Консоль:</strong><br>${stdout}</div>`;
+
+            // D. Save Progress to Server (Only if correct)
+            if (isCorrect) {
+                saveProgress(userCode, true);
+            }
+
+        } catch (err) {
+            outputDiv.innerHTML = `<span class=\"output-error\">⚠️ Ошибка выполнения:<br>${err}</span>`;
+        } finally {
+            runBtn.disabled = false;
+            spinner.style.display = 'none';
+            document.getElementById('btnText').innerText = "▶ Запустить проверку";
+        }
+    }
+
+    async function saveProgress(code, isCorrect) {
+        const slug = document.getElementById('task-slug').value;
+        const csrfToken = document.cookie.match(/csrftoken=([^;]+)/)?.[1];
+
+        try {
+            await fetch('/simulator/api/check_solution/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': csrftoken // Add Header
+                    'X-CSRFToken': csrfToken
                 },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({
+                    slug: slug,
+                    code: code,
+                    is_client_side_check: true, // Tell server this is a status update
+                    is_correct: isCorrect
+                })
             });
-            
-            const data = await response.json();
-            
-            // Handle per-question feedback
-            if (data.quiz_results) {
-                data.quiz_results.forEach((isCorrect, index) => {
-                    const block = document.getElementById(`q-block-${index}`);
-                    if (block) {
-                        if (isCorrect) {
-                            block.classList.add('correct');
-                        } else {
-                            block.classList.add('wrong');
-                        }
-                    }
-                });
-            }
-
-            if (data.success) {
-                resultBox.className = 'result-box success';
-                resultBox.style.display = 'block'; 
-                resultBox.innerHTML = '✅ <b>Верно!</b> ' + (data.message || '');
-            } else {
-                resultBox.className = 'result-box error';
-                resultBox.style.display = 'block'; 
-                resultBox.innerHTML = '❌ <b>Ошибка:</b> ' + (data.error || 'Неверный ответ');
-            }
+            console.log("Прогресс сохранен");
         } catch (e) {
-            console.error(e);
-            resultBox.className = 'result-box error';
-            resultBox.style.display = 'block'; 
-            resultBox.innerHTML = '❌ Ошибка сети: ' + e.message;
+            console.error("Ошибка сохранения:", e);
         }
     }
 </script>

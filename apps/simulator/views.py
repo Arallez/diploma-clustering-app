@@ -226,10 +226,13 @@ def check_solution(request):
             response_data.update(result_details)
             
             return JsonResponse(response_data)
-                \n        except Exception as e:
+        
+        except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
-            \n    return JsonResponse({'success': False, 'error': 'Method not allowed'})
-\n# Legacy stubs
+            
+    return JsonResponse({'success': False, 'error': 'Method not allowed'})
+
+# Legacy stubs
 @csrf_exempt
 def run_kmeans(request): return run_algorithm(request)
 @csrf_exempt

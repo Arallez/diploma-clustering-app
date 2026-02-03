@@ -5,7 +5,7 @@
 
 {% block extra_css %}
 <!-- Reuse tasks.css for layout -->
-<link rel="stylesheet" href="{% static 'css/tasks.css' %}?v=1.4">
+<link rel="stylesheet" href="{% static 'css/tasks.css' %}?v=1.5">
 <style>
     /* Specific layout for challenge page */
     .challenge-container {
@@ -236,13 +236,30 @@
             });
         });
     } else {
-        // --- 2. Init Quiz (Hybrid Renderer) ---
+        // --- 2. Init Quiz (Aggressive Parser) ---
         try {
             let quizData = JSON.parse(document.getElementById('quiz-data').textContent);
             
-            // Handle double-encoded string
-            if (typeof quizData === 'string') {
-                try { quizData = JSON.parse(quizData); } catch(e) {}
+            // AGGRESSIVE UNWRAP: Handle multiple levels of string encoding and cleaning
+            let attempts = 5;
+            while (typeof quizData === 'string' && attempts > 0) {
+                try {
+                    // Try parsing as is
+                    quizData = JSON.parse(quizData);
+                } catch (e) {
+                    // If failed, try cleaning common issues:
+                    // 1. Replace NBSP with space
+                    // 2. Replace Python/JS single quotes with double quotes (dangerous but necessary for simple lists)
+                    let clean = quizData.replace(/\u00A0/g, ' ').replace(/'/g, '"');
+                    try {
+                        quizData = JSON.parse(clean);
+                    } catch (e2) {
+                        // Stop if even cleaning didn't help
+                        console.warn("JSON Cleaning failed", e2);
+                        break; 
+                    }
+                }
+                attempts--;
             }
             
             // Normalize to array
@@ -254,19 +271,18 @@
             const container = document.getElementById('quiz-container');
             container.innerHTML = ''; 
             
-            // Check if we have ANY multi-question items (items with 'options' array)
+            // Check for structure
             const hasQuestions = quizData.some(item => typeof item === 'object' && item.options && Array.isArray(item.options));
             
             if (hasQuestions) {
                 // --- MULTI-QUESTION MODE ---
-                // Render each item as a question block
                 quizData.forEach((q, qIdx) => {
-                    // Safety: if q is just a string, skip or render as basic text
+                    // Skip invalid
                     if (typeof q !== 'object') return; 
 
                     const block = document.createElement('div');
                     block.className = 'quiz-question-block';
-                    block.dataset.type = 'question'; // Marker for submit
+                    block.dataset.type = 'question';
                     
                     const title = document.createElement('div');
                     title.className = 'quiz-question-text';
@@ -280,7 +296,6 @@
                     options.forEach((opt, oIdx) => {
                         const div = document.createElement('div');
                         div.className = 'quiz-option';
-                        // Radio button name is unique per Question
                         const inputName = `q_${qIdx}`;
                         const inputId = `q${qIdx}_o${oIdx}`;
                         
@@ -292,7 +307,6 @@
                             if(e.target.tagName !== 'INPUT') {
                                 div.querySelector('input').checked = true;
                             }
-                            // Visual Select
                             optsGroup.querySelectorAll('.quiz-option').forEach(el => el.classList.remove('selected'));
                             div.classList.add('selected');
                         };
@@ -302,13 +316,11 @@
                     container.appendChild(block);
                 });
             } else {
-                // --- SINGLE QUESTION / SIMPLE OPTIONS MODE ---
-                // No 'options' array found in items. Treat items themselves as options.
+                // --- SINGLE QUESTION MODE ---
                 const optsGroup = document.createElement('div');
                 optsGroup.className = 'quiz-options-group';
                 
                 quizData.forEach((opt, idx) => {
-                    // Extract display text if it's an object {text:..., value:...} or string
                     let text = opt;
                     let val = opt;
                     
@@ -320,7 +332,6 @@
 
                     const div = document.createElement('div');
                     div.className = 'quiz-option';
-                    // Checkboxes (legacy behavior for single Q)
                     div.innerHTML = `
                         <input type="checkbox" name="quiz_option" value='${val}' id="opt_${idx}">
                         <label for="opt_${idx}" style="flex:1; cursor:pointer;">${text}</label>
@@ -340,7 +351,7 @@
 
         } catch(e) {
             console.error("Quiz render error", e);
-            document.getElementById('quiz-container').innerHTML = `<p style="color:#f87171">Ошибка отображения теста: ${e.message}</p>`;
+            document.getElementById('quiz-container').innerHTML = `<p style="color:#f87171">Ошибка отображения теста: ${e.message}.<br>Raw data: ${document.getElementById('quiz-data').textContent.substring(0, 50)}...</p>`;
         }
     }
 
@@ -385,11 +396,9 @@
         const resultDiv = document.getElementById('quiz-result');
         let payload = null;
 
-        // Detect mode by DOM
         const questionBlocks = document.querySelectorAll('.quiz-question-block');
         
         if (questionBlocks.length > 0) {
-            // Multi-Question Submit
             payload = [];
             let allAnswered = true;
             
@@ -409,7 +418,6 @@
             }
 
         } else {
-            // Single Question Submit
             payload = Array.from(document.querySelectorAll('input[name="quiz_option"]:checked'))
                            .map(cb => cb.value);
             
@@ -435,7 +443,6 @@
                 if (data.success) {
                     resultDiv.innerHTML = `<span style="color:#4ade80">✅ ${data.message}</span>`;
                 } else {
-                    // Visual Error Feedback
                     if (data.quiz_results && Array.isArray(data.quiz_results) && questionBlocks.length > 0) {
                         data.quiz_results.forEach((isRight, idx) => {
                             if (questionBlocks[idx]) {

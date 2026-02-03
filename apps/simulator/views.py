@@ -16,6 +16,12 @@ from .algorithms import (
     compute_dendrogram_data 
 )
 from .presets import generate_preset
+from .services import (
+    is_safe_code, 
+    create_tracer, 
+    TimeLimitException, 
+    get_safe_builtins
+)
 
 # --- Page Views ---
 
@@ -142,34 +148,32 @@ def get_dendrogram(request):
 
 def check_solution(request):
     """
-    Checks user solution.
-    - For QUIZZES (task_type='choice'): Server-side check is mandatory.
-    - For CODE (task_type='code'): Client-side check (Pyodide) sends result here to save progress.
-      (Server-side exec() has been removed for security).
+    Checks user solution (Code execution or Quiz answer).
     """
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
             slug = data.get('slug')
-            user_input = data.get('code') # Code or Answer
-            is_client_side_check = data.get('is_client_side_check', False) # Flag from Pyodide
-            client_is_correct = data.get('is_correct', False)
+            user_input = data.get('code') # Contains code or selected option(s)
             
             task = get_object_or_404(Task, slug=slug)
             
             is_correct = False
-            result_details = {} 
+            result_details = {} # Detailed feedback for quiz
             error_msg = None
             
-            # --- CASE 1: QUIZ (Server-Side Check Required) ---
+            # --- HANDLE QUIZ (CHOICE) ---
             if task.task_type == 'choice':
                 expected = task.expected_output
                 
                 # Normalize types for comparison
                 if isinstance(user_input, list) and isinstance(expected, list):
                     # Multi-question comparison
+                    # Compare arrays strictly
                     is_correct = (user_input == expected)
                     
+                    # Generate detailed feedback (which index is wrong)
+                    # We send back an array of booleans [true, false, true]
                     correctness_array = []
                     for i in range(len(expected)):
                         if i < len(user_input):
@@ -177,38 +181,101 @@ def check_solution(request):
                             correctness_array.append(is_match)
                         else:
                             correctness_array.append(False)
+                            
                     result_details = {'quiz_results': correctness_array}
                     
                 else:
+                    # Single question comparison
                     expected_str = str(expected).strip()
                     submitted_str = str(user_input).strip()
                     is_correct = (submitted_str == expected_str)
                 
                 if not is_correct:
                     if isinstance(expected, list):
-                        error_msg = "Некоторые ответы неверны."
+                        error_msg = "Некоторые ответы неверны. Проверьте выделенные пункты."
                     else:
                         error_msg = f"Выбрано: {user_input}. Попробуйте еще раз."
 
-            # --- CASE 2: CODE (Client-Side Check Trusted) ---
-            elif task.task_type == 'code':
-                # Since we removed exec(), we rely on Pyodide result for now.
-                # In a real contest system, we would run this in a Docker container.
-                # For this diploma project, trusting the client + CSRF is acceptable.
+            # --- HANDLE CODE ---
+            else:
+                # 1. Static Analysis Check (Whitelist Imports)
+                is_safe, security_msg = is_safe_code(user_input)
+                if not is_safe:
+                    return JsonResponse({'success': False, 'error': security_msg})
+
+                # 2. Construct Safe Builtins (Enable __import__)
+                safe_builtins = get_safe_builtins()
                 
-                if is_client_side_check:
-                    is_correct = client_is_correct
+                # 3. Execution Context
+                execution_context = {
+                    '__builtins__': safe_builtins,
+                    'np': np,           # Convenience (Legacy)
+                    'math': math,       # Convenience (Legacy)
+                    'random': random,   # Convenience
+                }
+                
+                # 4. Execute with Loop Protection (Tracing)
+                try:
+                    # Set the trace function to count instructions
+                    sys.settrace(create_tracer(max_instructions=200000))
+                    try:
+                        exec(user_input, execution_context)
+                    finally:
+                        # CRITICAL: Always turn off tracing, or the whole server will slow down
+                        sys.settrace(None)
+                        
+                except TimeLimitException as e:
+                    return JsonResponse({'success': False, 'error': f'⏱️ {str(e)} (Бесконечный цикл?)'})
+                except Exception as e:
+                    return JsonResponse({'success': False, 'error': f'Syntax/Runtime Error: {e}'})
+                    
+                func_name = task.function_name
+                if func_name not in execution_context:
+                    return JsonResponse({'success': False, 'error': f'Функция {func_name} не найдена. Проверьте имя функции.'})
+                    
+                user_func = execution_context[func_name]
+                test_input = task.test_input
+                expected = task.expected_output
+                
+                try:
+                    # Also wrap the function call itself in tracing, in case the loop is inside the function
+                    sys.settrace(create_tracer(max_instructions=200000))
+                    try:
+                        if isinstance(test_input, dict):
+                            result = user_func(**test_input)
+                        elif isinstance(test_input, list):
+                            try:
+                                result = user_func(*test_input)
+                            except TypeError:
+                                result = user_func(test_input)
+                        else:
+                            result = user_func(test_input)
+                    finally:
+                        sys.settrace(None)
+                        
+                except TimeLimitException as e:
+                     return JsonResponse({'success': False, 'error': f'⏱️ {str(e)} (Бесконечный цикл?)'})
+                except Exception as e:
+                    return JsonResponse({'success': False, 'error': f'Runtime Error: {e}'})
+                
+                # Compare
+                if isinstance(result, np.ndarray): result = result.tolist()
+                if isinstance(expected, np.ndarray): expected = expected.tolist()
+
+                if isinstance(expected, (list, dict)):
+                    is_correct = (str(result) == str(expected)) 
                     if not is_correct:
-                        error_msg = "Ошибка при проверке кода."
+                        try: is_correct = np.allclose(result, expected, atol=1e-2)
+                        except: pass
                 else:
-                    # Fallback if someone tries to call without client check
-                    return JsonResponse({'success': False, 'error': 'Server-side execution disabled. Use Pyodide.'})
+                    is_correct = (result == expected)
+                    
+                error_msg = f"Ожидалось: {expected}, Получено: {result}" if not is_correct else None
 
             # --- SAVE ATTEMPT ---
             if request.user.is_authenticated:
                 code_to_save = json.dumps(user_input, ensure_ascii=False) if isinstance(user_input, (list, dict)) else str(user_input)
                 
-                # Save only if it's a new correct solution or just a log
                 UserTaskAttempt.objects.create(
                     user=request.user,
                     task=task,
@@ -223,10 +290,11 @@ def check_solution(request):
             else:
                 response_data['error'] = error_msg
                 
+            # Merge extra details (like per-question results)
             response_data.update(result_details)
             
             return JsonResponse(response_data)
-        
+                
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
             

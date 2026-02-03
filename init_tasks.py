@@ -5,19 +5,27 @@ import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 
-from apps.simulator.models import Task
+from apps.simulator.models import Task, TaskTag
 
 def create_tasks():
     print("🧹 Очистка старых заданий...")
-    Task.objects.all().delete()
+    # Очищаем только те задания, которые мы собираемся пересоздать (по slug), 
+    # чтобы не удалять квизы, созданные другими скриптами
+    slugs_to_create = ["euclidean-dist", "centroid-calc", "assign-cluster"]
+    Task.objects.filter(slug__in=slugs_to_create).delete()
 
-    print("🚀 Создание новых заданий...")
+    print("🚀 Создание базовых заданий по кластеризации...")
     
+    # Создаем тег "General" если нет
+    general_tag, _ = TaskTag.objects.get_or_create(slug="general", defaults={"name": "Основы", "order": 1})
+    kmeans_tag, _ = TaskTag.objects.get_or_create(slug="kmeans-code", defaults={"name": "K-Means: Реализация", "order": 5})
+
     # === ОБЩИЕ ЗНАНИЯ ===
     Task.objects.create(
         title="Евклидово расстояние",
         slug="euclidean-dist",
-        algorithm="general",
+        # algorithm="general", # REMOVED
+        tags=general_tag,
         order=1,
         difficulty=1,
         description="<p>Реализуйте функцию <code>dist(a, b)</code>, которая возвращает расстояние между двумя точками. Формула: √(x₂-x₁)² + (y₂-y₁)²</p>",
@@ -32,7 +40,8 @@ def create_tasks():
     Task.objects.create(
         title="Пересчет центроида",
         slug="centroid-calc",
-        algorithm="kmeans",
+        # algorithm="kmeans", # REMOVED
+        tags=kmeans_tag,
         order=1,
         difficulty=2,
         description="<p>Реализуйте функцию <code>calculate_centroid(points)</code>, возвращающую среднее арифметическое координат [x_mean, y_mean].</p>",
@@ -46,7 +55,8 @@ def create_tasks():
     Task.objects.create(
         title="Поиск ближайшего кластера",
         slug="assign-cluster",
-        algorithm="kmeans",
+        # algorithm="kmeans", # REMOVED
+        tags=kmeans_tag,
         order=2,
         difficulty=2,
         description="<p>Для точки <code>p</code> и списка <code>centroids</code> верните <b>индекс</b> (0, 1, 2..) ближайшего центроида.</p>",
@@ -57,7 +67,7 @@ def create_tasks():
         expected_output=1
     )
 
-    print("✅ Успешно! Задания добавлены в базу данных.")
+    print("✅ Успешно! Базовые задания обновлены.")
 
 if __name__ == "__main__":
     create_tasks()

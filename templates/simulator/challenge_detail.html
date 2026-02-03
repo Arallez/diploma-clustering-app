@@ -16,7 +16,7 @@
     }
 
     .task-sidebar {
-        background: #1e293b; /* Dark Slate instead of White */
+        background: #1e293b; /* Dark Slate */
         border-right: 1px solid #334155;
         padding: 20px;
         overflow-y: auto;
@@ -152,7 +152,7 @@
                         <h3 style="margin-bottom: 20px; color: #fff;">Выберите правильный ответ:</h3>
                         
                         <div class="quiz-options" id="quiz-container">
-                            <!-- Options will be rendered by JS if complex, or simple HTML here -->
+                            <!-- Options will be rendered by JS -->
                         </div>
 
                         <button class="btn btn-primary" onclick="submitQuiz()" style="width: 100%; margin-top: 20px; padding: 12px; background: #3b82f6; border:none; color:white; border-radius:4px; font-weight:600; cursor:pointer;">
@@ -172,8 +172,9 @@
 <input type="hidden" id="initial-code" value="{{ previous_code|escape }}">
 <input type="hidden" id="task-slug" value="{{ task.slug }}">
 <input type="hidden" id="task-type" value="{{ task.task_type }}">
-<!-- For Quiz -->
-<input type="hidden" id="quiz-options" value="{{ task.test_input|safe }}"> 
+
+<!-- Safer JSON passing -->
+{{ task.test_input|json_script:"quiz-data" }}
 
 {% endblock %}
 
@@ -199,14 +200,23 @@
     } else {
         // --- 2. Init Quiz (Only for Choice tasks) ---
         try {
-            // Need to handle potential single quotes in Python string repr
-            let rawOptions = document.getElementById('quiz-options').value;
-            // Basic cleanup to try and make it valid JSON
-            rawOptions = rawOptions.replace(/'/g, '"'); 
+            // Safe JSON retrieval from Django json_script tag
+            let options = JSON.parse(document.getElementById('quiz-data').textContent);
             
-            const options = JSON.parse(rawOptions);
+            // Normalize: Ensure options is an Array
+            if (!Array.isArray(options)) {
+                if (typeof options === 'object' && options !== null) {
+                    // If dict, convert to values (assuming simple quiz structure)
+                    options = Object.values(options);
+                } else {
+                    // If string/number, wrap in array
+                    options = [options];
+                }
+            }
+            
             const container = document.getElementById('quiz-container');
-            
+            container.innerHTML = ''; // Clear existing
+
             options.forEach((opt, idx) => {
                 const div = document.createElement('div');
                 div.className = 'quiz-option';
@@ -219,17 +229,20 @@
                         const cb = div.querySelector('input');
                         cb.checked = !cb.checked;
                     }
-                    // Visual select
-                    document.querySelectorAll('.quiz-option').forEach(el => el.classList.remove('selected'));
-                    document.querySelectorAll('input[name="quiz_option"]:checked').forEach(cb => {
-                        cb.closest('.quiz-option').classList.add('selected');
-                    });
+                    // Visual select logic
+                    const checkbox = div.querySelector('input');
+                    if(checkbox.checked) {
+                        div.classList.add('selected');
+                    } else {
+                        div.classList.remove('selected');
+                    }
                 };
                 container.appendChild(div);
             });
+            
         } catch(e) {
             console.error("Quiz options parse error", e);
-            document.getElementById('quiz-container').innerHTML = `<p style="color:red">Ошибка загрузки вариантов ответа: ${e}</p>`;
+            document.getElementById('quiz-container').innerHTML = `<p style="color:red">Ошибка загрузки вариантов ответа: ${e.message}</p>`;
         }
     }
 
@@ -242,7 +255,6 @@
         outputDiv.innerHTML = "⏳ Проверка на сервере...";
         
         try {
-            // CORRECT URL: hyphen instead of underscore!
             const response = await fetch('/simulator/api/check-solution/', {
                 method: 'POST',
                 headers: {
@@ -261,9 +273,7 @@
                     outputDiv.innerHTML = `<div class="output-error">❌ Ошибка: ${data.error || 'Неизвестная ошибка'}</div>`;
                 }
             } catch (jsonError) {
-                // If response is HTML (500 error, etc.)
                 outputDiv.innerHTML = `<div class="output-error">🔥 Ошибка сервера (HTML):<br>${text.substring(0, 200)}...</div>`;
-                console.error("Server HTML response:", text);
             }
             
         } catch (e) {
@@ -285,7 +295,6 @@
         }
 
         try {
-            // CORRECT URL here too
             const response = await fetch('/simulator/api/check-solution/', {
                 method: 'POST',
                 headers: {

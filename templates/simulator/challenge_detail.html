@@ -5,7 +5,7 @@
 
 {% block extra_css %}
 <!-- Reuse tasks.css for layout -->
-<link rel="stylesheet" href="{% static 'css/tasks.css' %}?v=1.6">
+<link rel="stylesheet" href="{% static 'css/tasks.css' %}?v=1.7">
 <style>
     /* Specific layout for challenge page */
     .challenge-container {
@@ -89,6 +89,7 @@
         border-radius: 12px;
         border: 1px solid #334155;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        transition: border-color 0.3s ease;
     }
     
     .quiz-question-text {
@@ -252,9 +253,8 @@
                 attempts--;
             }
             
-            // --- FIX: Handle {"questions": [...]} wrapper ---
+            // Handle nested "questions" key
             if (quizData && !Array.isArray(quizData) && quizData.questions && Array.isArray(quizData.questions)) {
-                console.log("Found nested 'questions' key, extracting...");
                 quizData = quizData.questions;
             }
 
@@ -267,7 +267,7 @@
             const container = document.getElementById('quiz-container');
             container.innerHTML = ''; 
             
-            // Check for Multi-Question structure
+            // Check structure
             const hasQuestions = quizData.some(item => typeof item === 'object' && item.options && Array.isArray(item.options));
             
             if (hasQuestions) {
@@ -281,7 +281,6 @@
                     
                     const title = document.createElement('div');
                     title.className = 'quiz-question-text';
-                    // Allow HTML in question text (e.g. <b>K</b>)
                     title.innerHTML = q.text || `Вопрос ${qIdx + 1}`;
                     block.appendChild(title);
 
@@ -345,7 +344,7 @@
 
         } catch(e) {
             console.error("Quiz render error", e);
-            document.getElementById('quiz-container').innerHTML = `<p style="color:#f87171">Ошибка отображения теста: ${e.message}.<br>Raw data: ${document.getElementById('quiz-data').textContent.substring(0, 50)}...</p>`;
+            document.getElementById('quiz-container').innerHTML = `<p style="color:#f87171">Ошибка отображения теста: ${e.message}</p>`;
         }
     }
 
@@ -434,17 +433,26 @@
             const text = await response.text();
             try {
                 const data = JSON.parse(text);
+                
+                // --- FIX: VISUAL FEEDBACK ON SUCCESS ---
+                // Always update visuals if detailed results are present, regardless of overall success
+                if (data.quiz_results && Array.isArray(data.quiz_results) && questionBlocks.length > 0) {
+                    data.quiz_results.forEach((isRight, idx) => {
+                        if (questionBlocks[idx]) {
+                            questionBlocks[idx].style.borderColor = isRight ? '#4ade80' : '#f87171';
+                            questionBlocks[idx].style.borderWidth = isRight ? '1px' : '2px';
+                            // Optional: Add icon or visual marker
+                            if (!isRight) questionBlocks[idx].style.boxShadow = "0 0 10px rgba(248, 113, 113, 0.2)";
+                            else questionBlocks[idx].style.boxShadow = "none";
+                        }
+                    });
+                }
+
                 if (data.success) {
                     resultDiv.innerHTML = `<span style="color:#4ade80">✅ ${data.message}</span>`;
                 } else {
-                    if (data.quiz_results && Array.isArray(data.quiz_results) && questionBlocks.length > 0) {
-                        data.quiz_results.forEach((isRight, idx) => {
-                            if (questionBlocks[idx]) {
-                                questionBlocks[idx].style.borderColor = isRight ? '#4ade80' : '#f87171';
-                                questionBlocks[idx].style.borderWidth = isRight ? '1px' : '2px';
-                            }
-                        });
-                        resultDiv.innerHTML = `<span style="color:#f87171">❌ Есть ошибки (см. красные блоки)</span>`;
+                    if (data.quiz_results) {
+                        resultDiv.innerHTML = `<span style="color:#f87171">❌ Некоторые ответы неверны. Проверьте выделенные блоки.</span>`;
                     } else {
                         resultDiv.innerHTML = `<span style="color:#f87171">❌ ${data.error}</span>`;
                     }

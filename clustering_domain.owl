@@ -1,0 +1,72 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+         xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+         xmlns:owl="http://www.w3.org/2002/07/owl#"
+         xml:base="file://D:\JetBrains\diploma-clustering-app\clustering_domain.owl"
+         xmlns="file://D:\JetBrains\diploma-clustering-app\clustering_domain.owl#">
+
+<owl:Ontology rdf:about="file://D:\JetBrains\diploma-clustering-app\clustering_domain.owl"/>
+
+<owl:ObjectProperty rdf:about="#uses_metric">
+  <rdfs:domain rdf:resource="#Algorithm"/>
+  <rdfs:range rdf:resource="#Metric"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#requires_knowledge">
+  <rdfs:domain rdf:resource="#KnowledgeItem"/>
+  <rdfs:range rdf:resource="#KnowledgeItem"/>
+</owl:ObjectProperty>
+
+<owl:Class rdf:about="#KnowledgeItem">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Algorithm">
+  <rdfs:subClassOf rdf:resource="#KnowledgeItem"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Metric">
+  <rdfs:subClassOf rdf:resource="#KnowledgeItem"/>
+</owl:Class>
+
+<owl:Class rdf:about="#OntologyConcept">
+  <rdfs:subClassOf rdf:resource="#KnowledgeItem"/>
+</owl:Class>
+
+<owl:NamedIndividual rdf:about="#EuclideanDistance">
+  <rdf:type rdf:resource="#Metric"/>
+  <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Геометрическое расстояние между двумя точками в евклидовом пространстве.</rdfs:comment>
+  <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Евклидово расстояние</rdfs:label>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#ManhattanDistance">
+  <rdf:type rdf:resource="#Metric"/>
+  <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Манхэттенское расстояние</rdfs:label>
+  <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Расстояние между двумя точками, равное сумме модулей разностей их координат.</rdfs:comment>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#KMeans">
+  <rdf:type rdf:resource="#Algorithm"/>
+  <uses_metric rdf:resource="#EuclideanDistance"/>
+  <requires_knowledge rdf:resource="#EuclideanDistance"/>
+  <requires_knowledge rdf:resource="#Centroid"/>
+  <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">K-Means (К-средних)</rdfs:label>
+  <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Итеративный алгоритм кластеризации, минимизирующий суммарное квадратичное отклонение точек кластеров от центроидов.</rdfs:comment>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#DBSCAN">
+  <rdf:type rdf:resource="#Algorithm"/>
+  <uses_metric rdf:resource="#EuclideanDistance"/>
+  <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DBSCAN</rdfs:label>
+  <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Алгоритм кластеризации, основанный на плотности. Способен находить кластеры произвольной формы и выделять шум.</rdfs:comment>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#Centroid">
+  <rdf:type rdf:resource="#OntologyConcept"/>
+  <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Геометрический центр кластера. В K-Means координаты центроида вычисляются как среднее арифметическое всех точек кластера.</rdfs:comment>
+  <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Центроид</rdfs:label>
+</owl:NamedIndividual>
+
+
+</rdf:RDF>

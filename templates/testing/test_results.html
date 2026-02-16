@@ -26,8 +26,8 @@
       {% for item in attempts_with_progress %}
       <tr>
         <td>{{ item.attempt.user.get_username }}</td>
-        <td>{{ item.attempt.started_at|date:"д.м.Y H:i" }}</td>
-        <td>{% if item.attempt.submitted_at %}{{ item.attempt.submitted_at|date:"д.м.Y H:i" }}{% else %}—{% endif %}</td>
+        <td>{{ item.attempt.started_at|date:"d.m.Y H:i" }}</td>
+        <td>{% if item.attempt.submitted_at %}{{ item.attempt.submitted_at|date:"d.m.Y H:i" }}{% else %}—{% endif %}</td>
         <td>
           <div class="testing-table__progress">
             <span class="testing-table__progress-text">{{ item.progress.attempted }}/{{ item.progress.total }}</span>

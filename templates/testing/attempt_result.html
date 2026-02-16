@@ -19,6 +19,11 @@
       <div class="testing-result-card__details">Выполнено {{ progress.attempted }} из {{ progress.total }} заданий</div>
     </div>
     
+    <!-- Прогресс-бар -->
+    <div class="testing-progress__bar" style="margin: 16px auto; max-width: 400px;">
+      <div class="testing-progress__fill" data-percent="{{ progress.percent }}"></div>
+    </div>
+    
     {% if attempt.submitted_at %}
     <p class="testing-result-card__meta">Сдан: {{ attempt.submitted_at|date:"d.m.Y H:i" }}</p>
     {% else %}
@@ -57,4 +62,8 @@
     {% endif %}
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/testing.js' %}"></script>
 {% endblock %}

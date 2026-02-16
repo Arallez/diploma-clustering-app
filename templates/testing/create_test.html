@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Создать тест{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/testing.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="testing-section testing-section--form">
+  <h1 class="testing-section__title--small">Создать тест</h1>
+  <form method="post" action="{% url 'testing:create_test' %}">
+    {% csrf_token %}
+    <div class="testing-form-group">
+      <label for="id_title">Название теста</label>
+      <input type="text" name="title" id="id_title" required placeholder="Например: Контрольная по K-Means">
+    </div>
+    <div class="testing-form-group">
+      <label for="id_group">Группа</label>
+      <select name="group" id="id_group" required>
+        <option value="">— Выберите группу —</option>
+        {% for g in groups %}
+        <option value="{{ g.pk }}">{{ g.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="testing-form-group">
+      <label for="id_time_limit">Лимит времени (минут)</label>
+      <input type="number" name="time_limit_minutes" id="id_time_limit" value="30" min="1" max="300">
+    </div>
+    <div class="testing-form-group">
+      <label for="id_opens_at">Открывается</label>
+      <input type="datetime-local" name="opens_at" id="id_opens_at">
+    </div>
+    <div class="testing-form-group">
+      <label for="id_closes_at">Закрывается</label>
+      <input type="datetime-local" name="closes_at" id="id_closes_at">
+    </div>
+    <div class="testing-form-group">
+      <label>Задания (отметьте нужные)</label>
+      <div class="testing-tasks-checklist">
+        {% for task in tasks %}
+        <label><input type="checkbox" name="tasks" value="{{ task.pk }}"> {{ task.title }}</label>
+        {% empty %}
+        <p class="testing-card__meta--muted">Нет заданий в системе. Создайте их в разделе «Задачи» (админка).</p>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="testing-btn-group">
+      <button type="submit" class="btn btn-primary">Создать тест</button>
+      <a href="{% url 'testing:home' %}" class="btn btn-outline">Отмена</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -4,10 +4,11 @@
         <span class="brand-text">Clustering Trainer</span>
     </a>
     <div class="nav-links">
-        <a href="{% url 'simulator:index' %}" class="nav-item {% if request.resolver_match.namespace == 'simulator' and request.resolver_match.url_name == 'index' %}active{% endif %}">Симулятор</a>
-        <a href="{% url 'simulator:task_list' %}" class="nav-item {% if request.resolver_match.url_name == 'task_list' %}active{% endif %}">Задачи</a>
+        <a href="{% url 'simulator:index' %}" class="nav-item {% if request.resolver_match.namespace == 'simulator' %}active{% endif %}">Симулятор</a>
+        <a href="{% url 'tasks:task_list' %}" class="nav-item {% if request.resolver_match.namespace == 'tasks' %}active{% endif %}">Задачи</a>
         <a href="{% url 'encyclopedia:graph' %}" class="nav-item {% if request.resolver_match.namespace == 'encyclopedia' %}active{% endif %}">База Знаний</a>
         <a href="{% url 'materials_list' %}" class="nav-item {% if request.resolver_match.url_name == 'materials_list' or request.resolver_match.url_name == 'material_detail' %}active{% endif %}">Материалы</a>
+        <a href="{% url 'testing:home' %}" class="nav-item {% if request.resolver_match.namespace == 'testing' %}active{% endif %}">Тестирование</a>
     </div>
     <div class="nav-auth">
         {% if user.is_authenticated %}

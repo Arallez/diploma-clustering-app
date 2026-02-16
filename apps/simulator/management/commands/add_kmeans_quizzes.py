@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from apps.simulator.models import Task, TaskTag
+from apps.tasks.models import Task, TaskTag
 
 class Command(BaseCommand):
     help = 'Adds a combined K-Means quiz task'

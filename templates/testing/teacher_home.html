@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Тестирование — Преподаватель{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/testing.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="testing-section">
+  <h1>Тестирование — Панель преподавателя</h1>
+
+  <div class="testing-card">
+    <h2>Создать группу</h2>
+    <form action="{% url 'testing:create_group' %}" method="post" class="testing-form-inline">
+      {% csrf_token %}
+      <input type="text" name="name" placeholder="Название группы" required>
+      <button type="submit" class="btn btn-primary btn-small">Создать</button>
+    </form>
+  </div>
+
+  <div class="testing-card">
+    <h2>Мои группы</h2>
+    {% for group in groups %}
+    <div class="testing-test-row">
+      <strong>{{ group.name }}</strong>
+      <div class="testing-code">{{ group.join_code }}</div>
+      <span class="testing-card__meta">Код для подключения студентов. Участников: {{ group.members.count }}</span>
+    </div>
+    {% empty %}
+    <p class="testing-card__meta--muted">Пока нет групп. Создайте группу выше и передайте код студентам.</p>
+    {% endfor %}
+  </div>
+
+  <div class="testing-card">
+    <h2>Мои тесты</h2>
+    <p><a href="{% url 'testing:create_test' %}" class="btn btn-primary btn-small">+ Создать тест</a></p>
+    {% for test in tests %}
+    <div class="testing-test-row">
+      <strong>{{ test.title }}</strong> — {{ test.group.name }}<br>
+      <span class="testing-card__meta">Заданий: {{ test.tasks.count }}, время: {{ test.time_limit_minutes }} мин. Окно: {{ test.opens_at|date:"d.m.Y H:i" }} — {{ test.closes_at|date:"d.m.Y H:i" }}</span><br>
+      <a href="{% url 'testing:test_results' test.pk %}">Результаты</a>
+    </div>
+    {% empty %}
+    <p class="testing-card__meta--muted">Нет тестов. <a href="{% url 'testing:create_test' %}">Создать тест</a>.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

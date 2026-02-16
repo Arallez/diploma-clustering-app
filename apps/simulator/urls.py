@@ -1,19 +1,17 @@
 from django.urls import path
+from django.views.generic import RedirectView
 from . import views
 
 app_name = 'simulator'
 
 urlpatterns = [
-    # Pages
+    # Песочница: одна страница + API для запуска алгоритмов
     path('', views.index, name='index'),
-    path('tasks/', views.task_list, name='task_list'),
-    path('challenge/<slug:slug>/', views.challenge_detail, name='challenge_detail'),
-    
-    # Unified API endpoint
     path('run/', views.run_algorithm, name='run_algorithm'),
-    
-    # Task Checking API (Restoring this!)
-    path('api/check-solution/', views.check_solution, name='check_solution'),
+
+    # Редиректы со старых URL заданий на /tasks/
+    path('tasks/', RedirectView.as_view(url='/tasks/', permanent=False)),
+    path('challenge/<slug:slug>/', views._redirect_legacy_challenge),
 
     # Legacy/Individual API endpoints
     path('api/run-kmeans/', views.run_kmeans, name='run_kmeans'),

@@ -1,0 +1,179 @@
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+
+{% block after_field_sets %}
+{{ block.super }}
+
+{% if show_quiz_constructor %}
+<div class="module" id="quiz-constructor-module" style="margin-top: 20px;">
+  <h2>📝 Конструктор теста (для типа «Выбор ответа»)</h2>
+  <p class="help" style="margin-bottom: 12px;">Можно добавить несколько вопросов. У каждого вопроса — свои варианты ответа. ID варианта (a, b, c…) задаёт правильный ответ для этого вопроса.</p>
+
+  <div id="quiz-questions-container">
+    {% for q in quiz_questions %}
+    <fieldset class="module aligned quiz-question-block" data-question-index="{{ forloop.counter0 }}" style="margin-bottom: 24px; padding: 16px; border: 1px solid #ddd; border-radius: 8px;">
+      <h3 style="margin-top: 0;">Вопрос {{ forloop.counter }}</h3>
+      <div class="form-row">
+        <label>Текст вопроса:</label>
+        <textarea name="quiz_question_{{ forloop.counter0 }}" rows="2" style="width: 100%; max-width: 600px;">{{ q.question }}</textarea>
+      </div>
+      <div class="form-row">
+        <label>Варианты ответа:</label>
+        <table class="quiz-options-table" style="width: 100%; max-width: 700px; border-collapse: collapse;">
+          <thead>
+            <tr><th style="width: 60px; text-align: left;">ID</th><th style="text-align: left;">Текст</th><th></th></tr>
+          </thead>
+          <tbody class="quiz-options-tbody" data-question-index="{{ forloop.counter0 }}">
+            {% for opt in q.options %}
+            <tr class="quiz-option-row">
+              <td><input type="text" name="quiz_option_{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}_id" value="{{ opt.id }}" maxlength="10" style="width: 50px;"></td>
+              <td><input type="text" name="quiz_option_{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}_text" value="{{ opt.text }}" style="width: 100%;"></td>
+              <td><button type="button" class="deletelink remove-quiz-option">×</button></td>
+            </tr>
+            {% empty %}
+            <tr class="quiz-option-row">
+              <td><input type="text" name="quiz_option_{{ forloop.parentloop.counter0 }}_0_id" value="a" maxlength="10" style="width: 50px;"></td>
+              <td><input type="text" name="quiz_option_{{ forloop.parentloop.counter0 }}_0_text" value="" style="width: 100%;"></td>
+              <td><button type="button" class="deletelink remove-quiz-option">×</button></td>
+            </tr>
+            <tr class="quiz-option-row">
+              <td><input type="text" name="quiz_option_{{ forloop.parentloop.counter0 }}_1_id" value="b" maxlength="10" style="width: 50px;"></td>
+              <td><input type="text" name="quiz_option_{{ forloop.parentloop.counter0 }}_1_text" value="" style="width: 100%;"></td>
+              <td><button type="button" class="deletelink remove-quiz-option">×</button></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <p><button type="button" class="addlink add-quiz-option" data-question-index="{{ forloop.counter0 }}">+ Добавить вариант</button></p>
+      </div>
+      <div class="form-row">
+        <label>Правильный ответ (ID варианта для этого вопроса):</label>
+        <input type="text" name="quiz_correct_{{ forloop.counter0 }}" value="{{ q.correct }}" maxlength="10" style="width: 80px;">
+      </div>
+      <p><button type="button" class="deletelink remove-quiz-question">Удалить вопрос</button></p>
+    </fieldset>
+    {% empty %}
+    <fieldset class="module aligned quiz-question-block" data-question-index="0" style="margin-bottom: 24px; padding: 16px; border: 1px solid #ddd; border-radius: 8px;">
+      <h3 style="margin-top: 0;">Вопрос 1</h3>
+      <div class="form-row">
+        <label>Текст вопроса:</label>
+        <textarea name="quiz_question_0" rows="2" style="width: 100%; max-width: 600px;"></textarea>
+      </div>
+      <div class="form-row">
+        <label>Варианты ответа:</label>
+        <table class="quiz-options-table" style="width: 100%; max-width: 700px; border-collapse: collapse;">
+          <thead>
+            <tr><th style="width: 60px;">ID</th><th>Текст</th><th></th></tr>
+          </thead>
+          <tbody class="quiz-options-tbody" data-question-index="0">
+            <tr class="quiz-option-row">
+              <td><input type="text" name="quiz_option_0_0_id" value="a" maxlength="10" style="width: 50px;"></td>
+              <td><input type="text" name="quiz_option_0_0_text" value="" style="width: 100%;"></td>
+              <td><button type="button" class="deletelink remove-quiz-option">×</button></td>
+            </tr>
+            <tr class="quiz-option-row">
+              <td><input type="text" name="quiz_option_0_1_id" value="b" maxlength="10" style="width: 50px;"></td>
+              <td><input type="text" name="quiz_option_0_1_text" value="" style="width: 100%;"></td>
+              <td><button type="button" class="deletelink remove-quiz-option">×</button></td>
+            </tr>
+          </tbody>
+        </table>
+        <p><button type="button" class="addlink add-quiz-option" data-question-index="0">+ Добавить вариант</button></p>
+      </div>
+      <div class="form-row">
+        <label>Правильный ответ (ID):</label>
+        <input type="text" name="quiz_correct_0" value="" maxlength="10" style="width: 80px;">
+      </div>
+      <p><button type="button" class="deletelink remove-quiz-question">Удалить вопрос</button></p>
+    </fieldset>
+    {% endfor %}
+  </div>
+
+  <p style="margin-top: 12px;"><button type="button" id="add-quiz-question" class="addlink">+ Добавить вопрос</button></p>
+</div>
+
+<script>
+(function() {
+  var container = document.getElementById('quiz-questions-container');
+  var addQuestionBtn = document.getElementById('add-quiz-question');
+  if (!container || !addQuestionBtn) return;
+  function nextQuestionIndex() { return container.querySelectorAll('.quiz-question-block').length; }
+  function escapeAttr(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  function makeOptionRow(qIdx, oIdx, idVal, textVal) {
+    var tr = document.createElement('tr');
+    tr.className = 'quiz-option-row';
+    tr.innerHTML = '<td><input type="text" name="quiz_option_' + qIdx + '_' + oIdx + '_id" value="' + escapeAttr(idVal) + '" maxlength="10" style="width:50px"></td><td><input type="text" name="quiz_option_' + qIdx + '_' + oIdx + '_text" value="' + escapeAttr(textVal) + '" style="width:100%"></td><td><button type="button" class="deletelink remove-quiz-option">×</button></td>';
+    tr.querySelector('.remove-quiz-option').addEventListener('click', function() {
+      var tbody = tr.closest('tbody');
+      if (tbody.querySelectorAll('.quiz-option-row').length > 1) { tr.remove(); reindexOptionsInTbody(tbody); }
+    });
+    return tr;
+  }
+  function reindexOptionsInTbody(tbody) {
+    var qIdx = parseInt(tbody.getAttribute('data-question-index'), 10);
+    var rows = tbody.querySelectorAll('.quiz-option-row');
+    rows.forEach(function(tr, idx) {
+      var idInp = tr.querySelector('input[name$="_id"]'); var textInp = tr.querySelector('input[name$="_text"]');
+      if (idInp) idInp.name = 'quiz_option_' + qIdx + '_' + idx + '_id';
+      if (textInp) textInp.name = 'quiz_option_' + qIdx + '_' + idx + '_text';
+    });
+  }
+  function addQuestionBlock(qIdx) {
+    var block = document.createElement('fieldset');
+    block.className = 'module aligned quiz-question-block';
+    block.setAttribute('data-question-index', qIdx);
+    block.style.cssText = 'margin-bottom: 24px; padding: 16px; border: 1px solid #ddd; border-radius: 8px;';
+    block.innerHTML = '<h3 style="margin-top:0">Вопрос ' + (qIdx + 1) + '</h3><div class="form-row"><label>Текст вопроса:</label><textarea name="quiz_question_' + qIdx + '" rows="2" style="width:100%; max-width:600px"></textarea></div><div class="form-row"><label>Варианты ответа:</label><table class="quiz-options-table" style="width:100%; max-width:700px; border-collapse:collapse"><thead><tr><th style="width:60px">ID</th><th>Текст</th><th></th></tr></thead><tbody class="quiz-options-tbody" data-question-index="' + qIdx + '"></tbody></table><p><button type="button" class="addlink add-quiz-option" data-question-index="' + qIdx + '">+ Добавить вариант</button></p></div><div class="form-row"><label>Правильный ответ (ID):</label><input type="text" name="quiz_correct_' + qIdx + '" value="" maxlength="10" style="width:80px"></div><p><button type="button" class="deletelink remove-quiz-question">Удалить вопрос</button></p>';
+    container.appendChild(block);
+    var tbody = block.querySelector('.quiz-options-tbody');
+    tbody.appendChild(makeOptionRow(qIdx, 0, 'a', '')); tbody.appendChild(makeOptionRow(qIdx, 1, 'b', ''));
+    block.querySelector('.remove-quiz-question').addEventListener('click', function() {
+      if (container.querySelectorAll('.quiz-question-block').length > 1) { block.remove(); reindexQuestionBlocks(); }
+    });
+    block.querySelector('.add-quiz-option').addEventListener('click', function() {
+      var tbody = block.querySelector('.quiz-options-tbody');
+      var oIdx = tbody.querySelectorAll('.quiz-option-row').length;
+      tbody.appendChild(makeOptionRow(qIdx, oIdx, String.fromCharCode(97 + Math.min(oIdx, 25)), ''));
+      reindexOptionsInTbody(tbody);
+    });
+  }
+  function reindexQuestionBlocks() {
+    container.querySelectorAll('.quiz-question-block').forEach(function(block, newIdx) {
+      block.setAttribute('data-question-index', newIdx);
+      block.querySelector('h3').textContent = 'Вопрос ' + (newIdx + 1);
+      var qText = block.querySelector('textarea[name^="quiz_question_"]'); var qCorrect = block.querySelector('input[name^="quiz_correct_"]');
+      if (qText) qText.name = 'quiz_question_' + newIdx; if (qCorrect) qCorrect.name = 'quiz_correct_' + newIdx;
+      var tbody = block.querySelector('.quiz-options-tbody'); tbody.setAttribute('data-question-index', newIdx);
+      reindexOptionsInTbody(tbody);
+      var addOptBtn = block.querySelector('.add-quiz-option'); if (addOptBtn) addOptBtn.setAttribute('data-question-index', newIdx);
+    });
+  }
+  addQuestionBtn.addEventListener('click', function() { addQuestionBlock(nextQuestionIndex()); });
+  container.querySelectorAll('.quiz-question-block').forEach(function(block) {
+    block.querySelectorAll('.remove-quiz-option').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var tr = btn.closest('tr'); var tbody = tr.closest('tbody');
+        if (tbody.querySelectorAll('.quiz-option-row').length > 1) { tr.remove(); reindexOptionsInTbody(tbody); }
+      });
+    });
+    var addOptBtn = block.querySelector('.add-quiz-option');
+    if (addOptBtn) addOptBtn.addEventListener('click', function() {
+      var tbody = block.querySelector('.quiz-options-tbody');
+      var qIdx = parseInt(tbody.getAttribute('data-question-index'), 10);
+      var oIdx = tbody.querySelectorAll('.quiz-option-row').length;
+      tbody.appendChild(makeOptionRow(qIdx, oIdx, String.fromCharCode(97 + Math.min(oIdx, 25)), ''));
+      reindexOptionsInTbody(tbody);
+    });
+    block.querySelectorAll('.remove-quiz-question').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        if (container.querySelectorAll('.quiz-question-block').length > 1) { block.remove(); reindexQuestionBlocks(); }
+      });
+    });
+  });
+})();
+</script>
+{% endif %}
+{% endblock %}

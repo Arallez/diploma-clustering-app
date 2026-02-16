@@ -13,7 +13,7 @@ class Material(models.Model):
     
     # Связь с тегами задач (ManyToMany для гибкости)
     tags = models.ManyToManyField(
-        'simulator.TaskTag',
+        'tasks.TaskTag',
         blank=True,
         related_name='materials',
         verbose_name="Связанные темы",

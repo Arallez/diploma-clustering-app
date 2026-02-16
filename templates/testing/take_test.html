@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Тест: {{ test.title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/testing.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="testing-section">
+  <h1 class="testing-section__title--small">{{ test.title }}</h1>
+  <p class="testing-section__subtitle">Группа: {{ test.group.name }}. Осталось времени:</p>
+  <div id="timer" class="testing-timer" data-ends-at="{{ ends_at|date:'c' }}">—</div>
+
+  <ul class="testing-task-list">
+    {% for task in task_list %}
+    <li>
+      <span>{{ task.title }}</span>
+      <a href="{% url 'tasks:challenge_detail' task.slug %}?test_attempt={{ attempt.pk }}" target="_blank">Открыть задание →</a>
+    </li>
+    {% empty %}
+    <li>В этом тесте нет заданий.</li>
+    {% endfor %}
+  </ul>
+
+  <div class="testing-submit-wrap">
+    <form action="{% url 'testing:submit_test' attempt.pk %}" method="post" id="submit-test-form">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-primary">Сдать тест</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/testing.js' %}"></script>
+{% endblock %}

@@ -1,11 +1,15 @@
+"""
+Создание базовых заданий. Запуск из корня: python scripts/init_tasks.py
+"""
 import os
-import django
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Setup Django environment
+import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 
-from apps.simulator.models import Task, TaskTag
+from apps.tasks.models import Task, TaskTag
 
 def create_tasks():
     print("🧹 Очистка старых заданий...")

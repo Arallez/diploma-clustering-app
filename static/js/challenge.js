@@ -98,7 +98,8 @@ out
                         return;
                     }
 
-                    const response = await fetch('/simulator/api/check-solution/', {
+                    const checkUrl = (document.getElementById('check-solution-url') && document.getElementById('check-solution-url').value) || '/tasks/api/check-solution/';
+                    const response = await fetch(checkUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ 

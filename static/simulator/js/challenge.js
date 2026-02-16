@@ -103,47 +103,78 @@ function parseQuizData(jsonString) {
 }
 
 /**
- * Render Multi-Question Format
+ * Get option value and display text. Always returns strings. Never output object — avoids [object Object].
+ */
+function getOptionValueAndText(opt) {
+    function toStr(x) {
+        if (x == null || x === '') return '';
+        if (typeof x === 'string') return x;
+        if (typeof x === 'number' || typeof x === 'boolean') return String(x);
+        if (typeof x === 'object') return ''; /* never stringify object to "[object Object]" */
+        return String(x);
+    }
+    if (opt == null) return { value: '', text: '' };
+    if (typeof opt === 'string') return { value: opt, text: opt };
+    if (typeof opt !== 'object') return { value: toStr(opt), text: toStr(opt) };
+    var v = toStr(opt.id) || toStr(opt.value) || toStr(opt.text);
+    var t = toStr(opt.text) || toStr(opt.label) || toStr(opt.id) || toStr(opt.value) || '';
+    return { value: v, text: t };
+}
+
+function escapeHtml(str) {
+    if (str == null || str === '') return '';
+    var el = document.createElement('div');
+    el.textContent = str;
+    return el.innerHTML;
+}
+
+/**
+ * Render Multi-Question Format. Options may be strings or {id, text} objects.
  */
 function renderMultiQuestionQuiz(container, questions) {
-    questions.forEach((q, qIdx) => {
+    questions.forEach(function(q, qIdx) {
         if (typeof q !== 'object') return;
 
-        const block = document.createElement('div');
+        var block = document.createElement('div');
         block.className = 'quiz-question-block';
         block.dataset.type = 'question';
         block.dataset.index = qIdx;
 
-        const title = document.createElement('div');
+        var title = document.createElement('div');
         title.className = 'quiz-question-text';
-        title.innerHTML = q.text || `Вопрос ${qIdx + 1}`;
+        title.textContent = q.question || q.text || ('Вопрос ' + (qIdx + 1));
         block.appendChild(title);
 
-        const optsGroup = document.createElement('div');
+        var optsGroup = document.createElement('div');
         optsGroup.className = 'quiz-options-group';
 
-        const options = q.options || [];
-        options.forEach((opt, oIdx) => {
-            const div = document.createElement('div');
+        var options = q.options || [];
+        options.forEach(function(opt, oIdx) {
+            var vt = getOptionValueAndText(opt);
+            var displayText = (typeof vt.text === 'string' ? vt.text : '') || (typeof vt.value === 'string' ? vt.value : '') || ('Вариант ' + (oIdx + 1));
+            var submitValue = (typeof vt.value === 'string' ? vt.value : '') || displayText;
+            var div = document.createElement('div');
             div.className = 'quiz-option';
-            const inputId = `q${qIdx}_o${oIdx}`;
-            
-            div.innerHTML = `
-                <input type="radio" name="q_${qIdx}" value="${opt}" id="${inputId}">
-                <label for="${inputId}" style="flex:1; cursor:pointer;">${opt}</label>
-            `;
-            
-            div.onclick = (e) => {
-                if(e.target.tagName !== 'INPUT') {
-                    div.querySelector('input').checked = true;
-                }
-                optsGroup.querySelectorAll('.quiz-option').forEach(el => el.classList.remove('selected'));
+            var inputId = 'q' + qIdx + '_o' + oIdx;
+            var input = document.createElement('input');
+            input.type = 'radio';
+            input.name = 'q_' + qIdx;
+            input.value = submitValue;
+            input.id = inputId;
+            var label = document.createElement('label');
+            label.htmlFor = inputId;
+            label.style.cssText = 'flex:1; cursor:pointer;';
+            label.textContent = displayText;
+            div.appendChild(input);
+            div.appendChild(label);
+            div.onclick = function(e) {
+                if (e.target.tagName !== 'INPUT') input.checked = true;
+                optsGroup.querySelectorAll('.quiz-option').forEach(function(el) { el.classList.remove('selected'); });
                 div.classList.add('selected');
             };
-            
             optsGroup.appendChild(div);
         });
-        
+
         block.appendChild(optsGroup);
         container.appendChild(block);
     });
@@ -276,14 +307,19 @@ async function submitQuiz() {
  */
 async function postSolution(slug, codeOrAnswers) {
     const csrfToken = document.cookie.match(/csrftoken=([^;]+)/)?.[1];
-    
-    const response = await fetch('/simulator/api/check-solution/', {
+    const testAttemptEl = document.getElementById('test-attempt-id');
+    const testAttemptId = testAttemptEl ? testAttemptEl.value : null;
+    const body = { slug, code: codeOrAnswers };
+    if (testAttemptId) body.test_attempt_id = parseInt(testAttemptId, 10);
+
+    const checkUrl = (document.getElementById('check-solution-url') && document.getElementById('check-solution-url').value) || '/tasks/api/check-solution/';
+    const response = await fetch(checkUrl, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'X-CSRFToken': csrfToken
         },
-        body: JSON.stringify({ slug, code: codeOrAnswers })
+        body: JSON.stringify(body)
     });
     
     const text = await response.text();

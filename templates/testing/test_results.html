@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Результаты: {{ test.title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/testing.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="testing-section">
+  <h1 class="testing-section__title--small">Результаты: {{ test.title }}</h1>
+  <p class="testing-section__subtitle">Группа: {{ test.group.name }}</p>
+
+  <table class="testing-table">
+    <thead>
+      <tr>
+        <th>Студент</th>
+        <th>Начало</th>
+        <th>Сдача</th>
+        <th>Статус</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in attempts %}
+      <tr>
+        <td>{{ a.user.get_username }}</td>
+        <td>{{ a.started_at|date:"d.m.Y H:i" }}</td>
+        <td>{% if a.submitted_at %}{{ a.submitted_at|date:"d.m.Y H:i" }}{% else %}—{% endif %}</td>
+        <td>{% if a.submitted_at %}<span class="testing-status--ok">Сдан</span>{% else %}<span class="testing-status--pending">В процессе</span>{% endif %}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" class="testing-table--muted">Пока нет попыток.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="testing-btn-group">
+    <a href="{% url 'testing:home' %}" class="btn btn-outline">← К тестированию</a>
+  </div>
+</div>
+{% endblock %}

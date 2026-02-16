@@ -41,7 +41,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'apps.core',
     'apps.simulator',
+    'apps.tasks',
     'apps.encyclopedia',
+    'apps.testing',
 ]
 
 MIDDLEWARE = [
@@ -111,6 +113,8 @@ AUTH_PASSWORD_VALIDATORS = [
 LANGUAGE_CODE = 'ru-ru'
 
 TIME_ZONE = 'UTC'
+# Время «открыт/закрыт» в тестах из формы считается в этой зоне (иначе 22:16 = 22:16 UTC, а не по Москве)
+TEST_DATETIME_TIMEZONE = 'Europe/Moscow'
 
 USE_I18N = True
 

@@ -6,7 +6,7 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from .forms import UserRegisterForm
-from apps.simulator.models import Task, UserTaskAttempt, TaskTag
+from apps.tasks.models import Task, UserTaskAttempt, TaskTag
 from .models import Material
 
 def home(request):

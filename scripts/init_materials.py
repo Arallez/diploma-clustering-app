@@ -1,8 +1,18 @@
+"""
+Создать начальный материал «Метод K-средних (K-Means)».
+Запуск из корня: python scripts/init_materials.py
+"""
+import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import django
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+django.setup()
+
 from apps.core.models import Material
 
-# Correct content
-title = "Метод K-средних (K-Means)"
-content = """
+kmeans_content = """
 ## Что такое кластеризация?
 
 Кластеризация — это задача обучения без учителя (unsupervised learning). 
@@ -39,14 +49,12 @@ K-Means можно рассматривать как упрощенный вар
 * Матрицы ковариации единичные (сферические кластеры без настройки формы).
 """
 
-# Update the existing material
-Material.objects.update_or_create(
+Material.objects.get_or_create(
     slug='k-means-theory',
     defaults={
-        'title': title,
-        'content': content,
+        'title': 'Метод K-средних (K-Means)',
+        'content': kmeans_content,
         'order': 1
     }
 )
-
-print(f"Material '{title}' fixed successfully!")
+print("Material 'K-Means Theory' created successfully!")

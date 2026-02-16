@@ -1,0 +1,295 @@
+/* Testing section: clean separation — only layout and visuals, no inline in templates */
+
+.testing-section {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px 20px;
+}
+
+.testing-section--narrow {
+  max-width: 700px;
+}
+
+.testing-section--form {
+  max-width: 640px;
+}
+
+.testing-section h1 {
+  font-size: 1.75rem;
+  margin-bottom: 24px;
+  color: #f1f5f9;
+}
+
+.testing-section h1.testing-section__title--small {
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+}
+
+.testing-section .testing-section__subtitle {
+  color: #94a3b8;
+  margin-bottom: 8px;
+}
+
+/* Cards */
+.testing-card {
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.testing-card h2 {
+  font-size: 1.1rem;
+  margin: 0 0 16px 0;
+  color: #e2e8f0;
+}
+
+.testing-card__meta {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.testing-card__meta--muted {
+  color: #94a3b8;
+}
+
+/* Group code */
+.testing-code {
+  font-family: var(--font-mono);
+  background: #0f172a;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  letter-spacing: 2px;
+  margin: 8px 0;
+}
+
+/* Forms */
+.testing-form-inline {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.testing-form-inline input {
+  flex: 1;
+  max-width: 220px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+.testing-form-group {
+  margin-bottom: 16px;
+}
+
+.testing-form-group label {
+  display: block;
+  margin-bottom: 6px;
+  color: #cbd5e1;
+  font-weight: 600;
+}
+
+.testing-form-group input,
+.testing-form-group select {
+  width: 100%;
+  max-width: 400px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+.testing-tasks-checklist {
+  max-height: 280px;
+  overflow-y: auto;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.testing-tasks-checklist label {
+  display: block;
+  padding: 6px 0;
+  color: #e2e8f0;
+  cursor: pointer;
+}
+
+.testing-tasks-checklist input {
+  width: auto;
+  max-width: none;
+  margin-right: 8px;
+}
+
+/* Lists */
+.testing-list-plain {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.testing-list-plain li {
+  padding: 4px 0;
+  color: #94a3b8;
+}
+
+.testing-list-tests {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.testing-list-tests li {
+  padding: 12px;
+  margin-bottom: 8px;
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.testing-list-tests .testing-list-tests__meta {
+  font-size: 0.9rem;
+  color: #94a3b8;
+}
+
+.testing-list-tests .testing-list-tests__row {
+  display: block;
+}
+
+/* Teacher: test row in card */
+.testing-test-row {
+  margin-bottom: 12px;
+  padding: 12px;
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 8px;
+}
+
+.testing-test-row:last-child {
+  margin-bottom: 0;
+}
+
+/* Timer */
+.testing-timer {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #60a5fa;
+  margin-bottom: 20px;
+}
+
+.testing-timer.testing-timer--warning {
+  color: #f59e0b;
+}
+
+.testing-timer.testing-timer--danger {
+  color: #ef4444;
+}
+
+/* Task list (take test page) */
+.testing-task-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.testing-task-list li {
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid #334155;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.testing-task-list a {
+  color: #60a5fa;
+  text-decoration: none;
+}
+
+.testing-task-list a:hover {
+  text-decoration: underline;
+}
+
+.testing-submit-wrap {
+  margin-top: 24px;
+}
+
+/* Results table */
+.testing-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.testing-table th,
+.testing-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #334155;
+  color: #e2e8f0;
+}
+
+.testing-table th {
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.testing-table .testing-table--muted {
+  color: #94a3b8;
+}
+
+.testing-table .testing-status--ok {
+  color: #10b981;
+}
+
+.testing-table .testing-status--pending {
+  color: #ef4444;
+}
+
+/* Buttons */
+.testing-btn-group {
+  margin-top: 20px;
+}
+
+.testing-btn-group .btn {
+  margin-right: 8px;
+}
+
+.btn-small {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+}
+
+/* Status badges for student test list */
+.testing-status-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.testing-status-badge--active {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+}
+
+.testing-status-badge--future {
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+}
+
+.testing-status-badge--past {
+  background: rgba(148, 163, 184, 0.2);
+  color: #94a3b8;
+}

@@ -1,71 +1,30 @@
 import json
-import math
-import random
-import sys
 import numpy as np
 from django.http import JsonResponse
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, redirect
+from django.urls import reverse
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
-from .models import Task, TaskTag, UserTaskAttempt
 from .algorithms import (
-    kmeans_step, 
-    dbscan_step, 
-    forel_step, 
+    kmeans_step,
+    dbscan_step,
+    forel_step,
     agglomerative_step,
     mean_shift_step,
-    compute_dendrogram_data 
+    compute_dendrogram_data,
 )
 from .presets import generate_preset
-from .services import (
-    is_safe_code, 
-    create_tracer, 
-    TimeLimitException, 
-    get_safe_builtins
-)
 
-# --- Page Views ---
 
 @ensure_csrf_cookie
 def index(request):
-    """Main simulator page"""
+    """Страница симулятора (песочница: точки + алгоритмы)."""
     return render(request, 'simulator/index.html')
 
-def task_list(request):
-    """List of educational tasks grouped by Tag/Block"""
-    tags = TaskTag.objects.prefetch_related('tasks').order_by('order')
-    uncategorized = Task.objects.filter(tags__isnull=True).order_by('order')
-    
-    # Get completed task IDs for the current user
-    completed_task_ids = set()
-    if request.user.is_authenticated:
-        completed_task_ids = set(
-            UserTaskAttempt.objects.filter(
-                user=request.user, 
-                is_correct=True
-            ).values_list('task_id', flat=True)
-        )
-    
-    return render(request, 'simulator/task_list.html', {
-        'tags': tags,
-        'uncategorized': uncategorized,
-        'completed_task_ids': completed_task_ids
-    })
 
-@ensure_csrf_cookie
-def challenge_detail(request, slug):
-    """Specific challenge page"""
-    task = get_object_or_404(Task, slug=slug)
-    
-    previous_code = ""
-    if request.user.is_authenticated:
-        last_attempt = request.user.task_attempts.filter(task=task, is_correct=True).first()
-        if last_attempt:
-            previous_code = last_attempt.code
-    
-    return render(request, 'simulator/challenge_detail.html', {
-        'task': task,
-        'previous_code': previous_code or task.initial_code
-    })
+def _redirect_legacy_challenge(request, slug):
+    """Редирект со старого /simulator/challenge/<slug>/ на /tasks/challenge/<slug>/."""
+    return redirect(reverse('tasks:challenge_detail', kwargs={'slug': slug}), permanent=False)
+
 
 # --- API Endpoints ---
 
@@ -141,160 +100,6 @@ def get_dendrogram(request):
                 return JsonResponse({'success': False, 'error': ddata['error']})
             
             return JsonResponse({'success': True, 'dendrogram': ddata})
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})
-            
-    return JsonResponse({'success': False, 'error': 'Method not allowed'})
-
-def check_solution(request):
-    """
-    Checks user solution (Code execution or Quiz answer).
-    """
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            slug = data.get('slug')
-            user_input = data.get('code') # Contains code or selected option(s)
-            
-            task = get_object_or_404(Task, slug=slug)
-            
-            is_correct = False
-            result_details = {} # Detailed feedback for quiz
-            error_msg = None
-            
-            # --- HANDLE QUIZ (CHOICE) ---
-            if task.task_type == 'choice':
-                expected = task.expected_output
-                
-                # Normalize types for comparison
-                if isinstance(user_input, list) and isinstance(expected, list):
-                    # Multi-question comparison
-                    # Compare arrays strictly
-                    is_correct = (user_input == expected)
-                    
-                    # Generate detailed feedback (which index is wrong)
-                    # We send back an array of booleans [true, false, true]
-                    correctness_array = []
-                    for i in range(len(expected)):
-                        if i < len(user_input):
-                            is_match = (user_input[i] == expected[i])
-                            correctness_array.append(is_match)
-                        else:
-                            correctness_array.append(False)
-                            
-                    result_details = {'quiz_results': correctness_array}
-                    
-                else:
-                    # Single question comparison
-                    expected_str = str(expected).strip()
-                    submitted_str = str(user_input).strip()
-                    is_correct = (submitted_str == expected_str)
-                
-                if not is_correct:
-                    if isinstance(expected, list):
-                        error_msg = "Некоторые ответы неверны. Проверьте выделенные пункты."
-                    else:
-                        error_msg = f"Выбрано: {user_input}. Попробуйте еще раз."
-
-            # --- HANDLE CODE ---
-            else:
-                # 1. Static Analysis Check (Whitelist Imports)
-                is_safe, security_msg = is_safe_code(user_input)
-                if not is_safe:
-                    return JsonResponse({'success': False, 'error': security_msg})
-
-                # 2. Construct Safe Builtins (Enable __import__)
-                safe_builtins = get_safe_builtins()
-                
-                # 3. Execution Context
-                execution_context = {
-                    '__builtins__': safe_builtins,
-                    'np': np,           # Convenience (Legacy)
-                    'math': math,       # Convenience (Legacy)
-                    'random': random,   # Convenience
-                }
-                
-                # 4. Execute with Loop Protection (Tracing)
-                try:
-                    # Set the trace function to count instructions
-                    sys.settrace(create_tracer(max_instructions=200000))
-                    try:
-                        exec(user_input, execution_context)
-                    finally:
-                        # CRITICAL: Always turn off tracing, or the whole server will slow down
-                        sys.settrace(None)
-                        
-                except TimeLimitException as e:
-                    return JsonResponse({'success': False, 'error': f'⏱️ {str(e)} (Бесконечный цикл?)'})
-                except Exception as e:
-                    return JsonResponse({'success': False, 'error': f'Syntax/Runtime Error: {e}'})
-                    
-                func_name = task.function_name
-                if func_name not in execution_context:
-                    return JsonResponse({'success': False, 'error': f'Функция {func_name} не найдена. Проверьте имя функции.'})
-                    
-                user_func = execution_context[func_name]
-                test_input = task.test_input
-                expected = task.expected_output
-                
-                try:
-                    # Also wrap the function call itself in tracing, in case the loop is inside the function
-                    sys.settrace(create_tracer(max_instructions=200000))
-                    try:
-                        if isinstance(test_input, dict):
-                            result = user_func(**test_input)
-                        elif isinstance(test_input, list):
-                            try:
-                                result = user_func(*test_input)
-                            except TypeError:
-                                result = user_func(test_input)
-                        else:
-                            result = user_func(test_input)
-                    finally:
-                        sys.settrace(None)
-                        
-                except TimeLimitException as e:
-                     return JsonResponse({'success': False, 'error': f'⏱️ {str(e)} (Бесконечный цикл?)'})
-                except Exception as e:
-                    return JsonResponse({'success': False, 'error': f'Runtime Error: {e}'})
-                
-                # Compare
-                if isinstance(result, np.ndarray): result = result.tolist()
-                if isinstance(expected, np.ndarray): expected = expected.tolist()
-
-                if isinstance(expected, (list, dict)):
-                    is_correct = (str(result) == str(expected)) 
-                    if not is_correct:
-                        try: is_correct = np.allclose(result, expected, atol=1e-2)
-                        except: pass
-                else:
-                    is_correct = (result == expected)
-                    
-                error_msg = f"Ожидалось: {expected}, Получено: {result}" if not is_correct else None
-
-            # --- SAVE ATTEMPT ---
-            if request.user.is_authenticated:
-                code_to_save = json.dumps(user_input, ensure_ascii=False) if isinstance(user_input, (list, dict)) else str(user_input)
-                
-                UserTaskAttempt.objects.create(
-                    user=request.user,
-                    task=task,
-                    code=code_to_save,
-                    is_correct=is_correct,
-                    error_message=error_msg
-                )
-            
-            response_data = {'success': is_correct}
-            if is_correct:
-                response_data['message'] = 'Правильно!'
-            else:
-                response_data['error'] = error_msg
-                
-            # Merge extra details (like per-question results)
-            response_data.update(result_details)
-            
-            return JsonResponse(response_data)
-                
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
             

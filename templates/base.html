@@ -7,12 +7,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <!-- Updated version to v=1.3 to force style refresh -->
-    <link rel="stylesheet" href="{% static 'css/base.css' %}?v=1.3">
+    <link rel="stylesheet" href="{% static 'css/base.css' %}?v=1.5">
     {% block extra_css %}{% endblock %}
 </head>
 <body>
     
     {% include 'includes/navbar.html' %}
+
+    {% if messages %}
+    <div class="toast-wrap" aria-live="polite">
+        {% for message in messages|slice:":1" %}
+        <div class="toast toast-{% if message.tags %}{{ message.tags }}{% else %}info{% endif %}" role="alert">
+            <span class="toast-icon">{% if message.tags == 'success' %}✓{% elif message.tags == 'error' or message.tags == 'danger' %}!{% elif message.tags == 'warning' %}⚠{% else %}ℹ{% endif %}</span>
+            <p class="toast-text">{{ message }}</p>
+            <button type="button" class="toast-close" aria-label="Закрыть">&times;</button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
 
     <main class="main-content">
         {% block content %}
@@ -20,5 +32,15 @@
     </main>
     
     {% block extra_js %}{% endblock %}
+    <script>
+      document.querySelectorAll('.toast-close').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var toast = this.closest('.toast');
+          var wrap = document.querySelector('.toast-wrap');
+          if (toast) toast.remove();
+          if (wrap && !wrap.querySelector('.toast')) wrap.remove();
+        });
+      });
+    </script>
 </body>
 </html>

@@ -1,0 +1,98 @@
+/* Custom admin styles for better visibility in dark themes and quiz constructor */
+
+/* Fix text color in quiz constructor */
+#quiz-constructor-module {
+  color: #333;
+}
+
+#quiz-constructor-module h2,
+#quiz-constructor-module h3 {
+  color: #333;
+}
+
+#quiz-constructor-module label {
+  color: #333;
+  font-weight: 600;
+}
+
+#quiz-constructor-module .help {
+  color: #666;
+}
+
+/* Inputs and textareas in quiz constructor */
+#quiz-constructor-module input[type="text"],
+#quiz-constructor-module textarea {
+  background-color: #fff;
+  color: #333;
+  border: 1px solid #ccc;
+  padding: 6px 8px;
+  border-radius: 4px;
+}
+
+#quiz-constructor-module input[type="text"]:focus,
+#quiz-constructor-module textarea:focus {
+  border-color: #417690;
+  outline: none;
+}
+
+/* Table in quiz constructor */
+#quiz-constructor-module .quiz-options-table th {
+  background-color: #f5f5f5;
+  color: #333;
+  padding: 8px;
+  border-bottom: 2px solid #ddd;
+  font-weight: 600;
+}
+
+#quiz-constructor-module .quiz-options-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #eee;
+}
+
+/* Question blocks */
+#quiz-constructor-module .quiz-question-block {
+  background-color: #f9f9f9;
+  border: 1px solid #ddd !important;
+}
+
+/* Buttons */
+#quiz-constructor-module .addlink,
+#quiz-constructor-module .deletelink {
+  color: #417690;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+#quiz-constructor-module .deletelink {
+  color: #ba2121;
+}
+
+#quiz-constructor-module .addlink:hover,
+#quiz-constructor-module .deletelink:hover {
+  text-decoration: underline;
+}
+
+/* General admin form improvements for dark themes */
+body.change-form .form-row label,
+body.change-form .form-row .help,
+body.change-form fieldset h2 {
+  color: #333;
+}
+
+body.change-form input[type="text"],
+body.change-form textarea,
+body.change-form select {
+  background-color: #fff;
+  color: #333;
+}
+
+/* Django admin field labels */
+.aligned label {
+  color: #333 !important;
+}
+
+/* Help text */
+.help,
+.helptext {
+  color: #666 !important;
+}

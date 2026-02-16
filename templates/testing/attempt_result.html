@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Результат: {{ test.title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/testing.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="testing-section">
+  <h1 class="testing-section__title--small">Результат: {{ test.title }}</h1>
+  <p class="testing-section__subtitle">Группа: {{ test.group.name }}</p>
+  
+  <!-- Результат -->
+  <div class="testing-result-card">
+    <div class="testing-result-card__score">
+      <div class="testing-result-card__percent">{{ progress.percent }}%</div>
+      <div class="testing-result-card__details">Выполнено {{ progress.attempted }} из {{ progress.total }} заданий</div>
+    </div>
+    
+    {% if attempt.submitted_at %}
+    <p class="testing-result-card__meta">Сдан: {{ attempt.submitted_at|date:"d.m.Y H:i" }}</p>
+    {% else %}
+    <p class="testing-result-card__meta testing-result-card__meta--warning">Тест ещё не сдан</p>
+    {% endif %}
+  </div>
+
+  <!-- Детали по заданиям -->
+  <div class="testing-card">
+    <h2>Детали по заданиям</h2>
+    <ul class="testing-task-list testing-task-list--results">
+      {% for item in tasks_with_status %}
+      <li>
+        <div class="testing-task-list__row">
+          {% if item.status == 'attempted' %}
+            <span class="testing-task-status testing-task-status--done">✅</span>
+            <span class="testing-task-list__title">{{ item.task.title }}</span>
+            <span class="testing-task-badge testing-task-badge--done">Попытка есть</span>
+          {% else %}
+            <span class="testing-task-status testing-task-status--pending">❌</span>
+            <span class="testing-task-list__title">{{ item.task.title }}</span>
+            <span class="testing-task-badge testing-task-badge--pending">Не решено</span>
+          {% endif %}
+        </div>
+      </li>
+      {% empty %}
+      <li>В этом тесте нет заданий.</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="testing-btn-group">
+    <a href="{% url 'testing:home' %}" class="btn btn-primary">← К тестированию</a>
+    {% if not attempt.submitted_at %}
+    <a href="{% url 'testing:take_test' attempt.pk %}" class="btn btn-outline">Продолжить тест</a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

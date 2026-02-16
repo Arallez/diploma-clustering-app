@@ -19,6 +19,37 @@ def is_teacher(user):
     return hasattr(user, 'teacher_profile') and user.teacher_profile is not None
 
 
+def calculate_attempt_progress(attempt):
+    """Вычисляет прогресс попытки теста (какие задания попытались решить)."""
+    test = attempt.test
+    task_ids = list(test.tasks.values_list('id', flat=True))
+    total = len(task_ids)
+    if total == 0:
+        return {'total': 0, 'attempted': 0, 'percent': 0, 'task_statuses': {}}
+    
+    # Собираем все попытки решений в рамках этого TestAttempt
+    task_attempts = UserTaskAttempt.objects.filter(
+        test_attempt=attempt,
+        task_id__in=task_ids
+    ).values('task_id').distinct()
+    
+    attempted_task_ids = set(ta['task_id'] for ta in task_attempts)
+    attempted = len(attempted_task_ids)
+    percent = int((attempted / total) * 100) if total > 0 else 0
+    
+    # Для каждого задания определяем статус
+    task_statuses = {}
+    for task_id in task_ids:
+        task_statuses[task_id] = 'attempted' if task_id in attempted_task_ids else 'not_attempted'
+    
+    return {
+        'total': total,
+        'attempted': attempted,
+        'percent': percent,
+        'task_statuses': task_statuses
+    }
+
+
 def testing_home(request):
     """Главная вкладки «Тестирование»: для преподавателя — группы и тесты, для студента — подключение к группе и активные тесты."""
     if not request.user.is_authenticated:
@@ -60,13 +91,21 @@ def testing_home(request):
         else:
             status = 'past'
         tests_with_status.append({'test': t, 'status': status})
-    # Уже начатые попытки (в процессе или завершённые)
+    
+    # Уже начатые попытки (в процессе или завершённые) с прогрессом
     my_attempts = TestAttempt.objects.filter(user=user).select_related('test')
+    attempts_with_progress = []
+    for attempt in my_attempts:
+        progress = calculate_attempt_progress(attempt)
+        attempts_with_progress.append({
+            'attempt': attempt,
+            'progress': progress
+        })
 
     return render(request, 'testing/student_home.html', {
         'memberships': memberships,
         'tests_with_status': tests_with_status,
-        'my_attempts': my_attempts,
+        'attempts_with_progress': attempts_with_progress,
     })
 
 
@@ -187,46 +226,88 @@ def start_test(request, test_id):
     attempt, created = TestAttempt.objects.get_or_create(user=request.user, test=test)
     if not created and attempt.submitted_at:
         messages.info(request, 'Вы уже сдали этот тест.')
-        return redirect('testing:home')
+        return redirect('testing:attempt_result', attempt_id=attempt.pk)
     return redirect('testing:take_test', attempt_id=attempt.pk)
 
 
 @login_required
 def take_test(request, attempt_id):
-    """Страница прохождения теста: таймер и список заданий."""
+    """Страница прохождения теста: таймер, прогресс и список заданий."""
     attempt = get_object_or_404(TestAttempt, pk=attempt_id, user=request.user)
     test = attempt.test
     if attempt.submitted_at:
         messages.info(request, 'Тест уже сдан.')
-        return redirect('testing:home')
+        return redirect('testing:attempt_result', attempt_id=attempt.pk)
     if not test.is_active():
         messages.error(request, 'Время теста истекло.')
         return redirect('testing:home')
+    
     task_list = list(test.tasks.all().order_by('tags__order', 'order'))
+    
+    # Вычисляем прогресс
+    progress = calculate_attempt_progress(attempt)
+    
+    # Добавляем статус к каждому заданию
+    tasks_with_status = []
+    for task in task_list:
+        status = progress['task_statuses'].get(task.id, 'not_attempted')
+        tasks_with_status.append({
+            'task': task,
+            'status': status
+        })
+    
     # Время окончания: started_at + time_limit_minutes или closes_at — что раньше
     end_by_time = attempt.started_at + timedelta(minutes=test.time_limit_minutes)
     end_by_deadline = test.closes_at
     ends_at = min(end_by_time, end_by_deadline)
+    
     return render(request, 'testing/take_test.html', {
         'attempt': attempt,
         'test': test,
-        'task_list': task_list,
+        'tasks_with_status': tasks_with_status,
+        'progress': progress,
         'ends_at': ends_at,
     })
 
 
 @login_required
 def submit_test(request, attempt_id):
-    """Завершить тест (поставить submitted_at)."""
+    """Завершить тест (поставить submitted_at) и перейти к результатам."""
     if request.method != 'POST':
         return redirect('testing:home')
     attempt = get_object_or_404(TestAttempt, pk=attempt_id, user=request.user)
     if attempt.submitted_at:
-        return redirect('testing:home')
+        return redirect('testing:attempt_result', attempt_id=attempt.pk)
     attempt.submitted_at = timezone.now()
     attempt.save()
     messages.success(request, 'Тест сдан.')
-    return redirect('testing:home')
+    return redirect('testing:attempt_result', attempt_id=attempt.pk)
+
+
+@login_required
+def attempt_result(request, attempt_id):
+    """Результат попытки студента: процент выполнения и список заданий."""
+    attempt = get_object_or_404(TestAttempt, pk=attempt_id, user=request.user)
+    test = attempt.test
+    
+    task_list = list(test.tasks.all().order_by('tags__order', 'order'))
+    progress = calculate_attempt_progress(attempt)
+    
+    # Добавляем статус к каждому заданию
+    tasks_with_status = []
+    for task in task_list:
+        status = progress['task_statuses'].get(task.id, 'not_attempted')
+        tasks_with_status.append({
+            'task': task,
+            'status': status
+        })
+    
+    return render(request, 'testing/attempt_result.html', {
+        'attempt': attempt,
+        'test': test,
+        'tasks_with_status': tasks_with_status,
+        'progress': progress,
+    })
 
 
 @login_required
@@ -236,5 +317,19 @@ def test_results(request, test_id):
     if test.owner_id != request.user.pk and not is_teacher(request.user):
         messages.error(request, 'Нет доступа.')
         return redirect('testing:home')
+    
     attempts = TestAttempt.objects.filter(test=test).select_related('user').order_by('-started_at')
-    return render(request, 'testing/test_results.html', {'test': test, 'attempts': attempts})
+    
+    # Добавляем прогресс к каждой попытке
+    attempts_with_progress = []
+    for attempt in attempts:
+        progress = calculate_attempt_progress(attempt)
+        attempts_with_progress.append({
+            'attempt': attempt,
+            'progress': progress
+        })
+    
+    return render(request, 'testing/test_results.html', {
+        'test': test,
+        'attempts_with_progress': attempts_with_progress
+    })

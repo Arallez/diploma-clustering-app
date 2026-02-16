@@ -1,0 +1,229 @@
+/* Django Admin Dark Theme */
+
+:root {
+  --primary-color: #3b82f6;
+  --bg-dark: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --text-white: #ffffff;
+  --border-color: #334155;
+  --success: #10b981;
+  --danger: #ef4444;
+}
+
+/* Base text color - Force white everywhere */
+body, p, h1, h2, h3, h4, h5, h6, li, dt, dd, th, td, label, span, div {
+  color: var(--text-white) !important;
+}
+
+/* Backgrounds */
+body {
+  background: var(--bg-dark) !important;
+}
+
+#content, #content-main {
+  background: transparent !important;
+}
+
+/* Header */
+#header {
+  background: var(--bg-secondary) !important;
+  color: var(--text-white) !important;
+  border-bottom: 1px solid var(--border-color);
+}
+
+#branding h1 a {
+  color: var(--primary-color) !important;
+}
+
+#user-tools a {
+  color: var(--text-white) !important;
+}
+
+/* Modules (Containers) */
+.module, .inline-group {
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+/* Module Headers */
+.module h2, .module caption, .inline-group h2 {
+  background: var(--bg-tertiary) !important;
+  color: var(--text-white) !important;
+  padding: 8px 12px;
+  font-size: 13px;
+  text-align: left;
+  border-radius: 8px 8px 0 0;
+}
+
+/* Links */
+a:link, a:visited {
+  color: var(--primary-color) !important;
+}
+
+/* BUTTONS - General Styles */
+.button, 
+input[type="submit"], 
+input[type="button"], 
+.submit-row input, 
+a.button,
+.object-tools a {
+  background: var(--primary-color) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 4px;
+  padding: 8px 15px;
+  text-transform: uppercase;
+  font-weight: bold;
+  cursor: pointer;
+  display: inline-block;
+  text-decoration: none;
+}
+
+.button:hover, input[type="submit"]:hover, .object-tools a:hover {
+  background: #2563eb !important;
+}
+
+/* QUIZ CONSTRUCTOR BUTTONS - Specific Fixes */
+
+/* "Add Quiz Question" & "Add Option" Buttons */
+#add-quiz-question,
+.add-quiz-option {
+  background-color: var(--success) !important;
+  color: #ffffff !important; /* Force white text */
+  border: none !important;
+  border-radius: 6px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-weight: bold;
+  text-decoration: none;
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 13px;
+  /* Reset any pseudo-elements that might add extra symbols */
+}
+
+#add-quiz-question:before,
+.add-quiz-option:before {
+  content: "" !important; /* Remove any CSS-added plus signs if they exist */
+  display: none !important;
+}
+
+#add-quiz-question:hover,
+.add-quiz-option:hover {
+  background-color: #059669 !important;
+  color: #ffffff !important;
+}
+
+/* "Remove Option" & "Remove Question" Buttons */
+.remove-quiz-option,
+.remove-quiz-question {
+  background-color: var(--danger) !important;
+  color: #ffffff !important; /* Force white text */
+  border: none !important;
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 14px; /* Ensure X is visible */
+  line-height: 1;
+}
+
+.remove-quiz-option:before,
+.remove-quiz-question:before {
+  content: "" !important; /* Remove any CSS-added X signs */
+  display: none !important;
+}
+
+.remove-quiz-option:hover,
+.remove-quiz-question:hover {
+  background-color: #dc2626 !important;
+  color: #ffffff !important;
+}
+
+
+/* Inputs */
+input[type="text"], input[type="password"], input[type="email"], input[type="number"], input[type="date"], select, textarea {
+  background: var(--bg-dark) !important;
+  color: var(--text-white) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 4px;
+  padding: 6px;
+}
+
+/* COLLAPSE/EXPAND - Functionality Fix */
+fieldset.collapse {
+  border: 1px solid var(--border-color) !important;
+  background: var(--bg-secondary) !important;
+}
+
+/* Ensure the toggle link is visible */
+fieldset.collapse h2 .collapse-toggle {
+  color: var(--primary-color) !important;
+  display: inline-block;
+  margin-left: 10px;
+  font-weight: normal;
+  cursor: pointer;
+  background: transparent !important;
+}
+
+/* Standard Django behavior: .collapsed hides content */
+fieldset.collapsed .form-row,
+fieldset.collapsed .description {
+  display: none !important;
+}
+
+/* Tables */
+tbody tr {
+  background: var(--bg-secondary) !important;
+}
+tbody tr:hover { background: var(--bg-tertiary) !important; }
+
+/* Breadcrumbs */
+div.breadcrumbs {
+  background: var(--bg-secondary) !important;
+  color: var(--text-white) !important;
+}
+
+/* Sidebar (Recent Actions) */
+#content-related {
+  background: var(--bg-secondary) !important;
+  float: right;
+  width: 260px;
+  position: relative;
+  margin-right: -300px;
+}
+
+#content-main {
+  float: left;
+  width: 100%; 
+  margin-right: 300px;
+}
+
+.dashboard #content-main {
+  float: none; /* Dashboard specific fix */
+}
+
+/* Quiz Constructor Specifics */
+.quiz-question-block {
+  background: var(--bg-dark) !important;
+  border: 1px solid var(--border-color);
+  padding: 15px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+}
+
+.quiz-option-row {
+  margin-bottom: 5px;
+  padding: 5px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex; /* Better alignment for options */
+  align-items: center;
+  gap: 10px;
+}
+
+.quiz-option-row input[type="text"] {
+  flex-grow: 1; /* Input takes available space */
+}

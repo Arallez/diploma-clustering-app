@@ -42,7 +42,7 @@
           <strong>{{ item.test.title }}</strong> ({{ item.test.group.name }})<br>
           <span class="testing-list-tests__meta">
             Время: {{ item.test.time_limit_minutes }} мин.
-            Окно: {{ item.test.opens_at|date:"d.m.Y H:i" }} — {{ item.test.closes_at|date:"d.m.Y H:i" }}
+            Окно: {{ item.test.opens_at|date:"д.м.Y H:i" }} — {{ item.test.closes_at|date:"д.м.Y H:i" }}
             {% if item.status == 'active' %}
               <span class="testing-status-badge testing-status-badge--active">Активен</span>
             {% elif item.status == 'future' %}
@@ -55,7 +55,7 @@
         {% if item.status == 'active' %}
         <a href="{% url 'testing:start_test' item.test.pk %}" class="btn btn-primary">Начать</a>
         {% elif item.status == 'future' %}
-        <span class="testing-card__meta--muted">Доступен с {{ item.test.opens_at|date:"d.m.Y H:i" }}</span>
+        <span class="testing-card__meta--muted">Доступен с {{ item.test.opens_at|date:"д.м.Y H:i" }}</span>
         {% endif %}
       </li>
       {% endfor %}
@@ -65,20 +65,27 @@
     {% endif %}
   </div>
 
-  {% if my_attempts %}
+  {% if attempts_with_progress %}
   <div class="testing-card">
     <h2>Мои попытки</h2>
     <ul class="testing-list-tests">
-      {% for a in my_attempts %}
+      {% for item in attempts_with_progress %}
       <li>
         <div class="testing-list-tests__row">
-          <strong>{{ a.test.title }}</strong><br>
+          <strong>{{ item.attempt.test.title }}</strong><br>
           <span class="testing-list-tests__meta">
-            {% if a.submitted_at %}Сдан {{ a.submitted_at|date:"d.m.Y H:i" }}{% else %}В процессе{% endif %}
+            {% if item.attempt.submitted_at %}
+              Сдан {{ item.attempt.submitted_at|date:"д.м.Y H:i" }}
+            {% else %}
+              В процессе
+            {% endif %}
+            — <strong>{{ item.progress.attempted }}/{{ item.progress.total }} ({{ item.progress.percent }}%)</strong>
           </span>
         </div>
-        {% if not a.submitted_at %}
-        <a href="{% url 'testing:take_test' a.pk %}" class="btn btn-outline">Продолжить</a>
+        {% if item.attempt.submitted_at %}
+        <a href="{% url 'testing:attempt_result' item.attempt.pk %}" class="btn btn-outline">Результат</a>
+        {% else %}
+        <a href="{% url 'testing:take_test' item.attempt.pk %}" class="btn btn-outline">Продолжить</a>
         {% endif %}
       </li>
       {% endfor %}

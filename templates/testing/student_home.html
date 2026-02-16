@@ -42,7 +42,7 @@
           <strong>{{ item.test.title }}</strong> ({{ item.test.group.name }})<br>
           <span class="testing-list-tests__meta">
             Время: {{ item.test.time_limit_minutes }} мин.
-            Окно: {{ item.test.opens_at|date:"д.м.Y H:i" }} — {{ item.test.closes_at|date:"д.м.Y H:i" }}
+            Окно: {{ item.test.opens_at|date:"d.m.Y H:i" }} — {{ item.test.closes_at|date:"d.m.Y H:i" }}
             {% if item.status == 'active' %}
               <span class="testing-status-badge testing-status-badge--active">Активен</span>
             {% elif item.status == 'future' %}
@@ -55,7 +55,7 @@
         {% if item.status == 'active' %}
         <a href="{% url 'testing:start_test' item.test.pk %}" class="btn btn-primary">Начать</a>
         {% elif item.status == 'future' %}
-        <span class="testing-card__meta--muted">Доступен с {{ item.test.opens_at|date:"д.м.Y H:i" }}</span>
+        <span class="testing-card__meta--muted">Доступен с {{ item.test.opens_at|date:"d.m.Y H:i" }}</span>
         {% endif %}
       </li>
       {% endfor %}
@@ -75,7 +75,7 @@
           <strong>{{ item.attempt.test.title }}</strong><br>
           <span class="testing-list-tests__meta">
             {% if item.attempt.submitted_at %}
-              Сдан {{ item.attempt.submitted_at|date:"д.м.Y H:i" }}
+              Сдан {{ item.attempt.submitted_at|date:"d.m.Y H:i" }}
             {% else %}
               В процессе
             {% endif %}

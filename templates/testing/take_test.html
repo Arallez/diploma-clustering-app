@@ -10,14 +10,31 @@
 {% block content %}
 <div class="testing-section">
   <h1 class="testing-section__title--small">{{ test.title }}</h1>
-  <p class="testing-section__subtitle">Группа: {{ test.group.name }}. Осталось времени:</p>
-  <div id="timer" class="testing-timer" data-ends-at="{{ ends_at|date:'c' }}">—</div>
+  <p class="testing-section__subtitle">Группа: {{ test.group.name }}</p>
+  
+  <!-- Прогресс -->
+  <div class="testing-progress">
+    <div class="testing-progress__header">
+      <span>Прогресс: {{ progress.attempted }} из {{ progress.total }} заданий ({{ progress.percent }}%)</span>
+      <span>Осталось времени: <span id="timer" class="testing-timer" data-ends-at="{{ ends_at|date:'c' }}">—</span></span>
+    </div>
+    <div class="testing-progress__bar">
+      <div class="testing-progress__fill" style="width: {{ progress.percent }}%"></div>
+    </div>
+  </div>
 
   <ul class="testing-task-list">
-    {% for task in task_list %}
+    {% for item in tasks_with_status %}
     <li>
-      <span>{{ task.title }}</span>
-      <a href="{% url 'tasks:challenge_detail' task.slug %}?test_attempt={{ attempt.pk }}" target="_blank">Открыть задание →</a>
+      <div class="testing-task-list__row">
+        {% if item.status == 'attempted' %}
+          <span class="testing-task-status testing-task-status--done">✅</span>
+        {% else %}
+          <span class="testing-task-status testing-task-status--pending">◻️</span>
+        {% endif %}
+        <span class="testing-task-list__title">{{ item.task.title }}</span>
+      </div>
+      <a href="{% url 'tasks:challenge_detail' item.task.slug %}?test_attempt={{ attempt.pk }}" target="_blank" class="btn btn-outline btn-sm">Открыть →</a>
     </li>
     {% empty %}
     <li>В этом тесте нет заданий.</li>

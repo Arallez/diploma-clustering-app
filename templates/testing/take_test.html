@@ -19,7 +19,7 @@
       <span>Осталось времени: <span id="timer" class="testing-timer" data-ends-at="{{ ends_at|date:'c' }}">—</span></span>
     </div>
     <div class="testing-progress__bar">
-      <div class="testing-progress__fill" style="width: {{ progress.percent }}%"></div>
+      <div class="testing-progress__fill" data-percent="{{ progress.percent }}"></div>
     </div>
   </div>
 

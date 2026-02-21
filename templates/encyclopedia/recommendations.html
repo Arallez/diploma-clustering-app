@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Адаптивное обучение - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="mb-3">📚 Ваш путь обучения</h1>
+            <p class="text-muted">
+                Система анализирует ваши решения и рекомендует следующие шаги на основе семантического графа (OWL-онтологии).
+            </p>
+        </div>
+    </div>
+
+    <!-- Прогресс -->
+    <div class="row mb-5">
+        <div class="col-md-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Ваш прогресс по концептам</h5>
+                    
+                    <div class="progress mb-3" style="height: 25px;">
+                        <div class="progress-bar bg-success" role="progressbar" 
+                             style="width: {{ progress.progress_percent }}%;" 
+                             aria-valuenow="{{ progress.progress_percent }}" aria-valuemin="0" aria-valuemax="100">
+                            {{ progress.progress_percent }}%
+                        </div>
+                    </div>
+                    
+                    <div class="row text-center mt-4">
+                        <div class="col-md-3">
+                            <h3 class="text-success">{{ progress.learned_count }}</h3>
+                            <span class="text-muted">Изучено концептов</span>
+                        </div>
+                        <div class="col-md-3">
+                            <h3>{{ progress.total_count }}</h3>
+                            <span class="text-muted">Всего концептов</span>
+                        </div>
+                        <div class="col-md-3">
+                            <h3 class="text-primary">{{ progress.available_tasks_count }}</h3>
+                            <span class="text-muted">Доступно задач</span>
+                        </div>
+                        <div class="col-md-3">
+                            <h3 class="text-secondary">{{ progress.blocked_tasks_count }}</h3>
+                            <span class="text-muted">Пока недоступно (нужна теория)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Рекомендованные задачи -->
+        <div class="col-md-6 mb-4">
+            <h4 class="mb-3"><i class="bi bi-laptop text-primary"></i> Рекомендуемые задачи</h4>
+            <p class="text-muted small">Вы уже знаете все пререквизиты для этих задач.</p>
+            
+            {% if recommended_tasks %}
+                <div class="list-group shadow-sm">
+                {% for task in recommended_tasks %}
+                    <a href="{% url 'tasks:challenge_detail' task.slug %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">{{ task.title }}</h6>
+                            <small class="text-muted">Связано с: {{ task.concept.title }}</small>
+                        </div>
+                        <span class="badge bg-primary rounded-pill">Решать</span>
+                    </a>
+                {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-success">
+                    Отлично! Вы решили все доступные на данный момент задачи. Изучите новую теорию, чтобы открыть следующие.
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Рекомендованная теория -->
+        <div class="col-md-6 mb-4">
+            <h4 class="mb-3"><i class="bi bi-book text-warning"></i> Рекомендуемая теория</h4>
+            <p class="text-muted small">Эти материалы откроют вам доступ к новым задачам.</p>
+            
+            {% if recommended_materials %}
+                <div class="list-group shadow-sm">
+                {% for material in recommended_materials %}
+                    <a href="{{ material.get_absolute_url }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">{{ material.title }}</h6>
+                            <small class="text-muted">Откроет новые задачи по: {{ material.concept.title }}</small>
+                        </div>
+                        <span class="badge bg-warning text-dark rounded-pill">Читать</span>
+                    </a>
+                {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    Пока нет новых рекомендаций по теории. Вы можете просто <a href="{% url 'encyclopedia:graph' %}" class="alert-link">исследовать граф знаний</a>.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="text-center mt-4">
+        <a href="{% url 'encyclopedia:graph' %}" class="btn btn-outline-secondary">Посмотреть весь граф знаний</a>
+    </div>
+</div>
+{% endblock %}

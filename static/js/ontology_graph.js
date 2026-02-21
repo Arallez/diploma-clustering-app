@@ -7,6 +7,7 @@ function initOntologyGraph(containerId, nodesData, linksData) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
+    // We get dimensions from the container
     const width = container.clientWidth;
     const height = container.clientHeight;
     
@@ -167,8 +168,8 @@ function initOntologyGraph(containerId, nodesData, linksData) {
         .attr("dy", "0.35em") // Vertical center offset
         .text(d => d.title);
 
-    // Tooltip Interactions
-    const tooltip = d3.select("#graph-tooltip");
+    // Fixed Side Info Panel Element
+    const infoPanel = d3.select("#graph-info-panel");
 
     node.on("mouseover", function(event, d) {
         // Highlight Node Box
@@ -193,81 +194,37 @@ function initOntologyGraph(containerId, nodesData, linksData) {
             return isConnected ? 1 : 0.15;
         });
 
-        // Show Tooltip with connection info
-        tooltip.transition().duration(200).style("opacity", 1);
+        // Gather connections for the side panel
+        let outgoing = linksData.filter(l => l.source.id === d.id).map(l => `
+            <li>
+                <span class="panel-conn-type" style="color:${(edgeStyles[l.raw_type]||edgeStyles['default']).color}">▶ ${l.type}</span>
+                <span class="panel-conn-node">${(l.target.title || l.target.id)}</span>
+            </li>
+        `).join("");
         
-        // Gather connections for tooltip
-        let outgoing = linksData.filter(l => l.source.id === d.id).map(l => `<li><span style="color:${(edgeStyles[l.raw_type]||edgeStyles['default']).color}">▶ ${l.type}</span> ${(l.target.title || l.target.id)}</li>`).join("");
-        let incoming = linksData.filter(l => l.target.id === d.id).map(l => `<li>${(l.source.title || l.source.id)} <span style="color:${(edgeStyles[l.raw_type]||edgeStyles['default']).color}">${l.type} ▶</span></li>`).join("");
+        let incoming = linksData.filter(l => l.target.id === d.id).map(l => `
+            <li>
+                <span class="panel-conn-type" style="color:${(edgeStyles[l.raw_type]||edgeStyles['default']).color}">◀ ${l.type}</span>
+                <span class="panel-conn-node">${(l.source.title || l.source.id)}</span>
+            </li>
+        `).join("");
         
-        let connHtml = "";
-        if (outgoing.length > 0) connHtml += `<ul style="margin:5px 0 0 15px; padding:0; list-style:none; font-size:11px">${outgoing}</ul>`;
-        if (incoming.length > 0) connHtml += `<ul style="margin:5px 0 0 15px; padding:0; list-style:none; font-size:11px">${incoming}</ul>`;
+        // Update Static Panel Content
+        infoPanel.html(`
+            <div class="panel-title" style="color:${colors[d.group]}">${d.title}</div>
+            <div class="panel-uri">URI: ${d.uri.split('#').pop()}</div>
+            <div class="panel-desc">${d.desc}</div>
+            
+            ${(outgoing || incoming) ? `<div class="panel-section-title">Связи графа</div>` : ''}
+            <ul class="panel-connections">
+                ${outgoing}
+                ${incoming}
+            </ul>
 
-        tooltip.html(
-            `<div class="tooltip-title" style="color:${colors[d.group]}">${d.title}</div>` +
-            `<div class="tooltip-uri">URI: ${d.uri.split('#').pop()}</div>` +
-            `<div class="tooltip-desc">${d.desc}</div>` +
-            (connHtml.length > 0 ? `<div style="margin-top:8px; padding-top:8px; border-top:1px solid #e2e8f0; font-size:11px; font-weight:bold;">Связи:</div>${connHtml}` : '')
-        );
-
-        // Advanced Tooltip Positioning
-        // Always place tooltip to the RIGHT and SLIGHTLY BELOW the cursor
-        // to prevent the tooltip from being under the mouse (which causes flicker)
-        
-        const tooltipNode = tooltip.node();
-        const tooltipRect = tooltipNode.getBoundingClientRect();
-        
-        // Offset from cursor
-        const offsetX = 25; 
-        const offsetY = 25;
-        
-        let leftPos = event.pageX + offsetX;
-        let topPos = event.pageY + offsetY;
-
-        // Prevent tooltip from overflowing the right edge of the screen
-        if (leftPos + tooltipRect.width > window.innerWidth) {
-            // Flip to the left side of the cursor
-            leftPos = event.pageX - tooltipRect.width - offsetX;
-        }
-
-        // Prevent tooltip from overflowing the bottom edge of the screen
-        if (topPos + tooltipRect.height > window.innerHeight + window.scrollY) {
-            // Push it up
-            topPos = event.pageY - tooltipRect.height - offsetY;
-            // If pushing it up makes it go above the viewport, just cap it at the bottom
-            if (topPos < window.scrollY) {
-                topPos = window.innerHeight + window.scrollY - tooltipRect.height - 10;
-            }
-        }
-
-        tooltip.style("left", leftPos + "px")
-               .style("top", topPos + "px");
-    })
-    .on("mousemove", function(event) {
-        // Update tooltip position as mouse moves over the node
-        const tooltipNode = tooltip.node();
-        const tooltipRect = tooltipNode.getBoundingClientRect();
-        
-        const offsetX = 25; 
-        const offsetY = 25;
-        
-        let leftPos = event.pageX + offsetX;
-        let topPos = event.pageY + offsetY;
-
-        if (leftPos + tooltipRect.width > window.innerWidth) {
-            leftPos = event.pageX - tooltipRect.width - offsetX;
-        }
-
-        if (topPos + tooltipRect.height > window.innerHeight + window.scrollY) {
-            topPos = event.pageY - tooltipRect.height - offsetY;
-            if (topPos < window.scrollY) {
-                topPos = window.innerHeight + window.scrollY - tooltipRect.height - 10;
-            }
-        }
-
-        tooltip.style("left", leftPos + "px")
-               .style("top", topPos + "px");
+            <div style="margin-top: 25px; padding-top: 15px; border-top: 1px dashed #e2e8f0; text-align: center; color: #64748b; font-size: 11px;">
+                🖱️ Кликните по узлу, чтобы перейти к теории
+            </div>
+        `);
     })
     .on("mouseout", function(d) {
         // Reset Style
@@ -281,7 +238,13 @@ function initOntologyGraph(containerId, nodesData, linksData) {
             .attr("marker-end", l => `url(#arrow-${l.raw_type || 'default'})`);
             
         node.style("opacity", 1);
-        tooltip.transition().duration(300).style("opacity", 0);
+        
+        // Reset Static Panel Content
+        infoPanel.html(`
+            <div class="panel-placeholder">
+                <p>Наведите курсор на узел графа, чтобы увидеть подробную информацию.</p>
+            </div>
+        `);
     })
     .on("click", function(event, d) {
         window.location.href = d.url;

@@ -24,10 +24,7 @@
         </div>
         
         <!-- Profile Actions -->
-        <div class="profile-actions" style="display: flex; gap: 12px; align-items: center;">
-            <a href="{% url 'encyclopedia:recommendations' %}" class="btn" style="background-color: var(--primary-color); color: white; display: flex; align-items: center; gap: 6px; padding: 10px 16px;">
-                <span style="font-size: 1.1em;">🧭</span> Путь обучения
-            </a>
+        <div class="profile-actions">
             <form action="{% url 'logout' %}" method="post" style="margin: 0;">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-outline-danger" style="padding: 10px 16px;">Выйти</button>
@@ -37,6 +34,15 @@
 
     <!-- Stats Grid -->
     <div class="stats-grid">
+        <!-- New Dedicated Card for Learning Path -->
+        <div class="stat-card" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+            <div style="font-size: 2rem; margin-bottom: 8px;">🧭</div>
+            <a href="{% url 'encyclopedia:recommendations' %}" class="btn" style="background-color: var(--primary-color); color: white; width: 100%; max-width: 200px;">
+                Путь обучения
+            </a>
+            <div class="stat-label" style="margin-top: 10px;">Индивидуальный план</div>
+        </div>
+        
         <div class="stat-card">
             <div class="stat-value">{{ solved_tasks_count }} / {{ total_tasks }}</div>
             <div class="stat-label">Решено задач</div>

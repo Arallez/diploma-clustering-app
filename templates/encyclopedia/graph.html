@@ -7,78 +7,70 @@
 <!-- D3.js Library -->
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <!-- Ontology Graph Styles -->
-<link rel="stylesheet" href="{% static 'css/ontology_graph.css' %}?v=1.8">
+<link rel="stylesheet" href="{% static 'css/ontology_graph.css' %}">
 {% endblock %}
 
 {% block content %}
-<div class="graph-container">
-    <div class="graph-header" style="flex-direction: column; align-items: center; text-align: center; gap: 15px;">
-        <div>
-            <h1>🌌 Онтология предметной области</h1>
-            <p>Интерактивный граф знаний. Наведите на узел, чтобы увидеть детали.</p>
-        </div>
-        
-        <!-- Legend for Node Colors -->
-        <div class="graph-legend">
-            <div class="legend-item"><div class="legend-color" style="background: #3b82f6;"></div>Алгоритмы кластеризации</div>
-            <div class="legend-item"><div class="legend-color" style="background: #10b981;"></div>Параметры</div>
-            <div class="legend-item"><div class="legend-color" style="background: #f59e0b;"></div>Метрики расстояния</div>
-            <div class="legend-item"><div class="legend-color" style="background: #8b5cf6;"></div>Применение (Use cases)</div>
-            <div class="legend-item"><div class="legend-color" style="background: #ec4899;"></div>Геометрия кластеров</div>
-            <div class="legend-item"><div class="legend-color" style="background: #14b8a6;"></div>Масштабируемость</div>
-            <div class="legend-item"><div class="legend-color" style="background: #f43f5e;"></div>Размер кластеров</div>
-            <div class="legend-item"><div class="legend-color" style="background: #64748b;"></div>Тип вывода (Inference)</div>
-        </div>
-        
-        <!-- Legend for Edge Types -->
-        <div class="edge-legend">
-            <div class="edge-legend-item">
-                <span style="font-weight: 600;">Типы связей:</span>
-            </div>
-            <div class="edge-legend-item">
-                <div class="edge-line edge-is-a"></div>
-                <span>Является / Is A (Сплошная серая)</span>
-            </div>
-            <div class="edge-legend-item">
-                <div class="edge-line edge-depends"></div>
-                <span>Зависит / Requires (Красная пунктирная)</span>
-            </div>
-            <div class="edge-legend-item">
-                <div class="edge-line edge-uses"></div>
-                <span>Использует / Uses (Синяя точечная)</span>
-            </div>
-            <div class="edge-legend-item">
-                <div class="edge-line edge-related"></div>
-                <span>Связано / Related (Фиолетовая)</span>
-            </div>
-        </div>
+<div class="graph-page-container">
+    <div class="graph-header">
+        <h1>🌌 Онтология предметной области</h1>
+        <p>Интерактивный граф знаний. Наведите мышь на узел, чтобы увидеть связи, или кликните для перехода к теории.</p>
     </div>
     
-    <!-- Graph Canvas & Overlay Panel -->
-    <div class="graph-layout-wrapper">
+    <!-- Graph Canvas & Overlays -->
+    <div class="graph-workspace">
         
-        <!-- Main Graph Area (White Canvas) -->
-        <div class="graph-main-area">
-            <!-- Layout Toggle Toolbar -->
-            <div class="layout-toolbar">
-                <span class="toolbar-label">Вид:</span>
-                <button class="toolbar-btn active" data-layout="force">Свободный</button>
-                <button class="toolbar-btn" data-layout="tree">Иерархия (Дерево)</button>
-                <button class="toolbar-btn" data-layout="radial">Радиальный</button>
-            </div>
+        <!-- Controls Overlay (Top Left) -->
+        <div class="graph-controls">
+            <button class="graph-btn" id="btn-zoom-in" title="Увеличить">+</button>
+            <button class="graph-btn" id="btn-zoom-out" title="Уменьшить">-</button>
+            <button class="graph-btn" id="btn-reset" title="Сбросить центр">⌂</button>
+        </div>
 
-            <!-- Canvas for D3 graph -->
-            <div id="ontology-graph"></div>
+        <!-- Layout Toolbar (Bottom Center) -->
+        <div class="layout-toolbar">
+            <button class="toolbar-btn active" data-layout="force">Свободный</button>
+            <button class="toolbar-btn" data-layout="tree">Иерархия</button>
+            <button class="toolbar-btn" data-layout="radial">Радиальный</button>
+        </div>
+
+        <!-- Protege-style Legend Overlay (Bottom Right) -->
+        <div class="graph-legend">
+            <div class="legend-title">Легенда узлов</div>
+            <div class="legend-grid">
+                <div class="legend-item"><div class="legend-color" style="background: #3b82f6;"></div>Алгоритмы</div>
+                <div class="legend-item"><div class="legend-color" style="background: #10b981;"></div>Параметры</div>
+                <div class="legend-item"><div class="legend-color" style="background: #f59e0b;"></div>Метрики</div>
+                <div class="legend-item"><div class="legend-color" style="background: #8b5cf6;"></div>Применение</div>
+                <div class="legend-item"><div class="legend-color" style="background: #ec4899;"></div>Геометрия</div>
+                <div class="legend-item"><div class="legend-color" style="background: #14b8a6;"></div>Масштабируемость</div>
+                <div class="legend-item"><div class="legend-color" style="background: #f43f5e;"></div>Размер кластеров</div>
+                <div class="legend-item"><div class="legend-color" style="background: #64748b;"></div>Тип вывода</div>
+            </div>
             
-            <!-- Graph controls -->
-            <div class="graph-controls">
-                <button class="graph-btn" id="btn-zoom-in" title="Увеличить">+</button>
-                <button class="graph-btn" id="btn-zoom-out" title="Уменьшить">-</button>
-                <button class="graph-btn" id="btn-reset" title="Сбросить центр">⌂</button>
+            <div class="edge-legend">
+                <div class="legend-title" style="margin-bottom: 8px;">Типы связей</div>
+                <div class="edge-item">
+                    <svg class="edge-line"><line x1="0" y1="1" x2="24" y2="1" stroke="#94a3b8" stroke-width="2"></line></svg>
+                    <span>Является (IS A)</span>
+                </div>
+                <div class="edge-item">
+                    <svg class="edge-line"><line x1="0" y1="1" x2="24" y2="1" stroke="#ef4444" stroke-width="2" stroke-dasharray="4,4"></line></svg>
+                    <span>Зависит (REQUIRES)</span>
+                </div>
+                <div class="edge-item">
+                    <svg class="edge-line"><line x1="0" y1="1" x2="24" y2="1" stroke="#3b82f6" stroke-width="2" stroke-dasharray="2,2"></line></svg>
+                    <span>Использует (USES)</span>
+                </div>
             </div>
         </div>
+
+        <!-- Main Graph Area (SVG Container) -->
+        <div class="graph-main-area">
+            <div id="ontology-graph"></div>
+        </div>
         
-        <!-- Absolute Overlay Right-side Info Panel (Hidden initially) -->
+        <!-- Info Panel Overlay (Slides in from right) -->
         <div id="graph-info-panel" class="graph-info-panel">
             <!-- Content injected dynamically via JS on hover -->
         </div>
@@ -89,7 +81,7 @@
 
 {% block extra_js %}
 <!-- Graph Visualization Logic -->
-<script src="{% static 'js/ontology_graph.js' %}?v=1.8"></script>
+<script src="{% static 'js/ontology_graph.js' %}"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         // 1. Fetch data from Django context
@@ -99,7 +91,7 @@
                 id: "{{ concept.id }}", 
                 title: "{{ concept.title|escapejs }}",
                 uri: "{{ concept.uri|escapejs }}",
-                // Расширенный парсинг URI для определения точного класса из онтологии
+                // Extended parsing matching standard Protege Domains
                 group: {% if 'Algo' in concept.uri %}1
                        {% elif 'Param' in concept.uri %}2
                        {% elif 'Metric' in concept.uri or 'Distance' in concept.uri %}3
@@ -122,13 +114,13 @@
                     source: "{{ concept.id }}", 
                     target: "{{ rel.target.id }}", 
                     type: "{{ rel.get_relation_type_display|escapejs }}",
-                    raw_type: "{{ rel.relation_type|escapejs }}" // передаем системный тип для стилизации линий
+                    raw_type: "{{ rel.relation_type|escapejs }}"
                 },
                 {% endfor %}
             {% endfor %}
         ];
 
-        // 2. Initialize Graph from external JS file
+        // 2. Initialize Graph
         initOntologyGraph("ontology-graph", nodesData, linksData);
     });
 </script>

@@ -7,7 +7,7 @@
 <!-- D3.js Library -->
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <!-- Ontology Graph Styles -->
-<link rel="stylesheet" href="{% static 'css/ontology_graph.css' %}?v=1.3">
+<link rel="stylesheet" href="{% static 'css/ontology_graph.css' %}?v=1.4">
 <style>
 /* Extended Legend Grid to fit more items nicely */
 .graph-legend {
@@ -67,34 +67,44 @@
         </div>
     </div>
     
-    <div style="position: relative; margin-top: 15px;">
-        <!-- Layout Toggle Toolbar (Protege style) -->
-        <div class="layout-toolbar">
-            <span class="toolbar-label">Вид:</span>
-            <button class="toolbar-btn active" data-layout="force">Свободный</button>
-            <button class="toolbar-btn" data-layout="tree">Иерархия (Дерево)</button>
-            <button class="toolbar-btn" data-layout="radial">Радиальный</button>
+    <!-- Graph & Panel Layout Wrapper -->
+    <div class="graph-layout-wrapper">
+        
+        <!-- Main Graph Area (White Canvas) -->
+        <div class="graph-main-area">
+            <!-- Layout Toggle Toolbar (Protege style) -->
+            <div class="layout-toolbar">
+                <span class="toolbar-label">Вид:</span>
+                <button class="toolbar-btn active" data-layout="force">Свободный</button>
+                <button class="toolbar-btn" data-layout="tree">Иерархия (Дерево)</button>
+                <button class="toolbar-btn" data-layout="radial">Радиальный</button>
+            </div>
+
+            <!-- Canvas for D3 graph -->
+            <div id="ontology-graph"></div>
+            
+            <!-- Graph controls -->
+            <div class="graph-controls">
+                <button class="graph-btn" id="btn-zoom-in" title="Увеличить">+</button>
+                <button class="graph-btn" id="btn-zoom-out" title="Уменьшить">-</button>
+                <button class="graph-btn" id="btn-reset" title="Сбросить центр">⌂</button>
+            </div>
+        </div>
+        
+        <!-- Fixed Right-side Info Panel -->
+        <div id="graph-info-panel" class="graph-info-panel">
+            <div class="panel-placeholder">
+                <p>Наведите курсор на узел графа, чтобы увидеть подробную информацию.</p>
+            </div>
         </div>
 
-        <!-- Canvas for D3 graph -->
-        <div id="ontology-graph"></div>
-        
-        <!-- Tooltip element -->
-        <div id="graph-tooltip" class="graph-tooltip"></div>
-        
-        <!-- Graph controls -->
-        <div class="graph-controls">
-            <button class="graph-btn" id="btn-zoom-in" title="Увеличить">+</button>
-            <button class="graph-btn" id="btn-zoom-out" title="Уменьшить">-</button>
-            <button class="graph-btn" id="btn-reset" title="Сбросить центр">⌂</button>
-        </div>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <!-- Graph Visualization Logic -->
-<script src="{% static 'js/ontology_graph.js' %}?v=1.3"></script>
+<script src="{% static 'js/ontology_graph.js' %}?v=1.4"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         // 1. Fetch data from Django context

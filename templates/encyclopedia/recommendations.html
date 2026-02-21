@@ -44,13 +44,14 @@
 
 /* Progress Bar */
 .progress-container {
-    background-color: var(--bg-color);
+    background-color: #f1f5f9; /* Light gray/whiteish background so the empty space is clearly visible */
     border-radius: 8px;
     height: 24px;
     width: 100%;
     margin-bottom: 1.5rem;
     overflow: hidden;
     border: 1px solid var(--border-color);
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); /* Slight inner shadow for depth */
 }
 
 .progress-bar {
@@ -63,6 +64,9 @@
     font-size: 0.85rem;
     font-weight: 600;
     transition: width 0.5s ease;
+    /* Ensure text doesn't overflow if width is too small */
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 /* Stats Row */

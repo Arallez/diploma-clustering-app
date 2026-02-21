@@ -1,297 +1,330 @@
-/* 
- * Ontology Graph Visualization Styles (Light Theme)
- * Based on Protege/WebProtege aesthetics
- */
+/* Ontology Graph Visualizer - Beautiful Dark Theme */
 
-.graph-container {
-    max-width: 98%; /* Take almost the entire screen width */
-    margin: 0 auto;
-    padding: 1rem; /* Reduced padding to give more room for the graph */
+.graph-page-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - var(--nav-height));
+    background-color: var(--bg-color); /* Dark theme base */
+    overflow: hidden;
 }
 
 .graph-header {
-    margin-bottom: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* Center horizontally */
-    text-align: center;
+    padding: 1.5rem 2rem;
+    background-color: var(--card-bg); /* Dark theme card */
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    z-index: 10;
 }
 
 .graph-header h1 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.8rem;
     color: var(--text-color);
-    margin-bottom: 0.5rem;
 }
 
 .graph-header p {
-    color: var(--text-muted);
     margin: 0;
-}
-
-/* Extended Legend Flex Layout (Centered) */
-.graph-legend {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    max-width: 1200px; /* Keeps the wrap nice and readable */
-    gap: 12px 25px;
-    background: var(--card-bg);
-    padding: 12px 20px;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    font-size: 12px;
-}
-
-.legend-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--text-color);
-}
-
-.legend-color {
-    width: 16px;
-    height: 16px;
-    border-radius: 3px; /* Rectangular legend items */
-}
-
-/* Edge Legend (Protege style lines) */
-.edge-legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    background: var(--card-bg);
-    padding: 8px 20px;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    font-size: 11px;
-    margin-top: 10px;
-    justify-content: center;
-}
-
-.edge-legend-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
     color: var(--text-muted);
+    font-size: 0.95rem;
 }
 
-.edge-line {
-    width: 30px;
-    height: 2px;
+.graph-workspace {
+    display: flex;
+    flex: 1;
     position: relative;
-}
-
-.edge-line::after {
-    content: '';
-    position: absolute;
-    right: 0;
-    top: -3px;
-    border-top: 4px solid transparent;
-    border-bottom: 4px solid transparent;
-    border-left: 6px solid;
-}
-
-/* Types of edges in legend */
-.edge-is-a { background: #94a3b8; }
-.edge-is-a::after { border-left-color: #94a3b8; }
-
-.edge-depends { background: #ef4444; border-top: 2px dashed #ef4444; height: 0; }
-.edge-depends::after { border-left-color: #ef4444; top: -4px; }
-
-.edge-uses { background: #3b82f6; border-top: 2px dotted #3b82f6; height: 0; }
-.edge-uses::after { border-left-color: #3b82f6; top: -4px; }
-
-.edge-related { background: #8b5cf6; }
-.edge-related::after { border-left-color: #8b5cf6; }
-
-
-/* 
- * Layout Wrapper (Relative positioning for Overlays)
- */
-.graph-layout-wrapper {
-    position: relative;
-    margin-top: 15px;
-    height: 85vh; /* Dramatically increased height */
-    min-height: 700px;
-    width: 100%;
-}
-
-.graph-main-area {
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    top: 0;
-    left: 0;
-    background-color: #ffffff; 
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
     overflow: hidden;
-    box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
 }
 
-#ontology-graph {
-    width: 100%;
-    height: 100%;
-    background-color: transparent !important; 
-    /* Custom Dark Blue Cursor with White Outline for perfect contrast */
-    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="%231e3a8a" stroke="%23ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13l-1.5-1.5a2.12 2.12 0 0 0-3 3l5.5 5.5a4.24 4.24 0 0 0 6 0l4-4a2.12 2.12 0 0 0-3-3l-1.5 1.5M10 13V4.5a1.5 1.5 0 0 1 3 0V11M13 11V3.5a1.5 1.5 0 0 1 3 0V11M16 11V4.5a1.5 1.5 0 0 1 3 0V11"/></svg>') 14 14, grab;
-}
-
-#ontology-graph:active {
-    /* Custom Dark Blue Grabbing Cursor */
-    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="%231e3a8a" stroke="%23ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13l-1.5-1.5a2.12 2.12 0 0 0-3 3l5.5 5.5a4.24 4.24 0 0 0 6 0l4-4a2.12 2.12 0 0 0-3-3l-1.5 1.5V4.5a1.5 1.5 0 0 0-3 0v6.5a1.5 1.5 0 0 0-3 0v-7a1.5 1.5 0 0 0-3 0V13z"/></svg>') 14 14, grabbing;
-}
-
-/* D3 Nodes (Rectangles) */
-.node rect {
-    stroke: #ffffff;
-    stroke-width: 2px;
-    rx: 6px; /* Rounded corners */
-    ry: 6px;
-    transition: all 0.2s;
-    /* Light shadow for 3D effect */
-    filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.1));
-}
-
-/* Node Text (Forced Dark on White) */
-.node text {
-    font-size: 11px;
-    font-family: 'Inter', sans-serif;
-    font-weight: 600;
-    fill: #ffffff !important; /* White text on colored rectangles */
-    pointer-events: none;
-    text-anchor: middle;
-}
-
-/* D3 Links */
-.link {
-    stroke-opacity: 0.6;
-    stroke-width: 2px;
-    transition: all 0.2s;
-    fill: none;
-    pointer-events: none; /* Prevents edges from stealing mouse hover and causing flicker! */
-}
-
-/* 
- * Overlay Info Panel (Appears on top right over the graph)
- */
-.graph-info-panel {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    width: 380px; 
-    max-height: calc(100% - 40px);
-    background: rgba(255, 255, 255, 0.95); /* Slight transparency */
-    backdrop-filter: blur(5px);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 20px;
-    overflow-y: auto;
-    color: #334155;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); /* Stronger shadow to pop over graph */
-    z-index: 100;
-    
-    /* Hidden by default */
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none; /* Prevents panel from stealing hover if mouse enters it */
-    transform: translateX(10px);
-    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
-}
-
-.graph-info-panel.visible {
-    opacity: 1;
-    visibility: visible;
-    pointer-events: none; /* Keep none! If auto, panel steals hover and causes infinite flicker loop */
-    transform: translateX(0);
-}
-
-/* Panel internals */
-.panel-title { font-weight: 700; font-size: 16px; margin-bottom: 5px; }
-.panel-uri { font-size: 11px; margin-bottom: 15px; color: #64748b; font-family: 'Fira Code', monospace; word-break: break-all; }
-.panel-desc { line-height: 1.5; margin-bottom: 20px; font-size: 13px; }
-.panel-section-title { font-weight: 600; font-size: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin-bottom: 10px; text-transform: uppercase; color: #475569;}
-.panel-connections { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; font-size: 12px; }
-.panel-connections li { display: flex; flex-direction: column; gap: 2px; background: #f8fafc; padding: 8px; border-radius: 4px; border: 1px solid #e2e8f0; }
-.panel-conn-type { font-size: 10px; font-weight: bold; text-transform: uppercase; }
-.panel-conn-node { font-weight: 600; color: #0f172a; }
-
-/* Zoom Controls */
+/* Controls Overlay */
 .graph-controls {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    z-index: 90;
-}
-
-.graph-btn {
-    background: #ffffff;
-    border: 1px solid #cbd5e1;
-    color: #475569;
-    width: 36px;
-    height: 36px;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-weight: bold;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-}
-
-.graph-btn:hover {
-    background: #f8fafc;
-    color: #0f172a;
-    border-color: #94a3b8;
-}
-
-/* Layout Toolbar (Protege-style) */
-.layout-toolbar {
     position: absolute;
     top: 20px;
     left: 20px;
-    background: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    padding: 4px;
+    z-index: 20;
     display: flex;
-    gap: 4px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-    z-index: 90;
+    flex-direction: column;
+    gap: 12px;
 }
 
-.toolbar-label {
-    font-size: 12px;
-    color: #64748b;
+.graph-btn {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.2rem;
     display: flex;
     align-items: center;
-    padding: 0 8px;
-    font-weight: 600;
+    justify-content: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+}
+
+.graph-btn:hover {
+    background: var(--secondary-color);
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+}
+
+/* Layout Toolbar */
+.layout-toolbar {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    display: flex;
+    background: var(--card-bg);
+    padding: 6px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    gap: 6px;
 }
 
 .toolbar-btn {
     background: transparent;
     border: none;
-    color: #475569;
-    padding: 6px 12px;
-    border-radius: 4px;
-    font-size: 13px;
+    padding: 8px 16px;
+    border-radius: 8px;
     cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-muted);
     transition: all 0.2s;
-    font-family: 'Inter', sans-serif;
 }
 
 .toolbar-btn:hover {
-    background: #f1f5f9;
-    color: #0f172a;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-color);
 }
 
 .toolbar-btn.active {
-    background: #eff6ff;
-    color: #2563eb;
+    background: rgba(96, 165, 250, 0.15); /* Primary color low opacity */
+    color: var(--accent-color);
+    border: 1px solid rgba(96, 165, 250, 0.3);
+}
+
+/* Side Info Panel (Protege style overlay) */
+.graph-info-panel {
+    position: absolute;
+    top: 20px;
+    right: -400px; /* Hidden state */
+    width: 340px;
+    max-height: calc(100% - 40px);
+    background: rgba(30, 41, 59, 0.85); /* Slate 800 with transparency */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    padding: 24px;
+    z-index: 30;
+    overflow-y: auto;
+    transition: right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    color: var(--text-color);
+}
+
+/* When active, slide panel in smoothly */
+.graph-info-panel.visible {
+    right: 20px;
+}
+
+/* Custom Scrollbar for panel */
+.graph-info-panel::-webkit-scrollbar { width: 6px; }
+.graph-info-panel::-webkit-scrollbar-track { background: transparent; }
+.graph-info-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+
+/* Panel Content Styling */
+.panel-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+    line-height: 1.3;
+    color: var(--text-color);
+}
+
+.panel-uri {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    margin-bottom: 16px;
+    word-break: break-all;
+    background: rgba(0,0,0,0.2);
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.panel-desc {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 24px;
+    color: #e2e8f0; /* Lighter text for description */
+}
+
+.panel-section-title {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+    color: #94a3b8;
+    margin-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 6px;
+}
+
+.panel-connections {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.panel-connections li {
+    font-size: 0.85rem;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    padding: 10px 12px;
+    line-height: 1.4;
+}
+
+.panel-conn-type {
+    font-weight: 700;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.panel-conn-node {
     font-weight: 600;
+    color: #f8fafc;
+}
+
+/* Protege Legend Overlay */
+.graph-legend {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(30, 41, 59, 0.85);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 15;
+    pointer-events: none; /* Let clicks pass through to graph */
+}
+
+/* If the panel opens, hide the legend gracefully to avoid overlap */
+.graph-info-panel.visible ~ .graph-legend {
+    opacity: 0.2;
+    transform: translateY(10px);
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+.legend-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-color);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.legend-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 20px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.legend-color {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+
+.edge-legend {
+    margin-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 12px;
+}
+
+.edge-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+
+.edge-line {
+    width: 24px;
+    height: 2px;
+}
+
+/* Main SVG Area */
+.graph-main-area {
+    flex: 1;
+    /* Beautiful deep dark background with inner shadow */
+    background-color: var(--bg-color);
+    box-shadow: inset 0 2px 20px rgba(0, 0, 0, 0.5);
+    background-image: radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 24px 24px; /* Subtle grid pattern for dark mode */
+}
+
+#ontology-graph {
+    width: 100%;
+    height: 100%;
+    /* Custom light accent grab cursor for dark mode */
+    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="%2360a5fa" stroke="%230f172a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>'), grab;
+}
+
+#ontology-graph:active {
+    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="%2360a5fa" stroke="%230f172a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>'), grabbing;
+}
+
+/* D3 Elements Specific Overrides */
+.node rect {
+    rx: 4; /* Rounded rectangles */
+    ry: 4;
+    stroke: var(--bg-color); /* Match dark background */
+    stroke-width: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+    filter: drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.4)); /* Deep drop shadow */
+}
+
+.node text {
+    font-size: 11px;
+    font-weight: 600;
+    fill: #ffffff; /* White text looks great on colorful nodes */
+    text-anchor: middle;
+    pointer-events: none; /* Let clicks pass to rect */
+    text-shadow: 0px 1px 2px rgba(0,0,0,0.8); /* Strong shadow to guarantee readability */
+}
+
+.node:hover rect {
+    filter: drop-shadow(0px 0px 12px rgba(255, 255, 255, 0.3)); /* Glow effect on hover */
+}
+
+.link {
+    transition: opacity 0.3s;
+    /* The color is set in JS based on raw_type */
 }

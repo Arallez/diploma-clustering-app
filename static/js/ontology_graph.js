@@ -41,15 +41,11 @@ function initOntologyGraph(containerId, nodesData, linksData) {
             let t = typeof l.target === 'object' ? l.target : nodesData.find(n => n.id === l.target);
             if (!s || !t) return;
 
-            // In Protégé, "Is A" arrows point FROM subclass TO superclass (e.g. KMeans -> Algorithm)
-            // But visually in a tree, Superclass is AT TOP (depth 0), subclass is AT BOTTOM (depth 1)
-            // So if S IS_A T, then S.depth should be T.depth + 1
             if (l.raw_type === 'IS_A' || l.raw_type === 'DEPENDS') {
                 if (s.depth <= t.depth) {
                     s.depth = t.depth + 1;
                 }
             } else {
-                // USES, RELATED: target is conceptually deeper
                 if (t.depth <= s.depth) {
                     t.depth = s.depth + 1;
                 }
@@ -213,9 +209,65 @@ function initOntologyGraph(containerId, nodesData, linksData) {
             `<div class="tooltip-uri">URI: ${d.uri.split('#').pop()}</div>` +
             `<div class="tooltip-desc">${d.desc}</div>` +
             (connHtml.length > 0 ? `<div style="margin-top:8px; padding-top:8px; border-top:1px solid #e2e8f0; font-size:11px; font-weight:bold;">Связи:</div>${connHtml}` : '')
-        )
-        .style("left", (event.pageX + 15) + "px")
-        .style("top", (event.pageY - 15) + "px");
+        );
+
+        // Advanced Tooltip Positioning
+        // Always place tooltip to the RIGHT and SLIGHTLY BELOW the cursor
+        // to prevent the tooltip from being under the mouse (which causes flicker)
+        
+        const tooltipNode = tooltip.node();
+        const tooltipRect = tooltipNode.getBoundingClientRect();
+        
+        // Offset from cursor
+        const offsetX = 25; 
+        const offsetY = 25;
+        
+        let leftPos = event.pageX + offsetX;
+        let topPos = event.pageY + offsetY;
+
+        // Prevent tooltip from overflowing the right edge of the screen
+        if (leftPos + tooltipRect.width > window.innerWidth) {
+            // Flip to the left side of the cursor
+            leftPos = event.pageX - tooltipRect.width - offsetX;
+        }
+
+        // Prevent tooltip from overflowing the bottom edge of the screen
+        if (topPos + tooltipRect.height > window.innerHeight + window.scrollY) {
+            // Push it up
+            topPos = event.pageY - tooltipRect.height - offsetY;
+            // If pushing it up makes it go above the viewport, just cap it at the bottom
+            if (topPos < window.scrollY) {
+                topPos = window.innerHeight + window.scrollY - tooltipRect.height - 10;
+            }
+        }
+
+        tooltip.style("left", leftPos + "px")
+               .style("top", topPos + "px");
+    })
+    .on("mousemove", function(event) {
+        // Update tooltip position as mouse moves over the node
+        const tooltipNode = tooltip.node();
+        const tooltipRect = tooltipNode.getBoundingClientRect();
+        
+        const offsetX = 25; 
+        const offsetY = 25;
+        
+        let leftPos = event.pageX + offsetX;
+        let topPos = event.pageY + offsetY;
+
+        if (leftPos + tooltipRect.width > window.innerWidth) {
+            leftPos = event.pageX - tooltipRect.width - offsetX;
+        }
+
+        if (topPos + tooltipRect.height > window.innerHeight + window.scrollY) {
+            topPos = event.pageY - tooltipRect.height - offsetY;
+            if (topPos < window.scrollY) {
+                topPos = window.innerHeight + window.scrollY - tooltipRect.height - 10;
+            }
+        }
+
+        tooltip.style("left", leftPos + "px")
+               .style("top", topPos + "px");
     })
     .on("mouseout", function(d) {
         // Reset Style
@@ -236,7 +288,6 @@ function initOntologyGraph(containerId, nodesData, linksData) {
     });
 
     // Helper to calculate edge intersection with rectangle boundary
-    // Returns the point on the edge of the target rectangle where the line should end
     function getIntersection(sx, sy, tx, ty, tWidth, tHeight) {
         const dx = tx - sx;
         const dy = ty - sy;
@@ -248,12 +299,10 @@ function initOntologyGraph(containerId, nodesData, linksData) {
         
         let ix, iy;
         
-        // Find intersection with left/right borders
         if (Math.abs(dx) > 0) {
             ix = dx > 0 ? tx - hw : tx + hw;
             iy = ty - dy * (Math.abs(hw) / Math.abs(dx));
             
-            // If the intersection is above or below the rectangle, use top/bottom borders instead
             if (iy < ty - hh) {
                 iy = ty - hh;
                 ix = tx - dx * (Math.abs(hh) / Math.abs(dy));
@@ -272,10 +321,7 @@ function initOntologyGraph(containerId, nodesData, linksData) {
     // Tick Update
     simulation.on("tick", () => {
         link.attr("d", d => {
-            // Find intersection point with target rectangle boundary so arrow isn't hidden inside
-            // Check if source and target are fully initialized objects
             if (!d.source.x || !d.target.x) return "";
-            
             const p = getIntersection(d.source.x, d.source.y, d.target.x, d.target.y, d.target.rectWidth, d.target.rectHeight);
             return `M${d.source.x},${d.source.y} L${p.x},${p.y}`;
         });

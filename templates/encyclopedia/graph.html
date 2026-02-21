@@ -7,7 +7,7 @@
 <!-- D3.js Library -->
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <!-- Ontology Graph Styles -->
-<link rel="stylesheet" href="{% static 'css/ontology_graph.css' %}?v=1.1">
+<link rel="stylesheet" href="{% static 'css/ontology_graph.css' %}?v=1.3">
 <style>
 /* Extended Legend Grid to fit more items nicely */
 .graph-legend {
@@ -28,8 +28,10 @@
     <div class="graph-header" style="flex-direction: column; align-items: stretch; gap: 15px;">
         <div>
             <h1>🌌 Онтология предметной области</h1>
-            <p>Интерактивный граф знаний. Наведите на узел, чтобы увидеть связи, переключайте вид для анализа иерархии.</p>
+            <p>Интерактивный граф знаний. Наведите на узел, чтобы увидеть детали. Типы связей обозначены разными линиями (как в Protégé).</p>
         </div>
+        
+        <!-- Legend for Node Colors -->
         <div class="graph-legend">
             <div class="legend-item"><div class="legend-color" style="background: #3b82f6;"></div>Алгоритмы кластеризации</div>
             <div class="legend-item"><div class="legend-color" style="background: #10b981;"></div>Параметры</div>
@@ -40,9 +42,32 @@
             <div class="legend-item"><div class="legend-color" style="background: #f43f5e;"></div>Размер кластеров</div>
             <div class="legend-item"><div class="legend-color" style="background: #64748b;"></div>Тип вывода (Inference)</div>
         </div>
+        
+        <!-- Legend for Edge Types -->
+        <div class="edge-legend">
+            <div class="edge-legend-item">
+                <span style="font-weight: 600;">Типы связей:</span>
+            </div>
+            <div class="edge-legend-item">
+                <div class="edge-line edge-is-a"></div>
+                <span>Является / Is A (Сплошная серая)</span>
+            </div>
+            <div class="edge-legend-item">
+                <div class="edge-line edge-depends"></div>
+                <span>Зависит / Requires (Красная пунктирная)</span>
+            </div>
+            <div class="edge-legend-item">
+                <div class="edge-line edge-uses"></div>
+                <span>Использует / Uses (Синяя точечная)</span>
+            </div>
+            <div class="edge-legend-item">
+                <div class="edge-line edge-related"></div>
+                <span>Связано / Related (Фиолетовая)</span>
+            </div>
+        </div>
     </div>
     
-    <div style="position: relative;">
+    <div style="position: relative; margin-top: 15px;">
         <!-- Layout Toggle Toolbar (Protege style) -->
         <div class="layout-toolbar">
             <span class="toolbar-label">Вид:</span>
@@ -69,7 +94,7 @@
 
 {% block extra_js %}
 <!-- Graph Visualization Logic -->
-<script src="{% static 'js/ontology_graph.js' %}?v=1.2"></script>
+<script src="{% static 'js/ontology_graph.js' %}?v=1.3"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         // 1. Fetch data from Django context
@@ -101,7 +126,8 @@
                 {
                     source: "{{ concept.id }}", 
                     target: "{{ rel.target.id }}", 
-                    type: "{{ rel.get_relation_type_display|escapejs }}"
+                    type: "{{ rel.get_relation_type_display|escapejs }}",
+                    raw_type: "{{ rel.relation_type|escapejs }}" // передаем системный тип для стилизации линий
                 },
                 {% endfor %}
             {% endfor %}

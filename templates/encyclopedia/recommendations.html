@@ -30,7 +30,7 @@
 .adaptive-card {
     background-color: var(--card-bg);
     border: 1px solid var(--border-color);
-    border-radius: 12px; /* slightly more rounded for a modern look */
+    border-radius: 12px;
     padding: 1.5rem;
     margin-bottom: 2rem;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -44,65 +44,49 @@
 }
 
 /* Beautiful Dark Theme Progress Bar */
+.progress-wrapper {
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
 .progress-container {
-    /* Use the dark secondary color from the theme as the track */
     background-color: var(--secondary-color);
     border-radius: 12px;
-    height: 28px; /* slightly taller for better visibility */
+    height: 28px;
     width: 100%;
-    margin-bottom: 1.5rem;
     overflow: hidden;
-    /* Subtle border to define the track edges against the dark card */
     border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5); /* Deep inner shadow for the empty part */
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
     position: relative;
 }
 
 .progress-bar {
-    /* Beautiful gradient using the primary and accent colors from the theme */
     background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
     height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end; /* Align text to the right side of the filled bar */
-    padding-right: 10px; /* Space from the edge */
-    color: #ffffff;
-    font-size: 0.85rem;
-    font-weight: 700;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5); /* Text shadow for readability */
-    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth springy animation */
-    /* Ensure text doesn't break layout if width is very small */
-    white-space: nowrap;
-    box-shadow: 0 0 10px rgba(96, 165, 250, 0.4); /* Outer glow for the filled part */
     border-radius: 12px 0 0 12px;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 10px rgba(96, 165, 250, 0.4);
 }
 
-/* If progress is 100%, round the right corners too */
 .progress-bar[style*="width: 100%"] {
     border-radius: 12px;
 }
 
-/* Optional: Subtle animated glow on the progress bar */
-.progress-bar::after {
-    content: '';
+/* Always visible percentage text overlapping the bar perfectly */
+.progress-text {
     position: absolute;
     top: 0;
     left: 0;
-    bottom: 0;
-    right: 0;
-    background: linear-gradient(
-        90deg,
-        rgba(255, 255, 255, 0) 0%,
-        rgba(255, 255, 255, 0.15) 50%,
-        rgba(255, 255, 255, 0) 100%
-    );
-    animation: shimmer 2s infinite;
-    pointer-events: none;
-}
-
-@keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #ffffff;
+    text-shadow: 0px 1px 3px rgba(0,0,0,0.8);
+    pointer-events: none; /* Let clicks pass through if needed */
 }
 
 /* Stats Row */
@@ -229,9 +213,13 @@
     <div class="adaptive-card">
         <h2 class="adaptive-card-title">Ваш прогресс по концептам</h2>
         
-        <div class="progress-container">
-            <div class="progress-bar" style="width: {{ progress.progress_percent|default:0 }}%;">
-                {% if progress.progress_percent > 0 %}{{ progress.progress_percent }}%{% endif %}
+        <div class="progress-wrapper">
+            <div class="progress-container">
+                <div class="progress-bar" style="width: {{ progress.progress_percent|default:0 }}%;"></div>
+            </div>
+            <!-- Percentage text is now absolutely centered over the entire container -->
+            <div class="progress-text">
+                {{ progress.progress_percent|default:0 }}%
             </div>
         </div>
         

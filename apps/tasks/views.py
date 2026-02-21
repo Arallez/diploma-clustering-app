@@ -14,20 +14,40 @@ from apps.simulator.services import (
     TimeLimitException,
     get_safe_builtins,
 )
+from apps.encyclopedia.recommendations import is_task_available
 
 
 def task_list(request):
     tags = TaskTag.objects.prefetch_related('tasks').order_by('order')
     uncategorized = Task.objects.filter(tags__isnull=True).order_by('order')
     completed_task_ids = set()
+    available_task_ids = set()
+    blocked_tasks_info = {}  # task_id -> list of missing concepts
+    
     if request.user.is_authenticated:
         completed_task_ids = set(
             UserTaskAttempt.objects.filter(user=request.user, is_correct=True).values_list('task_id', flat=True)
         )
+        
+        # Проверяем доступность задач на основе онтологии
+        all_tasks = Task.objects.filter(concept__isnull=False).select_related('concept')
+        for task in all_tasks:
+            is_available, missing_concepts = is_task_available(request.user, task)
+            if is_available:
+                available_task_ids.add(task.id)
+            else:
+                blocked_tasks_info[task.id] = missing_concepts
+    
+    # Задачи без связи с онтологией всегда доступны
+    tasks_without_concept = Task.objects.filter(concept__isnull=True)
+    available_task_ids.update(tasks_without_concept.values_list('id', flat=True))
+    
     return render(request, 'tasks/task_list.html', {
         'tags': tags,
         'uncategorized': uncategorized,
         'completed_task_ids': completed_task_ids,
+        'available_task_ids': available_task_ids,
+        'blocked_tasks_info': blocked_tasks_info,
     })
 
 
@@ -36,6 +56,10 @@ def challenge_detail(request, slug):
     task = get_object_or_404(Task, slug=slug)
     previous_code = ""
     test_attempt_id = None
+    is_available = True
+    missing_concepts = []
+    required_materials = []
+    
     if request.user.is_authenticated:
         last_attempt = request.user.task_attempts.filter(task=task, is_correct=True).first()
         if last_attempt:
@@ -46,10 +70,21 @@ def challenge_detail(request, slug):
             ta = TestAttempt.objects.filter(pk=ta_id, user=request.user).first()
             if ta and not ta.submitted_at:
                 test_attempt_id = ta.pk
+        
+        # Проверяем доступность задачи на основе онтологии
+        if task.concept:
+            is_available, missing_concepts = is_task_available(request.user, task)
+            if missing_concepts:
+                from apps.core.models import Material
+                required_materials = Material.objects.filter(concept__in=missing_concepts)
+    
     return render(request, 'tasks/challenge_detail.html', {
         'task': task,
         'previous_code': previous_code or task.initial_code,
         'test_attempt_id': test_attempt_id,
+        'is_available': is_available,
+        'missing_concepts': missing_concepts,
+        'required_materials': required_materials,
     })
 
 

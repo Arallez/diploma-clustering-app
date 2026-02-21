@@ -1,0 +1,472 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="http://www.semanticweb.org/diploma/clustering#"
+     xml:base="http://www.semanticweb.org/diploma/clustering"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:xml="http://www.w3.org/XML/1998/namespace"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
+    <owl:Ontology rdf:about="http://www.semanticweb.org/diploma/clustering"/>
+    
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Object Properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    <!-- http://www.semanticweb.org/diploma/clustering#assumesClusterSize -->
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/diploma/clustering#assumesClusterSize">
+        <rdfs:label xml:lang="ru">предполагает размер кластеров</rdfs:label>
+    </owl:ObjectProperty>
+    
+    <!-- http://www.semanticweb.org/diploma/clustering#hasInferenceType -->
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/diploma/clustering#hasInferenceType">
+        <rdfs:label xml:lang="ru">тип логического вывода</rdfs:label>
+    </owl:ObjectProperty>
+    
+    <!-- http://www.semanticweb.org/diploma/clustering#hasParameter -->
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/diploma/clustering#hasParameter">
+        <rdfs:label xml:lang="ru">имеет параметр</rdfs:label>
+    </owl:ObjectProperty>
+    
+    <!-- http://www.semanticweb.org/diploma/clustering#hasScalability -->
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/diploma/clustering#hasScalability">
+        <rdfs:label xml:lang="ru">имеет масштабируемость</rdfs:label>
+    </owl:ObjectProperty>
+    
+    <!-- http://www.semanticweb.org/diploma/clustering#solvesTask -->
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/diploma/clustering#solvesTask">
+        <rdfs:label xml:lang="ru">решает задачу / Use case</rdfs:label>
+    </owl:ObjectProperty>
+    
+    <!-- http://www.semanticweb.org/diploma/clustering#supportsGeometry -->
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/diploma/clustering#supportsGeometry">
+        <rdfs:label xml:lang="ru">поддерживает геометрию кластера</rdfs:label>
+    </owl:ObjectProperty>
+    
+    <!-- http://www.semanticweb.org/diploma/clustering#usesMetric -->
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/diploma/clustering#usesMetric">
+        <rdfs:label xml:lang="ru">использует метрику</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Classes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    <!-- http://www.semanticweb.org/diploma/clustering#Algorithm -->
+    <owl:Class rdf:about="http://www.semanticweb.org/diploma/clustering#Algorithm">
+        <rdfs:label xml:lang="ru">Алгоритм кластеризации</rdfs:label>
+    </owl:Class>
+    
+    <!-- http://www.semanticweb.org/diploma/clustering#ClusterSize -->
+    <owl:Class rdf:about="http://www.semanticweb.org/diploma/clustering#ClusterSize">
+        <rdfs:label xml:lang="ru">Ожидаемый размер кластеров</rdfs:label>
+    </owl:Class>
+    
+    <!-- http://www.semanticweb.org/diploma/clustering#DensityBasedAlgorithm -->
+    <owl:Class rdf:about="http://www.semanticweb.org/diploma/clustering#DensityBasedAlgorithm">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/diploma/clustering#Algorithm"/>
+        <rdfs:label xml:lang="ru">Плотностные алгоритмы</rdfs:label>
+    </owl:Class>
+    
+    <!-- http://www.semanticweb.org/diploma/clustering#Geometry -->
+    <owl:Class rdf:about="http://www.semanticweb.org/diploma/clustering#Geometry">
+        <rdfs:label xml:lang="ru">Геометрия кластеров</rdfs:label>
+    </owl:Class>
+    
+    <!-- http://www.semanticweb.org/diploma/clustering#HierarchicalAlgorithm -->
+    <owl:Class rdf:about="http://www.semanticweb.org/diploma/clustering#HierarchicalAlgorithm">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/diploma/clustering#Algorithm"/>
+        <rdfs:label xml:lang="ru">Иерархические алгоритмы</rdfs:label>
+    </owl:Class>
+    
+    <!-- http://www.semanticweb.org/diploma/clustering#InferenceType -->
+    <owl:Class rdf:about="http://www.semanticweb.org/diploma/clustering#InferenceType">
+        <rdfs:label xml:lang="ru">Тип вывода (Inductive/Transductive)</rdfs:label>
+    </owl:Class>
+    
+    <!-- http://www.semanticweb.org/diploma/clustering#Metric -->
+    <owl:Class rdf:about="http://www.semanticweb.org/diploma/clustering#Metric">
+        <rdfs:label xml:lang="ru">Метрика расстояния</rdfs:label>
+    </owl:Class>
+    
+    <!-- http://www.semanticweb.org/diploma/clustering#ModelBasedAlgorithm -->
+    <owl:Class rdf:about="http://www.semanticweb.org/diploma/clustering#ModelBasedAlgorithm">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/diploma/clustering#Algorithm"/>
+        <rdfs:label xml:lang="ru">Модельные алгоритмы</rdfs:label>
+    </owl:Class>
+    
+    <!-- http://www.semanticweb.org/diploma/clustering#Parameter -->
+    <owl:Class rdf:about="http://www.semanticweb.org/diploma/clustering#Parameter">
+        <rdfs:label xml:lang="ru">Параметры</rdfs:label>
+    </owl:Class>
+    
+    <!-- http://www.semanticweb.org/diploma/clustering#PartitioningAlgorithm -->
+    <owl:Class rdf:about="http://www.semanticweb.org/diploma/clustering#PartitioningAlgorithm">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/diploma/clustering#Algorithm"/>
+        <rdfs:label xml:lang="ru">Алгоритмы разбиения</rdfs:label>
+    </owl:Class>
+    
+    <!-- http://www.semanticweb.org/diploma/clustering#Scalability -->
+    <owl:Class rdf:about="http://www.semanticweb.org/diploma/clustering#Scalability">
+        <rdfs:label xml:lang="ru">Масштабируемость</rdfs:label>
+    </owl:Class>
+    
+    <!-- http://www.semanticweb.org/diploma/clustering#UseCase -->
+    <owl:Class rdf:about="http://www.semanticweb.org/diploma/clustering#UseCase">
+        <rdfs:label xml:lang="ru">Применение (Use case)</rdfs:label>
+    </owl:Class>
+    
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Individuals
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    <!-- АЛГОРИТМЫ -->
+
+    <!-- http://www.semanticweb.org/diploma/clustering#Algo_AffinityPropagation -->
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#Algo_AffinityPropagation">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#PartitioningAlgorithm"/>
+        <assumesClusterSize rdf:resource="http://www.semanticweb.org/diploma/clustering#UnevenClusterSize"/>
+        <hasInferenceType rdf:resource="http://www.semanticweb.org/diploma/clustering#Inductive"/>
+        <hasParameter rdf:resource="http://www.semanticweb.org/diploma/clustering#Param_Damping"/>
+        <hasScalability rdf:resource="http://www.semanticweb.org/diploma/clustering#LowScalability"/>
+        <solvesTask rdf:resource="http://www.semanticweb.org/diploma/clustering#UC_ManyClusters"/>
+        <supportsGeometry rdf:resource="http://www.semanticweb.org/diploma/clustering#NonFlatGeometry"/>
+        <usesMetric rdf:resource="http://www.semanticweb.org/diploma/clustering#Metric_GraphDistance"/>
+        <rdfs:label xml:lang="ru">Affinity propagation</rdfs:label>
+        <rdfs:comment xml:lang="ru">Алгоритм кластеризации на основе графов. Создает кластеры, отправляя сообщения между парами объектов до сходимости. Автоматически определяет количество кластеров на основе предпочтений (sample preference). Плохо масштабируется для очень больших выборок, но хорошо справляется с неравномерными кластерами невыпуклой формы.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <!-- http://www.semanticweb.org/diploma/clustering#Algo_Agglomerative -->
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#Algo_Agglomerative">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#HierarchicalAlgorithm"/>
+        <hasInferenceType rdf:resource="http://www.semanticweb.org/diploma/clustering#Transductive"/>
+        <hasParameter rdf:resource="http://www.semanticweb.org/diploma/clustering#Param_DistanceThreshold"/>
+        <hasParameter rdf:resource="http://www.semanticweb.org/diploma/clustering#Param_NumClusters"/>
+        <hasScalability rdf:resource="http://www.semanticweb.org/diploma/clustering#HighScalability"/>
+        <solvesTask rdf:resource="http://www.semanticweb.org/diploma/clustering#UC_ManyClusters"/>
+        <usesMetric rdf:resource="http://www.semanticweb.org/diploma/clustering#Metric_AnyPairwise"/>
+        <rdfs:label xml:lang="ru">Agglomerative clustering</rdfs:label>
+        <rdfs:comment xml:lang="ru">Иерархические агломеративные методы (AGNES). Суть состоит в последовательном объединении меньших кластеров в большие. В начале работы алгоритма каждый объект первоначально является отдельным кластером. На каждом шаге наиболее похожие объекты/кластеры объединяются друг с другом, формируя больший кластер, пока не будет достигнута некоторая конечная точка. Результат представляется в виде дендрограммы.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <!-- http://www.semanticweb.org/diploma/clustering#Algo_BIRCH -->
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#Algo_BIRCH">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#HierarchicalAlgorithm"/>
+        <hasInferenceType rdf:resource="http://www.semanticweb.org/diploma/clustering#Inductive"/>
+        <hasParameter rdf:resource="http://www.semanticweb.org/diploma/clustering#Param_BranchingFactor"/>
+        <hasParameter rdf:resource="http://www.semanticweb.org/diploma/clustering#Param_DistanceThreshold"/>
+        <hasScalability rdf:resource="http://www.semanticweb.org/diploma/clustering#HighScalability"/>
+        <solvesTask rdf:resource="http://www.semanticweb.org/diploma/clustering#UC_DataReduction"/>
+        <solvesTask rdf:resource="http://www.semanticweb.org/diploma/clustering#UC_OutlierRemoval"/>
+        <usesMetric rdf:resource="http://www.semanticweb.org/diploma/clustering#Metric_PointDistance"/>
+        <rdfs:label xml:lang="ru">BIRCH</rdfs:label>
+        <rdfs:comment xml:lang="ru">Balanced Reducing and Clustering using Hierarchies. Это алгоритм, специально разработанный для кластеризации очень больших наборов данных. Алгоритм использует дерево признаков кластеризации (CF) — иерархическую структуру с эффективным использованием памяти. Он поэтапно обрабатывает данные, создавая узлы в дереве CF, поддерживая баланс через порог (threshold) и фактор ветвления (branching factor).</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <!-- http://www.semanticweb.org/diploma/clustering#Algo_BisectingKMeans -->
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#Algo_BisectingKMeans">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#PartitioningAlgorithm"/>
+        <assumesClusterSize rdf:resource="http://www.semanticweb.org/diploma/clustering#EvenClusterSize"/>
+        <hasInferenceType rdf:resource="http://www.semanticweb.org/diploma/clustering#Inductive"/>
+        <hasParameter rdf:resource="http://www.semanticweb.org/diploma/clustering#Param_NumClusters"/>
+        <hasScalability rdf:resource="http://www.semanticweb.org/diploma/clustering#HighScalability"/>
+        <solvesTask rdf:resource="http://www.semanticweb.org/diploma/clustering#UC_GeneralPurpose"/>
+        <supportsGeometry rdf:resource="http://www.semanticweb.org/diploma/clustering#FlatGeometry"/>
+        <usesMetric rdf:resource="http://www.semanticweb.org/diploma/clustering#Metric_PointDistance"/>
+        <rdfs:label xml:lang="ru">Bisecting K-Means</rdfs:label>
+        <rdfs:comment xml:lang="ru">Бисекция к-средних (раздвоение). По Б.Г. Миркину относится к классу дивизимных (делимых) методов. В начале работы все объекты принадлежат одному кластеру, который на последующих шагах делится на меньшие при помощи критерия максимизации расстояния Уорда (что эквивалентно K-Means при K=2). Метод формирует бинарную иерархию (дерево) и хорошо масштабируется.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <!-- http://www.semanticweb.org/diploma/clustering#Algo_DBSCAN -->
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#Algo_DBSCAN">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#DensityBasedAlgorithm"/>
+        <assumesClusterSize rdf:resource="http://www.semanticweb.org/diploma/clustering#UnevenClusterSize"/>
+        <hasInferenceType rdf:resource="http://www.semanticweb.org/diploma/clustering#Transductive"/>
+        <hasParameter rdf:resource="http://www.semanticweb.org/diploma/clustering#Param_NeighborhoodSize"/>
+        <hasScalability rdf:resource="http://www.semanticweb.org/diploma/clustering#HighScalability"/>
+        <solvesTask rdf:resource="http://www.semanticweb.org/diploma/clustering#UC_OutlierRemoval"/>
+        <supportsGeometry rdf:resource="http://www.semanticweb.org/diploma/clustering#NonFlatGeometry"/>
+        <usesMetric rdf:resource="http://www.semanticweb.org/diploma/clustering#Metric_NearestPointDistance"/>
+        <rdfs:label xml:lang="ru">DBSCAN</rdfs:label>
+        <rdfs:comment xml:lang="ru">Density-Based Spatial Clustering of Applications with Noise. Это плотностной алгоритм кластеризации. Алгоритм выделяет области высокой концентрации точек (корневые точки и их соседи), которые разделяются областями с низкой плотностью. Точки, попавшие в области с низкой плотностью, определяются как выбросы (шумы). Характерно нахождение кластеров произвольной (невыпуклой) формы.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <!-- http://www.semanticweb.org/diploma/clustering#Algo_GaussianMixtures -->
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#Algo_GaussianMixtures">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#ModelBasedAlgorithm"/>
+        <hasInferenceType rdf:resource="http://www.semanticweb.org/diploma/clustering#Inductive"/>
+        <hasScalability rdf:resource="http://www.semanticweb.org/diploma/clustering#LowScalability"/>
+        <solvesTask rdf:resource="http://www.semanticweb.org/diploma/clustering#UC_DensityEstimation"/>
+        <supportsGeometry rdf:resource="http://www.semanticweb.org/diploma/clustering#FlatGeometry"/>
+        <usesMetric rdf:resource="http://www.semanticweb.org/diploma/clustering#Metric_Mahalanobis"/>
+        <rdfs:label xml:lang="ru">Gaussian mixtures</rdfs:label>
+        <rdfs:comment xml:lang="ru">Смеси распределений. Это модельный метод (EM-алгоритм). Согласно модели смеси распределений, наблюденные данные – это независимая случайная выборка из популяции. Каждый кластер представлен одномодальной Гауссовой функцией плотности (эллипсоидальные кластеры). Оценки параметров определяются путем максимизации логарифма правдоподобия. Идеально для оценки плотности.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <!-- http://www.semanticweb.org/diploma/clustering#Algo_HDBSCAN -->
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#Algo_HDBSCAN">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#DensityBasedAlgorithm"/>
+        <assumesClusterSize rdf:resource="http://www.semanticweb.org/diploma/clustering#UnevenClusterSize"/>
+        <hasInferenceType rdf:resource="http://www.semanticweb.org/diploma/clustering#Transductive"/>
+        <hasParameter rdf:resource="http://www.semanticweb.org/diploma/clustering#Param_MinMembership"/>
+        <hasScalability rdf:resource="http://www.semanticweb.org/diploma/clustering#HighScalability"/>
+        <solvesTask rdf:resource="http://www.semanticweb.org/diploma/clustering#UC_OutlierRemoval"/>
+        <supportsGeometry rdf:resource="http://www.semanticweb.org/diploma/clustering#NonFlatGeometry"/>
+        <usesMetric rdf:resource="http://www.semanticweb.org/diploma/clustering#Metric_NearestPointDistance"/>
+        <rdfs:label xml:lang="ru">HDBSCAN</rdfs:label>
+        <rdfs:comment xml:lang="ru">Иерархическое плотностное сканирование (Hierarchical DBSCAN). Преобразует алгоритм DBSCAN в иерархический метод кластеризации для надежной работы с данными, в которых кластеры имеют переменную плотность. Является мощным инструментом для поиска кластеров произвольной формы с автоматическим удалением шума и выбросов.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <!-- http://www.semanticweb.org/diploma/clustering#Algo_KMeans -->
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#Algo_KMeans">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#PartitioningAlgorithm"/>
+        <assumesClusterSize rdf:resource="http://www.semanticweb.org/diploma/clustering#EvenClusterSize"/>
+        <hasInferenceType rdf:resource="http://www.semanticweb.org/diploma/clustering#Inductive"/>
+        <hasParameter rdf:resource="http://www.semanticweb.org/diploma/clustering#Param_NumClusters"/>
+        <hasScalability rdf:resource="http://www.semanticweb.org/diploma/clustering#HighScalability"/>
+        <solvesTask rdf:resource="http://www.semanticweb.org/diploma/clustering#UC_GeneralPurpose"/>
+        <supportsGeometry rdf:resource="http://www.semanticweb.org/diploma/clustering#FlatGeometry"/>
+        <usesMetric rdf:resource="http://www.semanticweb.org/diploma/clustering#Metric_PointDistance"/>
+        <rdfs:label xml:lang="ru">K-Means</rdfs:label>
+        <rdfs:comment xml:lang="ru">Алгоритм К внутригрупповых средних. Самый популярный метод построения разбиения по матрице объект-признак. Процесс состоит из двух шагов: (1) Обновление кластеров (объекты приписываются к ближайшему центроиду); (2) Обновление центроидов. Исходит из допущения, что кластеры имеют выпуклую форму, все признаки шкалированы одинаково, а группы сбалансированы по количеству наблюдений.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <!-- http://www.semanticweb.org/diploma/clustering#Algo_MeanShift -->
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#Algo_MeanShift">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#DensityBasedAlgorithm"/>
+        <assumesClusterSize rdf:resource="http://www.semanticweb.org/diploma/clustering#UnevenClusterSize"/>
+        <hasInferenceType rdf:resource="http://www.semanticweb.org/diploma/clustering#Inductive"/>
+        <hasParameter rdf:resource="http://www.semanticweb.org/diploma/clustering#Param_Bandwidth"/>
+        <hasScalability rdf:resource="http://www.semanticweb.org/diploma/clustering#LowScalability"/>
+        <solvesTask rdf:resource="http://www.semanticweb.org/diploma/clustering#UC_ManyClusters"/>
+        <supportsGeometry rdf:resource="http://www.semanticweb.org/diploma/clustering#NonFlatGeometry"/>
+        <usesMetric rdf:resource="http://www.semanticweb.org/diploma/clustering#Metric_PointDistance"/>
+        <rdfs:label xml:lang="ru">Mean-shift</rdfs:label>
+        <rdfs:comment xml:lang="ru">Метод сдвига к среднему. Не требует устанавливать количество кластеров априорно и не делает допущений о форме кластеров. Идея метафорична: представьте поле в тумане. Каждую минуту каждый человек оглядывается в пределах своего радиуса (bandwidth) и делает шаг в сторону большинства людей, которых он видит. Часто применяется для сегментации изображений.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <!-- http://www.semanticweb.org/diploma/clustering#Algo_OPTICS -->
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#Algo_OPTICS">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#DensityBasedAlgorithm"/>
+        <assumesClusterSize rdf:resource="http://www.semanticweb.org/diploma/clustering#UnevenClusterSize"/>
+        <hasInferenceType rdf:resource="http://www.semanticweb.org/diploma/clustering#Transductive"/>
+        <hasParameter rdf:resource="http://www.semanticweb.org/diploma/clustering#Param_MinMembership"/>
+        <hasScalability rdf:resource="http://www.semanticweb.org/diploma/clustering#HighScalability"/>
+        <solvesTask rdf:resource="http://www.semanticweb.org/diploma/clustering#UC_OutlierRemoval"/>
+        <supportsGeometry rdf:resource="http://www.semanticweb.org/diploma/clustering#NonFlatGeometry"/>
+        <usesMetric rdf:resource="http://www.semanticweb.org/diploma/clustering#Metric_PointDistance"/>
+        <rdfs:label xml:lang="ru">OPTICS</rdfs:label>
+        <rdfs:comment xml:lang="ru">Плотностной алгоритм, решающий главную слабость DBSCAN — работу с кластерами различной (переменной) плотности. Создает упорядоченный список точек данных, отражающий структуру кластеризации. Успешно работает с невыпуклыми формами и отлично фильтрует шумовые выбросы.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <!-- http://www.semanticweb.org/diploma/clustering#Algo_SpectralClustering -->
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#Algo_SpectralClustering">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#PartitioningAlgorithm"/>
+        <assumesClusterSize rdf:resource="http://www.semanticweb.org/diploma/clustering#EvenClusterSize"/>
+        <hasInferenceType rdf:resource="http://www.semanticweb.org/diploma/clustering#Transductive"/>
+        <hasParameter rdf:resource="http://www.semanticweb.org/diploma/clustering#Param_NumClusters"/>
+        <hasScalability rdf:resource="http://www.semanticweb.org/diploma/clustering#MediumScalability"/>
+        <supportsGeometry rdf:resource="http://www.semanticweb.org/diploma/clustering#NonFlatGeometry"/>
+        <usesMetric rdf:resource="http://www.semanticweb.org/diploma/clustering#Metric_GraphDistance"/>
+        <rdfs:label xml:lang="ru">Spectral clustering</rdfs:label>
+        <rdfs:comment xml:lang="ru">Спектральный кластер-анализ. Основан на преобразовании матрицы связи, например, через Лапласиан. Задача отыскания оптимального разбиения эквивалентна проблеме максимизации отношения Рэлея и достигается на собственном векторе матрицы. Эффективен для кластеров сложной формы и сегментации изображений.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <!-- http://www.semanticweb.org/diploma/clustering#Algo_Ward -->
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#Algo_Ward">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#HierarchicalAlgorithm"/>
+        <hasInferenceType rdf:resource="http://www.semanticweb.org/diploma/clustering#Transductive"/>
+        <hasParameter rdf:resource="http://www.semanticweb.org/diploma/clustering#Param_DistanceThreshold"/>
+        <hasParameter rdf:resource="http://www.semanticweb.org/diploma/clustering#Param_NumClusters"/>
+        <hasScalability rdf:resource="http://www.semanticweb.org/diploma/clustering#HighScalability"/>
+        <solvesTask rdf:resource="http://www.semanticweb.org/diploma/clustering#UC_ManyClusters"/>
+        <usesMetric rdf:resource="http://www.semanticweb.org/diploma/clustering#Metric_PointDistance"/>
+        <rdfs:label xml:lang="ru">Ward hierarchical clustering</rdfs:label>
+        <rdfs:comment xml:lang="ru">Агломеративный иерархический алгоритм Уорда (Ward). В качестве критерия слияния использует минимизацию дисперсии объединенных кластеров (разность значений критерия метода к-средних на исходном и объединенном разбиениях). Заставляет присоединять маленькие кластеры к большим.</rdfs:comment>
+    </owl:NamedIndividual>
+
+    <!-- MiniBatchKMeans (Из слайда 56) -->
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#Algo_MiniBatchKMeans">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#PartitioningAlgorithm"/>
+        <rdfs:label xml:lang="ru">MiniBatch K-Means</rdfs:label>
+        <rdfs:comment xml:lang="ru">Мини-пакетный алгоритм k-средних работает аналогично k-средних. Разница состоит в том, что в нем наиболее вычислительно затратный шаг выполняется только на случайной выборке наблюдений (пакете), задаваемой параметром batch_size. Позволяет значительно сократить время сходимости при небольшой потере качества.</rdfs:comment>
+        <hasParameter rdf:resource="http://www.semanticweb.org/diploma/clustering#Param_NumClusters"/>
+        <hasParameter rdf:resource="http://www.semanticweb.org/diploma/clustering#Param_BatchSize"/>
+        <hasScalability rdf:resource="http://www.semanticweb.org/diploma/clustering#HighScalability"/>
+        <supportsGeometry rdf:resource="http://www.semanticweb.org/diploma/clustering#FlatGeometry"/>
+        <assumesClusterSize rdf:resource="http://www.semanticweb.org/diploma/clustering#EvenClusterSize"/>
+        <usesMetric rdf:resource="http://www.semanticweb.org/diploma/clustering#Metric_PointDistance"/>
+        <hasInferenceType rdf:resource="http://www.semanticweb.org/diploma/clustering#Inductive"/>
+        <solvesTask rdf:resource="http://www.semanticweb.org/diploma/clustering#UC_GeneralPurpose"/>
+    </owl:NamedIndividual>
+
+    <!-- Алгоритм максимина (Из слайда 29) -->
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#Algo_Maximin">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#PartitioningAlgorithm"/>
+        <rdfs:label xml:lang="ru">Алгоритм Максимина</rdfs:label>
+        <rdfs:comment xml:lang="ru">Алгоритм максиминного расстояния — простая эвристическая процедура, использующая евклидово расстояние. В первую очередь он выявляет наиболее удалённые кластеры через пороговую величину Т. Алгоритм привлекателен с вычислительной точки зрения, поскольку требует лишь однократный просмотр выборки. Позволяет быстро получить приближенные оценки и исходные центры (гнёзда).</rdfs:comment>
+        <hasParameter rdf:resource="http://www.semanticweb.org/diploma/clustering#Param_DistanceThreshold"/> 
+        <hasScalability rdf:resource="http://www.semanticweb.org/diploma/clustering#HighScalability"/>
+        <supportsGeometry rdf:resource="http://www.semanticweb.org/diploma/clustering#FlatGeometry"/> 
+        <usesMetric rdf:resource="http://www.semanticweb.org/diploma/clustering#Metric_PointDistance"/>
+        <hasInferenceType rdf:resource="http://www.semanticweb.org/diploma/clustering#Inductive"/>
+    </owl:NamedIndividual>
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // СВОЙСТВА И ХАРАКТЕРИСТИКИ
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#EvenClusterSize">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#ClusterSize"/>
+        <rdfs:label xml:lang="ru">Even cluster size (равномерные)</rdfs:label>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#FlatGeometry">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#Geometry"/>
+        <rdfs:label xml:lang="ru">Flat geometry (выпуклая/сферическая)</rdfs:label>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#HighScalability">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#Scalability"/>
+        <rdfs:label xml:lang="ru">High (Very large n_samples)</rdfs:label>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#Inductive">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#InferenceType"/>
+        <rdfs:label xml:lang="ru">Inductive (может предсказывать для новых данных)</rdfs:label>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#LowScalability">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#Scalability"/>
+        <rdfs:label xml:lang="ru">Low (Not scalable with n_samples)</rdfs:label>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#MediumScalability">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#Scalability"/>
+        <rdfs:label xml:lang="ru">Medium (Large n_clusters / Medium n_samples)</rdfs:label>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#Metric_AnyPairwise">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#Metric"/>
+        <rdfs:label xml:lang="ru">Any pairwise distance</rdfs:label>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#Metric_GraphDistance">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#Metric"/>
+        <rdfs:label xml:lang="ru">Graph distance (nearest-neighbor graph)</rdfs:label>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#Metric_Mahalanobis">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#Metric"/>
+        <rdfs:label xml:lang="ru">Mahalanobis distances to centers</rdfs:label>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#Metric_NearestPointDistance">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#Metric"/>
+        <rdfs:label xml:lang="ru">Distances between nearest points</rdfs:label>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#Metric_PointDistance">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#Metric"/>
+        <rdfs:label xml:lang="ru">Distances between points (Евклидово и др.)</rdfs:label>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#NonFlatGeometry">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#Geometry"/>
+        <rdfs:label xml:lang="ru">Non-flat geometry (произвольная форма)</rdfs:label>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#Param_Bandwidth">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#Parameter"/>
+        <rdfs:label xml:lang="ru">bandwidth</rdfs:label>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#Param_BranchingFactor">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#Parameter"/>
+        <rdfs:label xml:lang="ru">branching factor</rdfs:label>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#Param_Damping">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#Parameter"/>
+        <rdfs:label xml:lang="ru">damping, sample preference</rdfs:label>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#Param_DistanceThreshold">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#Parameter"/>
+        <rdfs:label xml:lang="ru">distance threshold / threshold</rdfs:label>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#Param_MinMembership">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#Parameter"/>
+        <rdfs:label xml:lang="ru">minimum cluster membership</rdfs:label>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#Param_NeighborhoodSize">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#Parameter"/>
+        <rdfs:label xml:lang="ru">neighborhood size (eps)</rdfs:label>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#Param_NumClusters">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#Parameter"/>
+        <rdfs:label xml:lang="ru">number of clusters</rdfs:label>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#Param_BatchSize">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#Parameter"/>
+        <rdfs:label xml:lang="ru">batch size (размер пакета)</rdfs:label>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#Transductive">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#InferenceType"/>
+        <rdfs:label xml:lang="ru">Transductive (только для текущей выборки)</rdfs:label>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#UC_DataReduction">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#UseCase"/>
+        <rdfs:label xml:lang="ru">Data reduction (Сокращение данных)</rdfs:label>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#UC_DensityEstimation">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#UseCase"/>
+        <rdfs:label xml:lang="ru">Density estimation (Оценка плотности)</rdfs:label>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#UC_GeneralPurpose">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#UseCase"/>
+        <rdfs:label xml:lang="ru">General-purpose (Универсальный)</rdfs:label>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#UC_ManyClusters">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#UseCase"/>
+        <rdfs:label xml:lang="ru">Many clusters (Множество кластеров)</rdfs:label>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#UC_OutlierRemoval">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#UseCase"/>
+        <rdfs:label xml:lang="ru">Outlier removal (Удаление шумов)</rdfs:label>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/diploma/clustering#UnevenClusterSize">
+        <rdf:type rdf:resource="http://www.semanticweb.org/diploma/clustering#ClusterSize"/>
+        <rdfs:label xml:lang="ru">Uneven cluster size (неравномерные)</rdfs:label>
+    </owl:NamedIndividual>
+
+</rdf:RDF>

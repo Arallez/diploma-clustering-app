@@ -1,0 +1,474 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="http://www.semanticweb.org/diploma/clustering#"
+     xml:base="http://www.semanticweb.org/diploma/clustering"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:xml="http://www.w3.org/XML/1998/namespace"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
+    
+    <owl:Ontology rdf:about="http://www.semanticweb.org/diploma/clustering">
+        <rdfs:comment>Полная онтология методов кластеризации с глоссарием всех терминов (по материалам Б.Г. Миркина и Scikit-Learn).</rdfs:comment>
+    </owl:Ontology>
+
+    <!-- ======================================================================= -->
+    <!-- Object Properties (Свойства и связи - с описаниями)                     -->
+    <!-- ======================================================================= -->
+
+    <owl:ObjectProperty rdf:about="#assumesClusterSize">
+        <rdfs:label xml:lang="ru">предполагает размер кластеров</rdfs:label>
+        <rdfs:comment xml:lang="ru">Связывает алгоритм с его ожиданием относительно баланса объектов в кластерах (равномерные или неравномерные).</rdfs:comment>
+    </owl:ObjectProperty>
+    
+    <owl:ObjectProperty rdf:about="#hasInferenceType">
+        <rdfs:label xml:lang="ru">тип логического вывода</rdfs:label>
+        <rdfs:comment xml:lang="ru">Определяет, может ли алгоритм применяться к новым, ранее не виденным данным (Индуктивный), или работает только на текущей выборке (Трансдуктивный).</rdfs:comment>
+    </owl:ObjectProperty>
+    
+    <owl:ObjectProperty rdf:about="#hasParameter">
+        <rdfs:label xml:lang="ru">имеет параметр</rdfs:label>
+        <rdfs:comment xml:lang="ru">Связывает алгоритм с ключевыми параметрами, которые пользователю необходимо настроить перед запуском.</rdfs:comment>
+    </owl:ObjectProperty>
+    
+    <owl:ObjectProperty rdf:about="#hasScalability">
+        <rdfs:label xml:lang="ru">имеет масштабируемость</rdfs:label>
+        <rdfs:comment xml:lang="ru">Показывает вычислительную сложность алгоритма и его способность работать с большими объемами данных (Big Data).</rdfs:comment>
+    </owl:ObjectProperty>
+    
+    <owl:ObjectProperty rdf:about="#solvesTask">
+        <rdfs:label xml:lang="ru">решает задачу / Use case</rdfs:label>
+        <rdfs:comment xml:lang="ru">Связывает метод с практической бизнес-задачей, для которой он подходит лучше всего.</rdfs:comment>
+    </owl:ObjectProperty>
+    
+    <owl:ObjectProperty rdf:about="#supportsGeometry">
+        <rdfs:label xml:lang="ru">поддерживает геометрию кластера</rdfs:label>
+        <rdfs:comment xml:lang="ru">Указывает, какую форму "сгущений точек" способен выявить алгоритм (сферическую или произвольную невыпуклую).</rdfs:comment>
+    </owl:ObjectProperty>
+    
+    <owl:ObjectProperty rdf:about="#usesMetric">
+        <rdfs:label xml:lang="ru">использует метрику</rdfs:label>
+        <rdfs:comment xml:lang="ru">Определяет математическую меру расстояния или сходства, используемую алгоритмом для сравнения объектов.</rdfs:comment>
+    </owl:ObjectProperty>
+    
+    <!-- ======================================================================= -->
+    <!-- Classes (Классы - базовые понятия предметной области)                   -->
+    <!-- ======================================================================= -->
+
+    <owl:Class rdf:about="#Algorithm">
+        <rdfs:label xml:lang="ru">Алгоритм кластеризации</rdfs:label>
+        <rdfs:comment xml:lang="ru">Метод машинного обучения без учителя, предназначенный для разбиения совокупности объектов на однородные группы (кластеры). Цель - поиск существующих скрытых структур.</rdfs:comment>
+    </owl:Class>
+    
+    <owl:Class rdf:about="#ClusterSize">
+        <rdfs:label xml:lang="ru">Ожидаемый размер кластеров</rdfs:label>
+        <rdfs:comment xml:lang="ru">Характеристика алгоритма, показывающая, ожидает ли он кластеры одинакового объема (количества точек) или способен работать с дисбалансом классов.</rdfs:comment>
+    </owl:Class>
+    
+    <owl:Class rdf:about="#DensityBasedAlgorithm">
+        <rdfs:subClassOf rdf:resource="#Algorithm"/>
+        <rdfs:label xml:lang="ru">Плотностные алгоритмы</rdfs:label>
+        <rdfs:comment xml:lang="ru">Методы, основанные на концентрации (плотности) объектов. Находят кластеры произвольной формы и отлично игнорируют шумы.</rdfs:comment>
+    </owl:Class>
+    
+    <owl:Class rdf:about="#Geometry">
+        <rdfs:label xml:lang="ru">Геометрия кластеров</rdfs:label>
+        <rdfs:comment xml:lang="ru">Форма распределения данных в признаковом пространстве. Может быть выпуклой (сферы) или сложной (цепочки, кольца).</rdfs:comment>
+    </owl:Class>
+    
+    <owl:Class rdf:about="#HierarchicalAlgorithm">
+        <rdfs:subClassOf rdf:resource="#Algorithm"/>
+        <rdfs:label xml:lang="ru">Иерархические алгоритмы</rdfs:label>
+        <rdfs:comment xml:lang="ru">Методы, основанные на последовательном объединении меньших кластеров (агломерация) или разделении больших. Результат представляется в виде дендрограммы.</rdfs:comment>
+    </owl:Class>
+    
+    <owl:Class rdf:about="#InferenceType">
+        <rdfs:label xml:lang="ru">Тип вывода (Inductive/Transductive)</rdfs:label>
+        <rdfs:comment xml:lang="ru">Способность алгоритма обобщать найденные правила на новые данные, которые поступят в будущем.</rdfs:comment>
+    </owl:Class>
+    
+    <owl:Class rdf:about="#Metric">
+        <rdfs:label xml:lang="ru">Метрика расстояния</rdfs:label>
+        <rdfs:comment xml:lang="ru">Математическая функция для оценки "схожести" или "различия" между объектами (Евклидово расстояние, Манхэттенское, Чебышева и др.).</rdfs:comment>
+    </owl:Class>
+    
+    <owl:Class rdf:about="#ModelBasedAlgorithm">
+        <rdfs:subClassOf rdf:resource="#Algorithm"/>
+        <rdfs:label xml:lang="ru">Модельные алгоритмы</rdfs:label>
+        <rdfs:comment xml:lang="ru">Методы, использующие математическую или статистическую модель распределения (например, смесь Гауссианов) для нахождения кластеров.</rdfs:comment>
+    </owl:Class>
+    
+    <owl:Class rdf:about="#Parameter">
+        <rdfs:label xml:lang="ru">Параметры</rdfs:label>
+        <rdfs:comment xml:lang="ru">Устанавливаемые пользователем переменные (гиперпараметры), от которых зависит результат работы метода кластеризации.</rdfs:comment>
+    </owl:Class>
+    
+    <owl:Class rdf:about="#PartitioningAlgorithm">
+        <rdfs:subClassOf rdf:resource="#Algorithm"/>
+        <rdfs:label xml:lang="ru">Алгоритмы разбиения</rdfs:label>
+        <rdfs:comment xml:lang="ru">Алгоритмы, разделяющие объекты на заданное количество K непересекающихся кластеров. Часто используют итеративное перераспределение.</rdfs:comment>
+    </owl:Class>
+    
+    <owl:Class rdf:about="#Scalability">
+        <rdfs:label xml:lang="ru">Масштабируемость</rdfs:label>
+        <rdfs:comment xml:lang="ru">Способность алгоритма сохранять высокую скорость вычислений при многократном увеличении объема данных (количества строк или столбцов).</rdfs:comment>
+    </owl:Class>
+    
+    <owl:Class rdf:about="#UseCase">
+        <rdfs:label xml:lang="ru">Применение (Use case)</rdfs:label>
+        <rdfs:comment xml:lang="ru">Типичные задачи анализа данных, для которых характеристики алгоритма подходят наилучшим образом.</rdfs:comment>
+    </owl:Class>
+
+    <!-- ======================================================================= -->
+    <!-- Individuals (Конкретные термины: метрики, параметры, геометрия и т.д.)  -->
+    <!-- ======================================================================= -->
+
+    <!-- ГЕОМЕТРИЯ -->
+    <owl:NamedIndividual rdf:about="#FlatGeometry">
+        <rdf:type rdf:resource="#Geometry"/>
+        <rdfs:label xml:lang="ru">Flat geometry (выпуклая/сферическая)</rdfs:label>
+        <rdfs:comment xml:lang="ru">Предположение о том, что кластеры образуют выпуклые формы (круги, сферы или эллипсы) вокруг своего центра. Характерно для центроидных методов (K-Means).</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="#NonFlatGeometry">
+        <rdf:type rdf:resource="#Geometry"/>
+        <rdfs:label xml:lang="ru">Non-flat geometry (произвольная форма)</rdfs:label>
+        <rdfs:comment xml:lang="ru">Кластеры могут иметь сложную невыпуклую форму (например, полумесяцы, "цепочки", вытянутые полосы). Выявляются плотностными алгоритмами и алгоритмами на графах.</rdfs:comment>
+    </owl:NamedIndividual>
+
+    <!-- МАСШТАБИРУЕМОСТЬ -->
+    <owl:NamedIndividual rdf:about="#HighScalability">
+        <rdf:type rdf:resource="#Scalability"/>
+        <rdfs:label xml:lang="ru">Высокая масштабируемость</rdfs:label>
+        <rdfs:comment xml:lang="ru">Алгоритм отлично работает с огромными наборами данных (сотни тысяч и миллионы записей) за адекватное время (полиномиальная или линейная сложность).</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="#MediumScalability">
+        <rdf:type rdf:resource="#Scalability"/>
+        <rdfs:label xml:lang="ru">Средняя масштабируемость</rdfs:label>
+        <rdfs:comment xml:lang="ru">Алгоритм справляется с выборками среднего размера (десятки тысяч записей), но "зависает" или требует слишком много памяти при обработке сверхбольших данных.</rdfs:comment>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#LowScalability">
+        <rdf:type rdf:resource="#Scalability"/>
+        <rdfs:label xml:lang="ru">Низкая масштабируемость</rdfs:label>
+        <rdfs:comment xml:lang="ru">Алгоритм не подходит для больших данных из-за высокой вычислительной сложности (например, требует расчета матрицы расстояний N x N, что съест всю память).</rdfs:comment>
+    </owl:NamedIndividual>
+
+    <!-- РАЗМЕР КЛАСТЕРОВ -->
+    <owl:NamedIndividual rdf:about="#EvenClusterSize">
+        <rdf:type rdf:resource="#ClusterSize"/>
+        <rdfs:label xml:lang="ru">Равномерные размеры</rdfs:label>
+        <rdfs:comment xml:lang="ru">Алгоритм искусственно тяготеет к тому, чтобы в каждый кластер попадало примерно одинаковое количество объектов. Сильно различающиеся по плотности группы алгоритм может разбить ошибочно.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="#UnevenClusterSize">
+        <rdf:type rdf:resource="#ClusterSize"/>
+        <rdfs:label xml:lang="ru">Неравномерные размеры</rdfs:label>
+        <rdfs:comment xml:lang="ru">Алгоритм легко распознает структуры, где один кластер содержит 1000 точек, а другой, соседний кластер — всего 20.</rdfs:comment>
+    </owl:NamedIndividual>
+
+    <!-- ТИП ВЫВОДА -->
+    <owl:NamedIndividual rdf:about="#Inductive">
+        <rdf:type rdf:resource="#InferenceType"/>
+        <rdfs:label xml:lang="ru">Индуктивный вывод (Inductive)</rdfs:label>
+        <rdfs:comment xml:lang="ru">Алгоритм способен построить обобщающее правило (например, найти центры тяжести) и на его основе классифицировать новые поступающие данные, которых не было в первоначальной выборке.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="#Transductive">
+        <rdf:type rdf:resource="#InferenceType"/>
+        <rdfs:label xml:lang="ru">Трансдуктивный вывод (Transductive)</rdfs:label>
+        <rdfs:comment xml:lang="ru">Алгоритм работает строго с той выборкой, которая загружена в память. Чтобы разметить новую появившуюся точку, придется запускать всю кластеризацию с нуля для всех данных.</rdfs:comment>
+    </owl:NamedIndividual>
+
+    <!-- ПАРАМЕТРЫ -->
+    <owl:NamedIndividual rdf:about="#Param_NumClusters">
+        <rdf:type rdf:resource="#Parameter"/>
+        <rdfs:label xml:lang="ru">Число кластеров (k)</rdfs:label>
+        <rdfs:comment xml:lang="ru">Пользователь обязан до начала работы алгоритма указать, на сколько именно групп (K) нужно разбить данные.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="#Param_DistanceThreshold">
+        <rdf:type rdf:resource="#Parameter"/>
+        <rdfs:label xml:lang="ru">Порог расстояния (threshold)</rdfs:label>
+        <rdfs:comment xml:lang="ru">Пороговая величина расстояния, при превышении которой объекты перестают объединяться в один кластер, либо создается новый кластер.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="#Param_Bandwidth">
+        <rdf:type rdf:resource="#Parameter"/>
+        <rdfs:label xml:lang="ru">Ширина окна (bandwidth)</rdfs:label>
+        <rdfs:comment xml:lang="ru">В плотностных методах — радиус поиска, внутри которого точки считаются "соседями" при вычислении локального сдвига к центру масс.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="#Param_Damping">
+        <rdf:type rdf:resource="#Parameter"/>
+        <rdfs:label xml:lang="ru">Затухание (damping)</rdfs:label>
+        <rdfs:comment xml:lang="ru">Коэффициент в методе Affinity Propagation, контролирующий скорость изменения сообщений между точками, чтобы избежать числовых колебаний при сходимости.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="#Param_NeighborhoodSize">
+        <rdf:type rdf:resource="#Parameter"/>
+        <rdfs:label xml:lang="ru">Размер окрестности (eps)</rdfs:label>
+        <rdfs:comment xml:lang="ru">Максимальное расстояние от наблюдения, чтобы считать другое наблюдение его "соседом" (параметр epsilon в алгоритме DBSCAN).</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="#Param_MinMembership">
+        <rdf:type rdf:resource="#Parameter"/>
+        <rdfs:label xml:lang="ru">Мин. кол-во объектов (min_samples)</rdfs:label>
+        <rdfs:comment xml:lang="ru">Минимальное число наблюдений в окрестности точки, необходимое для того, чтобы признать эту точку "корневой" (ядром кластера), а не шумом.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="#Param_BranchingFactor">
+        <rdf:type rdf:resource="#Parameter"/>
+        <rdfs:label xml:lang="ru">Фактор ветвления (branching factor)</rdfs:label>
+        <rdfs:comment xml:lang="ru">Параметр алгоритма BIRCH, ограничивающий максимальное количество подкластеров в каждом узле строящегося дерева.</rdfs:comment>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#Param_BatchSize">
+        <rdf:type rdf:resource="#Parameter"/>
+        <rdfs:label xml:lang="ru">Размер пакета (batch size)</rdfs:label>
+        <rdfs:comment xml:lang="ru">Количество случайно отбираемых наблюдений, обрабатываемых алгоритмом за одну мини-итерацию (применяется для ускорения вычислений в потоковых методах).</rdfs:comment>
+    </owl:NamedIndividual>
+
+    <!-- МЕТРИКИ -->
+    <owl:NamedIndividual rdf:about="#Metric_PointDistance">
+        <rdf:type rdf:resource="#Metric"/>
+        <rdfs:label xml:lang="ru">Расстояние между точками (Евклидово)</rdfs:label>
+        <rdfs:comment xml:lang="ru">Геометрическое расстояние по прямой линии между объектами в многомерном признаковом пространстве. Самая популярная мера сходства.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="#Metric_NearestPointDistance">
+        <rdf:type rdf:resource="#Metric"/>
+        <rdfs:label xml:lang="ru">Расстояния до ближайших точек</rdfs:label>
+        <rdfs:comment xml:lang="ru">Метрика, используемая в плотностных методах. Фокусируется не на центре кластера, а на расстоянии от края одного множества точек до другого.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="#Metric_GraphDistance">
+        <rdf:type rdf:resource="#Metric"/>
+        <rdfs:label xml:lang="ru">Графовое расстояние</rdfs:label>
+        <rdfs:comment xml:lang="ru">Объекты представляются как вершины графа (например, граф k-ближайших соседей). Расстояние измеряется как вес ребер или длина пути в графе.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="#Metric_Mahalanobis">
+        <rdf:type rdf:resource="#Metric"/>
+        <rdfs:label xml:lang="ru">Расстояние Махаланобиса</rdfs:label>
+        <rdfs:comment xml:lang="ru">Статистическая мера расстояния, которая учитывает дисперсию и ковариацию признаков. Позволяет алгоритмам корректно распознавать вытянутые эллипсоидальные кластеры.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="#Metric_AnyPairwise">
+        <rdf:type rdf:resource="#Metric"/>
+        <rdfs:label xml:lang="ru">Любое попарное расстояние</rdfs:label>
+        <rdfs:comment xml:lang="ru">Алгоритм способен работать с заранее вычисленной матрицей сходства/различия, используя любую кастомную или неметрическую функцию расстояния (например, процент несогласия).</rdfs:comment>
+    </owl:NamedIndividual>
+
+    <!-- USE CASES (ПРИМЕНЕНИЕ) -->
+    <owl:NamedIndividual rdf:about="#UC_GeneralPurpose">
+        <rdf:type rdf:resource="#UseCase"/>
+        <rdfs:label xml:lang="ru">Универсальное применение</rdfs:label>
+        <rdfs:comment xml:lang="ru">Алгоритм "общего назначения", который используется по умолчанию как базовый (baseline) для большинства типовых задач.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="#UC_OutlierRemoval">
+        <rdf:type rdf:resource="#UseCase"/>
+        <rdfs:label xml:lang="ru">Удаление выбросов и шумов</rdfs:label>
+        <rdfs:comment xml:lang="ru">Задача поиска аномалий. Объекты, не принадлежащие ни к одному сгущению, изолируются как ошибочные или нетипичные точки.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="#UC_DensityEstimation">
+        <rdf:type rdf:resource="#UseCase"/>
+        <rdfs:label xml:lang="ru">Оценка плотности распределения</rdfs:label>
+        <rdfs:comment xml:lang="ru">Статистическая задача восстановления вероятностной функции (например, Гауссовой плотности) на основе эмпирических данных.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="#UC_DataReduction">
+        <rdf:type rdf:resource="#UseCase"/>
+        <rdfs:label xml:lang="ru">Сокращение размерности данных</rdfs:label>
+        <rdfs:comment xml:lang="ru">Использование кластеризации для уплотнения (сжатия) огромных массивов данных до управляемого набора макро-представителей перед дальнейшим анализом.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="#UC_ManyClusters">
+        <rdf:type rdf:resource="#UseCase"/>
+        <rdfs:label xml:lang="ru">Выделение большого числа кластеров</rdfs:label>
+        <rdfs:comment xml:lang="ru">Задача, где данные фрагментированы на десятки или сотни мелких подгрупп (например, микро-сегментация клиентов).</rdfs:comment>
+    </owl:NamedIndividual>
+
+    <!-- ======================================================================= -->
+    <!-- Individuals: АЛГОРИТМЫ (С добавленными комментариями из теории)         -->
+    <!-- ======================================================================= -->
+
+    <owl:NamedIndividual rdf:about="#Algo_AffinityPropagation">
+        <rdf:type rdf:resource="#PartitioningAlgorithm"/>
+        <assumesClusterSize rdf:resource="#UnevenClusterSize"/>
+        <hasInferenceType rdf:resource="#Inductive"/>
+        <hasParameter rdf:resource="#Param_Damping"/>
+        <hasScalability rdf:resource="#LowScalability"/>
+        <solvesTask rdf:resource="#UC_ManyClusters"/>
+        <supportsGeometry rdf:resource="#NonFlatGeometry"/>
+        <usesMetric rdf:resource="#Metric_GraphDistance"/>
+        <rdfs:label xml:lang="ru">Affinity propagation</rdfs:label>
+        <rdfs:comment xml:lang="ru">Алгоритм кластеризации на основе графов. Создает кластеры, отправляя сообщения между парами объектов до сходимости. Автоматически определяет количество кластеров на основе предпочтений (sample preference). Плохо масштабируется для очень больших выборок, но хорошо справляется с неравномерными кластерами невыпуклой формы.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="#Algo_Agglomerative">
+        <rdf:type rdf:resource="#HierarchicalAlgorithm"/>
+        <hasInferenceType rdf:resource="#Transductive"/>
+        <hasParameter rdf:resource="#Param_DistanceThreshold"/>
+        <hasParameter rdf:resource="#Param_NumClusters"/>
+        <hasScalability rdf:resource="#HighScalability"/>
+        <solvesTask rdf:resource="#UC_ManyClusters"/>
+        <usesMetric rdf:resource="#Metric_AnyPairwise"/>
+        <rdfs:label xml:lang="ru">Agglomerative clustering</rdfs:label>
+        <rdfs:comment xml:lang="ru">Иерархические агломеративные методы (AGNES). Суть состоит в последовательном объединении меньших кластеров в большие. В начале работы алгоритма каждый объект первоначально является отдельным кластером. На каждом шаге наиболее похожие объекты/кластеры объединяются друг с другом, формируя больший кластер, пока не будет достигнута некоторая конечная точка. Результат представляется в виде дендрограммы.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="#Algo_BIRCH">
+        <rdf:type rdf:resource="#HierarchicalAlgorithm"/>
+        <hasInferenceType rdf:resource="#Inductive"/>
+        <hasParameter rdf:resource="#Param_BranchingFactor"/>
+        <hasParameter rdf:resource="#Param_DistanceThreshold"/>
+        <hasScalability rdf:resource="#HighScalability"/>
+        <solvesTask rdf:resource="#UC_DataReduction"/>
+        <solvesTask rdf:resource="#UC_OutlierRemoval"/>
+        <usesMetric rdf:resource="#Metric_PointDistance"/>
+        <rdfs:label xml:lang="ru">BIRCH</rdfs:label>
+        <rdfs:comment xml:lang="ru">Balanced Reducing and Clustering using Hierarchies. Это алгоритм, специально разработанный для кластеризации очень больших наборов данных. Алгоритм использует дерево признаков кластеризации (CF) — иерархическую структуру с эффективным использованием памяти. Он поэтапно обрабатывает данные, создавая узлы в дереве CF, поддерживая баланс через порог (threshold) и фактор ветвления (branching factor).</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="#Algo_BisectingKMeans">
+        <rdf:type rdf:resource="#PartitioningAlgorithm"/>
+        <assumesClusterSize rdf:resource="#EvenClusterSize"/>
+        <hasInferenceType rdf:resource="#Inductive"/>
+        <hasParameter rdf:resource="#Param_NumClusters"/>
+        <hasScalability rdf:resource="#HighScalability"/>
+        <solvesTask rdf:resource="#UC_GeneralPurpose"/>
+        <supportsGeometry rdf:resource="#FlatGeometry"/>
+        <usesMetric rdf:resource="#Metric_PointDistance"/>
+        <rdfs:label xml:lang="ru">Bisecting K-Means</rdfs:label>
+        <rdfs:comment xml:lang="ru">Бисекция к-средних (раздвоение). По Б.Г. Миркину относится к классу дивизимных (делимых) методов. В начале работы все объекты принадлежат одному кластеру, который на последующих шагах делится на меньшие при помощи критерия максимизации расстояния Уорда (что эквивалентно K-Means при K=2). Метод формирует бинарную иерархию (дерево) и хорошо масштабируется.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="#Algo_DBSCAN">
+        <rdf:type rdf:resource="#DensityBasedAlgorithm"/>
+        <assumesClusterSize rdf:resource="#UnevenClusterSize"/>
+        <hasInferenceType rdf:resource="#Transductive"/>
+        <hasParameter rdf:resource="#Param_NeighborhoodSize"/>
+        <hasScalability rdf:resource="#HighScalability"/>
+        <solvesTask rdf:resource="#UC_OutlierRemoval"/>
+        <supportsGeometry rdf:resource="#NonFlatGeometry"/>
+        <usesMetric rdf:resource="#Metric_NearestPointDistance"/>
+        <rdfs:label xml:lang="ru">DBSCAN</rdfs:label>
+        <rdfs:comment xml:lang="ru">Density-Based Spatial Clustering of Applications with Noise. Это плотностной алгоритм кластеризации. Алгоритм выделяет области высокой концентрации точек (корневые точки и их соседи), которые разделяются областями с низкой плотностью. Точки, попавшие в области с низкой плотностью, определяются как выбросы (шумы). Характерно нахождение кластеров произвольной (невыпуклой) формы.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="#Algo_GaussianMixtures">
+        <rdf:type rdf:resource="#ModelBasedAlgorithm"/>
+        <hasInferenceType rdf:resource="#Inductive"/>
+        <hasScalability rdf:resource="#LowScalability"/>
+        <solvesTask rdf:resource="#UC_DensityEstimation"/>
+        <supportsGeometry rdf:resource="#FlatGeometry"/>
+        <usesMetric rdf:resource="#Metric_Mahalanobis"/>
+        <rdfs:label xml:lang="ru">Gaussian mixtures</rdfs:label>
+        <rdfs:comment xml:lang="ru">Смеси распределений. Это модельный метод (EM-алгоритм). Согласно модели смеси распределений, наблюденные данные – это независимая случайная выборка из популяции. Каждый кластер представлен одномодальной Гауссовой функцией плотности (эллипсоидальные кластеры). Оценки параметров определяются путем максимизации логарифма правдоподобия. Идеально для оценки плотности.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="#Algo_HDBSCAN">
+        <rdf:type rdf:resource="#DensityBasedAlgorithm"/>
+        <assumesClusterSize rdf:resource="#UnevenClusterSize"/>
+        <hasInferenceType rdf:resource="#Transductive"/>
+        <hasParameter rdf:resource="#Param_MinMembership"/>
+        <hasScalability rdf:resource="#HighScalability"/>
+        <solvesTask rdf:resource="#UC_OutlierRemoval"/>
+        <supportsGeometry rdf:resource="#NonFlatGeometry"/>
+        <usesMetric rdf:resource="#Metric_NearestPointDistance"/>
+        <rdfs:label xml:lang="ru">HDBSCAN</rdfs:label>
+        <rdfs:comment xml:lang="ru">Иерархическое плотностное сканирование (Hierarchical DBSCAN). Преобразует алгоритм DBSCAN в иерархический метод кластеризации для надежной работы с данными, в которых кластеры имеют переменную плотность. Является мощным инструментом для поиска кластеров произвольной формы с автоматическим удалением шума и выбросов.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="#Algo_KMeans">
+        <rdf:type rdf:resource="#PartitioningAlgorithm"/>
+        <assumesClusterSize rdf:resource="#EvenClusterSize"/>
+        <hasInferenceType rdf:resource="#Inductive"/>
+        <hasParameter rdf:resource="#Param_NumClusters"/>
+        <hasScalability rdf:resource="#HighScalability"/>
+        <solvesTask rdf:resource="#UC_GeneralPurpose"/>
+        <supportsGeometry rdf:resource="#FlatGeometry"/>
+        <usesMetric rdf:resource="#Metric_PointDistance"/>
+        <rdfs:label xml:lang="ru">K-Means</rdfs:label>
+        <rdfs:comment xml:lang="ru">Алгоритм К внутригрупповых средних. Самый популярный метод построения разбиения по матрице объект-признак. Процесс состоит из двух шагов: (1) Обновление кластеров (объекты приписываются к ближайшему центроиду); (2) Обновление центроидов. Исходит из допущения, что кластеры имеют выпуклую форму, все признаки шкалированы одинаково, а группы сбалансированы по количеству наблюдений.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="#Algo_MeanShift">
+        <rdf:type rdf:resource="#DensityBasedAlgorithm"/>
+        <assumesClusterSize rdf:resource="#UnevenClusterSize"/>
+        <hasInferenceType rdf:resource="#Inductive"/>
+        <hasParameter rdf:resource="#Param_Bandwidth"/>
+        <hasScalability rdf:resource="#LowScalability"/>
+        <solvesTask rdf:resource="#UC_ManyClusters"/>
+        <supportsGeometry rdf:resource="#NonFlatGeometry"/>
+        <usesMetric rdf:resource="#Metric_PointDistance"/>
+        <rdfs:label xml:lang="ru">Mean-shift</rdfs:label>
+        <rdfs:comment xml:lang="ru">Метод сдвига к среднему. Не требует устанавливать количество кластеров априорно и не делает допущений о форме кластеров. Идея метафорична: представьте поле в тумане. Каждую минуту каждый человек оглядывается в пределах своего радиуса (bandwidth) и делает шаг в сторону большинства людей, которых он видит. Часто применяется для сегментации изображений.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="#Algo_OPTICS">
+        <rdf:type rdf:resource="#DensityBasedAlgorithm"/>
+        <assumesClusterSize rdf:resource="#UnevenClusterSize"/>
+        <hasInferenceType rdf:resource="#Transductive"/>
+        <hasParameter rdf:resource="#Param_MinMembership"/>
+        <hasScalability rdf:resource="#HighScalability"/>
+        <solvesTask rdf:resource="#UC_OutlierRemoval"/>
+        <supportsGeometry rdf:resource="#NonFlatGeometry"/>
+        <usesMetric rdf:resource="#Metric_PointDistance"/>
+        <rdfs:label xml:lang="ru">OPTICS</rdfs:label>
+        <rdfs:comment xml:lang="ru">Плотностной алгоритм, решающий главную слабость DBSCAN — работу с кластерами различной (переменной) плотности. Создает упорядоченный список точек данных, отражающий структуру кластеризации. Успешно работает с невыпуклыми формами и отлично фильтрует шумовые выбросы.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="#Algo_SpectralClustering">
+        <rdf:type rdf:resource="#PartitioningAlgorithm"/>
+        <assumesClusterSize rdf:resource="#EvenClusterSize"/>
+        <hasInferenceType rdf:resource="#Transductive"/>
+        <hasParameter rdf:resource="#Param_NumClusters"/>
+        <hasScalability rdf:resource="#MediumScalability"/>
+        <supportsGeometry rdf:resource="#NonFlatGeometry"/>
+        <usesMetric rdf:resource="#Metric_GraphDistance"/>
+        <rdfs:label xml:lang="ru">Spectral clustering</rdfs:label>
+        <rdfs:comment xml:lang="ru">Спектральный кластер-анализ. Основан на преобразовании матрицы связи, например, через Лапласиан. Задача отыскания оптимального разбиения эквивалентна проблеме максимизации отношения Рэлея и достигается на собственном векторе матрицы. Эффективен для кластеров сложной формы и сегментации изображений.</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <owl:NamedIndividual rdf:about="#Algo_Ward">
+        <rdf:type rdf:resource="#HierarchicalAlgorithm"/>
+        <hasInferenceType rdf:resource="#Transductive"/>
+        <hasParameter rdf:resource="#Param_DistanceThreshold"/>
+        <hasParameter rdf:resource="#Param_NumClusters"/>
+        <hasScalability rdf:resource="#HighScalability"/>
+        <solvesTask rdf:resource="#UC_ManyClusters"/>
+        <usesMetric rdf:resource="#Metric_PointDistance"/>
+        <rdfs:label xml:lang="ru">Ward hierarchical clustering</rdfs:label>
+        <rdfs:comment xml:lang="ru">Агломеративный иерархический алгоритм Уорда (Ward). В качестве критерия слияния использует минимизацию дисперсии объединенных кластеров (разность значений критерия метода к-средних на исходном и объединенном разбиениях). Заставляет присоединять маленькие кластеры к большим.</rdfs:comment>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#Algo_MiniBatchKMeans">
+        <rdf:type rdf:resource="#PartitioningAlgorithm"/>
+        <hasParameter rdf:resource="#Param_NumClusters"/>
+        <hasParameter rdf:resource="#Param_BatchSize"/>
+        <hasScalability rdf:resource="#HighScalability"/>
+        <supportsGeometry rdf:resource="#FlatGeometry"/>
+        <assumesClusterSize rdf:resource="#EvenClusterSize"/>
+        <usesMetric rdf:resource="#Metric_PointDistance"/>
+        <hasInferenceType rdf:resource="#Inductive"/>
+        <solvesTask rdf:resource="#UC_GeneralPurpose"/>
+        <rdfs:label xml:lang="ru">MiniBatch K-Means</rdfs:label>
+        <rdfs:comment xml:lang="ru">Мини-пакетный алгоритм k-средних работает аналогично k-средних. Разница состоит в том, что в нем наиболее вычислительно затратный шаг выполняется только на случайной выборке наблюдений (пакете), задаваемой параметром batch_size. Позволяет значительно сократить время сходимости при небольшой потере качества.</rdfs:comment>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#Algo_Maximin">
+        <rdf:type rdf:resource="#PartitioningAlgorithm"/>
+        <hasParameter rdf:resource="#Param_DistanceThreshold"/> 
+        <hasScalability rdf:resource="#HighScalability"/>
+        <supportsGeometry rdf:resource="#FlatGeometry"/> 
+        <usesMetric rdf:resource="#Metric_PointDistance"/>
+        <hasInferenceType rdf:resource="#Inductive"/>
+        <rdfs:label xml:lang="ru">Алгоритм Максимина</rdfs:label>
+        <rdfs:comment xml:lang="ru">Алгоритм максиминного расстояния — простая эвристическая процедура, использующая евклидово расстояние. В первую очередь он выявляет наиболее удалённые кластеры через пороговую величину Т. Алгоритм привлекателен с вычислительной точки зрения, поскольку требует лишь однократный просмотр выборки. Позволяет быстро получить приближенные оценки и исходные центры (гнёзда).</rdfs:comment>
+    </owl:NamedIndividual>
+
+</rdf:RDF>

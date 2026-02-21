@@ -54,6 +54,17 @@ class Task(models.Model):
     solution_code = models.TextField(blank=True, verbose_name="Эталонное решение / Пояснение")
     test_input = models.JSONField(default=dict, blank=True, verbose_name="Входные данные / Варианты ответа")
     expected_output = models.JSONField(default=dict, blank=True, verbose_name="Ожидаемый ответ")
+    
+    # Связь с онтологией для адаптивного обучения
+    concept = models.ForeignKey(
+        'encyclopedia.Concept',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='tasks',
+        verbose_name="Понятие из онтологии",
+        help_text="С каким понятием из онтологии связана эта задача (для адаптивного обучения)"
+    )
 
     class Meta:
         db_table = 'simulator_task'

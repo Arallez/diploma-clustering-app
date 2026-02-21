@@ -1,0 +1,144 @@
+/* Стили для админки задач (Task) - исправление читаемости кнопок */
+
+/* Кнопки "Добавить вариант" и "Добавить вопрос" - белый текст на ярком синем фоне */
+.addlink.add-quiz-option,
+#add-quiz-question.addlink,
+button.addlink.add-quiz-option,
+button#add-quiz-question.addlink {
+    background-color: #417690 !important;
+    color: #ffffff !important;
+    padding: 10px 16px !important;
+    border: none !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    text-decoration: none !important;
+    display: inline-block !important;
+    margin-top: 8px !important;
+    transition: background-color 0.2s ease !important;
+}
+
+.addlink.add-quiz-option:hover,
+#add-quiz-question.addlink:hover,
+button.addlink.add-quiz-option:hover,
+button#add-quiz-question.addlink:hover,
+.addlink.add-quiz-option:link,
+#add-quiz-question.addlink:link,
+.addlink.add-quiz-option:visited,
+#add-quiz-question.addlink:visited,
+.addlink.add-quiz-option:active,
+#add-quiz-question.addlink:active {
+    background-color: #205067 !important;
+    color: #ffffff !important;
+    text-decoration: none !important;
+}
+
+/* Кнопки "Показать/Скрыть" Django админки - просто белый текст для читаемости на сером фоне */
+a.collapse-toggle,
+a#fieldsetcollapser0,
+a[id^="fieldsetcollapser"],
+a[id*="fieldsetcollapser"] {
+    color: #ffffff !important;
+}
+
+a.collapse-toggle:hover,
+a#fieldsetcollapser0:hover,
+a[id^="fieldsetcollapser"]:hover,
+a[id*="fieldsetcollapser"]:hover,
+a.collapse-toggle:link,
+a#fieldsetcollapser0:link,
+a[id^="fieldsetcollapser"]:link,
+a.collapse-toggle:visited,
+a#fieldsetcollapser0:visited,
+a[id^="fieldsetcollapser"]:visited,
+a.collapse-toggle:active,
+a#fieldsetcollapser0:active,
+a[id^="fieldsetcollapser"]:active {
+    color: #ffffff !important;
+}
+
+/* Кнопки удаления - БЕЛЫЙ ТЕКСТ для читаемости */
+button.deletelink.remove-quiz-option,
+button.deletelink.remove-quiz-question,
+.deletelink.remove-quiz-option,
+.deletelink.remove-quiz-question,
+#fieldset-quiz-constructor button.deletelink,
+#fieldset-quiz-constructor .deletelink,
+#quiz-questions-container button.deletelink,
+#quiz-questions-container .deletelink,
+.quiz-question-block .deletelink,
+.quiz-question-block button.deletelink {
+    color: #ffffff !important;
+}
+
+button.deletelink.remove-quiz-option:hover,
+button.deletelink.remove-quiz-question:hover,
+.deletelink.remove-quiz-option:hover,
+.deletelink.remove-quiz-question:hover,
+#fieldset-quiz-constructor button.deletelink:hover,
+#fieldset-quiz-constructor .deletelink:hover,
+#quiz-questions-container button.deletelink:hover,
+#quiz-questions-container .deletelink:hover,
+.quiz-question-block .deletelink:hover,
+.quiz-question-block button.deletelink:hover,
+button.deletelink.remove-quiz-option:link,
+button.deletelink.remove-quiz-question:link,
+.deletelink.remove-quiz-option:link,
+.deletelink.remove-quiz-question:link,
+button.deletelink.remove-quiz-option:visited,
+button.deletelink.remove-quiz-question:visited,
+.deletelink.remove-quiz-option:visited,
+.deletelink.remove-quiz-question:visited,
+button.deletelink.remove-quiz-option:active,
+button.deletelink.remove-quiz-question:active,
+.deletelink.remove-quiz-option:active,
+.deletelink.remove-quiz-question:active {
+    color: #ffffff !important;
+}
+
+/* Убеждаемся, что ВСЕ элементы внутри кнопок удаления тоже белые */
+button.deletelink.remove-quiz-option *,
+button.deletelink.remove-quiz-question *,
+.deletelink.remove-quiz-option *,
+.deletelink.remove-quiz-question *,
+#fieldset-quiz-constructor .deletelink *,
+#quiz-questions-container .deletelink *,
+.quiz-question-block .deletelink * {
+    color: #ffffff !important;
+}
+
+/* Стили для конструктора вопросов */
+#fieldset-quiz-constructor {
+    margin-top: 20px;
+}
+
+#fieldset-quiz-constructor.collapsed .quiz-constructor-content {
+    display: none;
+}
+
+#fieldset-quiz-constructor:not(.collapsed) .quiz-constructor-content {
+    display: block;
+}
+
+.quiz-question-block {
+    margin-bottom: 24px;
+    padding: 16px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+.quiz-question-block h3 {
+    margin-top: 0;
+}
+
+.quiz-options-table {
+    width: 100%;
+    max-width: 700px;
+    border-collapse: collapse;
+}
+
+.quiz-options-table th {
+    text-align: left;
+    width: 60px;
+}

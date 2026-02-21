@@ -8,6 +8,11 @@ from django.utils.html import strip_tags
 from .forms import UserRegisterForm
 from apps.tasks.models import Task, UserTaskAttempt, TaskTag
 from .models import Material
+from apps.encyclopedia.recommendations import (
+    get_recommended_tasks,
+    get_recommended_materials,
+    get_user_progress
+)
 
 def home(request):
     return render(request, 'core/home.html')
@@ -62,12 +67,20 @@ def profile(request):
     # 2. История последних действий (последние 10 попыток)
     recent_attempts = UserTaskAttempt.objects.filter(user=user).select_related('task')[:10]
     
+    # 3. Адаптивные рекомендации на основе онтологии
+    recommended_tasks = get_recommended_tasks(user, limit=5)
+    recommended_materials = get_recommended_materials(user, limit=5)
+    ontology_progress = get_user_progress(user)
+    
     context = {
         'user': user,
         'total_tasks': total_tasks,
         'solved_tasks_count': solved_tasks_count,
         'progress_percent': progress_percent,
         'recent_attempts': recent_attempts,
+        'recommended_tasks': recommended_tasks,
+        'recommended_materials': recommended_materials,
+        'ontology_progress': ontology_progress,
     }
     
     return render(request, 'core/profile.html', context)

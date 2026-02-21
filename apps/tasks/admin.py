@@ -20,7 +20,7 @@ class TaskAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('title',)}
     ordering = ('tags__order', 'order')
     fieldsets = (
-        (None, {'fields': ('title', 'slug', 'description', 'task_type', 'difficulty', 'tags', 'order')}),
+        (None, {'fields': ('title', 'slug', 'description', 'task_type', 'difficulty', 'tags', 'order', 'concept')}),
         ('Код (для типа «Написание кода»)', {'fields': ('function_name', 'initial_code', 'solution_code'), 'classes': ('collapse',)}),
         ('Данные теста (JSON)', {'fields': ('test_input', 'expected_output'), 'classes': ('collapse',), 'description': 'Заполняются автоматически из конструктора для тестов.'}),
     )

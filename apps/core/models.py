@@ -20,6 +20,17 @@ class Material(models.Model):
         help_text="К каким темам задач относится этот материал"
     )
     
+    # Связь с онтологией для адаптивного обучения
+    concept = models.ForeignKey(
+        'encyclopedia.Concept',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='materials',
+        verbose_name="Понятие из онтологии",
+        help_text="Какое понятие из онтологии объясняет этот материал"
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Создано")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Обновлено")
 

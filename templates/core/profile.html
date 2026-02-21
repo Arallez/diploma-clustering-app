@@ -22,10 +22,15 @@
                 <span class="role-badge">Студент</span>
             </div>
         </div>
-        <div class="logout-form">
-            <form action="{% url 'logout' %}" method="post">
+        
+        <!-- Profile Actions -->
+        <div class="profile-actions" style="display: flex; gap: 12px; align-items: center;">
+            <a href="{% url 'encyclopedia:recommendations' %}" class="btn" style="background-color: var(--primary-color); color: white; display: flex; align-items: center; gap: 6px; padding: 10px 16px;">
+                <span style="font-size: 1.1em;">🧭</span> Путь обучения
+            </a>
+            <form action="{% url 'logout' %}" method="post" style="margin: 0;">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-outline-danger">Выйти</button>
+                <button type="submit" class="btn btn-outline-danger" style="padding: 10px 16px;">Выйти</button>
             </form>
         </div>
     </div>

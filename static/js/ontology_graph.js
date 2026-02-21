@@ -121,14 +121,9 @@ function initOntologyGraph(containerId, nodesData, linksData) {
         d.rectHeight = 26;
     });
 
-    // 3. Initialize Base Simulation (Increased spacing)
+    // 3. Initialize Base Simulation
     const simulation = d3.forceSimulation(nodesData)
-        // Increased distance to prevent overlaps with rectangles
-        .force("link", d3.forceLink(linksData).id(d => d.id).distance(220))
-        // Stronger repulsion
-        .force("charge", d3.forceManyBody().strength(-2000))
-        // Collision using the approximated width
-        .force("collide", d3.forceCollide().radius(d => d.rectWidth / 2 + 20));
+        .force("link", d3.forceLink(linksData).id(d => d.id).distance(220));
 
     // Lines (Edges)
     const link = g.append("g")
@@ -168,7 +163,7 @@ function initOntologyGraph(containerId, nodesData, linksData) {
         .attr("dy", "0.35em") // Vertical center offset
         .text(d => d.title);
 
-    // Fixed Side Info Panel Element
+    // Overlay Info Panel Element
     const infoPanel = d3.select("#graph-info-panel");
 
     node.on("mouseover", function(event, d) {
@@ -209,7 +204,7 @@ function initOntologyGraph(containerId, nodesData, linksData) {
             </li>
         `).join("");
         
-        // Update Static Panel Content
+        // Update Overlay Panel Content
         infoPanel.html(`
             <div class="panel-title" style="color:${colors[d.group]}">${d.title}</div>
             <div class="panel-uri">URI: ${d.uri.split('#').pop()}</div>
@@ -225,6 +220,9 @@ function initOntologyGraph(containerId, nodesData, linksData) {
                 🖱️ Кликните по узлу, чтобы перейти к теории
             </div>
         `);
+        
+        // Make the overlay visible
+        infoPanel.classed("visible", true);
     })
     .on("mouseout", function(d) {
         // Reset Style
@@ -239,12 +237,8 @@ function initOntologyGraph(containerId, nodesData, linksData) {
             
         node.style("opacity", 1);
         
-        // Reset Static Panel Content
-        infoPanel.html(`
-            <div class="panel-placeholder">
-                <p>Наведите курсор на узел графа, чтобы увидеть подробную информацию.</p>
-            </div>
-        `);
+        // Hide the overlay
+        infoPanel.classed("visible", false);
     })
     .on("click", function(event, d) {
         window.location.href = d.url;
@@ -301,26 +295,29 @@ function initOntologyGraph(containerId, nodesData, linksData) {
 
         if (type === 'force') {
             simulation
-                .force("charge", d3.forceManyBody().strength(-2000))
+                .force("charge", d3.forceManyBody().strength(-1500))
                 .force("center", d3.forceCenter(0, 0))
-                .force("collide", d3.forceCollide().radius(d => d.rectWidth / 2 + 30));
+                .force("collide", d3.forceCollide().radius(d => d.rectWidth / 2 + 25).iterations(4));
         } else if (type === 'tree') {
-            // Tree layout using depth. INCREASED layerHeight for better spacing
+            // Tree layout using depth.
             const layerHeight = 180; 
             const yOffset = (maxDepth * layerHeight) / 2;
             
             simulation
-                .force("charge", d3.forceManyBody().strength(-2500))
-                .force("y", d3.forceY(d => (d.depth * layerHeight) - yOffset).strength(1.5))
-                .force("x", d3.forceX(0).strength(0.1)) // Less strict horizontal center to spread out
-                .force("collide", d3.forceCollide().radius(d => d.rectWidth / 2 + 20));
+                .force("charge", d3.forceManyBody().strength(-1500))
+                .force("y", d3.forceY(d => (d.depth * layerHeight) - yOffset).strength(1.2))
+                .force("x", d3.forceX(0).strength(0.1)) // Gentle pull to center horizontally
+                .force("collide", d3.forceCollide().radius(d => d.rectWidth / 2 + 20).iterations(4));
         } else if (type === 'radial') {
-            // Radial layout
-            const radiusStep = 180; // Increased spacing
+            // Radial layout - fixed jumping
+            const radiusStep = 220; // Give them wider rings
             simulation
-                .force("charge", d3.forceManyBody().strength(-2000))
-                .force("r", d3.forceRadial(d => d.depth * radiusStep, 0, 0).strength(1.5))
-                .force("collide", d3.forceCollide().radius(d => d.rectWidth / 2 + 20));
+                // Lower charge to prevent explosion jumping
+                .force("charge", d3.forceManyBody().strength(-800))
+                // Soften radial pull so large nodes have room to breathe
+                .force("r", d3.forceRadial(d => d.depth * radiusStep, 0, 0).strength(0.8))
+                // Increase iterations for more accurate, less jumpy collision
+                .force("collide", d3.forceCollide().radius(d => d.rectWidth / 2 + 20).iterations(6));
         }
         
         simulation.alpha(1).restart();

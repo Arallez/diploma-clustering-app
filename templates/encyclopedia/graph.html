@@ -4,140 +4,10 @@
 {% block title %}Граф знаний - {{ block.super }}{% endblock %}
 
 {% block extra_css %}
-<!-- D3.js для отрисовки графа -->
+<!-- D3.js Library -->
 <script src="https://d3js.org/d3.v7.min.js"></script>
-<style>
-.graph-container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 1rem 2rem;
-}
-.graph-header {
-    margin-bottom: 1rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-}
-.graph-header h1 {
-    color: var(--text-color);
-    margin-bottom: 0.5rem;
-}
-.graph-header p {
-    color: var(--text-muted);
-    margin: 0;
-}
-/* Легенда (как в Protege) */
-.graph-legend {
-    display: flex;
-    gap: 15px;
-    background: var(--card-bg);
-    padding: 10px 15px;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    font-size: 13px;
-}
-.legend-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--text-color);
-}
-.legend-color {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-}
-
-#ontology-graph {
-    width: 100%;
-    height: 75vh;
-    min-height: 600px;
-    background-color: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    overflow: hidden;
-    position: relative;
-    cursor: grab;
-}
-#ontology-graph:active {
-    cursor: grabbing;
-}
-
-/* Стили для D3 */
-.node circle {
-    stroke: var(--bg-color);
-    stroke-width: 2px;
-    transition: all 0.2s;
-}
-.node text {
-    font-size: 12px;
-    font-family: 'Inter', sans-serif;
-    font-weight: 500;
-    fill: var(--text-color);
-    pointer-events: none;
-    text-shadow: 0px 1px 3px var(--bg-color), 0px -1px 3px var(--bg-color), 1px 0px 3px var(--bg-color), -1px 0px 3px var(--bg-color);
-}
-.link {
-    stroke: var(--text-muted);
-    stroke-opacity: 0.4;
-    stroke-width: 1.5px;
-}
-/* Текст на связях (как в Protege) */
-.link-label {
-    font-size: 10px;
-    font-family: 'Fira Code', monospace;
-    fill: var(--text-muted);
-    pointer-events: none;
-    text-anchor: middle;
-    background: var(--bg-color);
-    text-shadow: 0px 1px 2px var(--bg-color), 0px -1px 2px var(--bg-color), 1px 0px 2px var(--bg-color), -1px 0px 2px var(--bg-color);
-}
-
-/* Tooltip */
-.tooltip {
-    position: absolute;
-    padding: 12px;
-    background: var(--card-bg);
-    border: 1px solid var(--primary-color);
-    color: var(--text-color);
-    border-radius: 6px;
-    pointer-events: none;
-    font-size: 13px;
-    opacity: 0;
-    transition: opacity 0.2s;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    z-index: 1000;
-    max-width: 300px;
-    line-height: 1.4;
-}
-
-/* Controls */
-.graph-controls {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-.graph-btn {
-    background: var(--bg-color);
-    border: 1px solid var(--border-color);
-    color: var(--text-color);
-    width: 36px;
-    height: 36px;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-.graph-btn:hover {
-    background: var(--primary-color);
-    color: white;
-}
-</style>
+<!-- Ontology Graph Styles -->
+<link rel="stylesheet" href="{% static 'css/ontology_graph.css' %}?v=1.0">
 {% endblock %}
 
 {% block content %}
@@ -157,8 +27,13 @@
     </div>
     
     <div style="position: relative;">
+        <!-- Canvas for D3 graph -->
         <div id="ontology-graph"></div>
-        <div id="graph-tooltip" class="tooltip"></div>
+        
+        <!-- Tooltip element -->
+        <div id="graph-tooltip" class="graph-tooltip"></div>
+        
+        <!-- Graph controls -->
         <div class="graph-controls">
             <button class="graph-btn" id="btn-zoom-in" title="Увеличить">+</button>
             <button class="graph-btn" id="btn-zoom-out" title="Уменьшить">-</button>
@@ -169,16 +44,17 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- Graph Visualization Logic -->
+<script src="{% static 'js/ontology_graph.js' %}?v=1.0"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        // Подготовка данных из Django
-        const nodes = [
+        // 1. Fetch data from Django context
+        const nodesData = [
             {% for concept in concepts %}
             {
                 id: "{{ concept.id }}", 
                 title: "{{ concept.title|escapejs }}",
                 uri: "{{ concept.uri|escapejs }}",
-                // Раскраска узлов в зависимости от URI (как классы в Protege)
                 group: {% if 'Algo' in concept.uri %}1
                        {% elif 'Param' in concept.uri %}2
                        {% elif 'Metric' in concept.uri %}3
@@ -190,7 +66,7 @@
             {% endfor %}
         ];
 
-        const links = [
+        const linksData = [
             {% for concept in concepts %}
                 {% for rel in concept.relations_out.all %}
                 {
@@ -202,210 +78,8 @@
             {% endfor %}
         ];
 
-        const width = document.getElementById('ontology-graph').clientWidth;
-        const height = document.getElementById('ontology-graph').clientHeight;
-        
-        // Цвета (совпадают с легендой)
-        const colors = {
-            1: '#3b82f6', // Синий (Алгоритмы)
-            2: '#10b981', // Зеленый (Параметры)
-            3: '#f59e0b', // Желтый (Метрики)
-            4: '#8b5cf6', // Фиолетовый (Use Cases)
-            5: '#64748b'  // Серый (Остальное: Scalability, InferenceType, Geometry)
-        };
-
-        const svg = d3.select("#ontology-graph")
-            .append("svg")
-            .attr("width", width)
-            .attr("height", height);
-
-        const g = svg.append("g");
-
-        // Настройка зума
-        const zoom = d3.zoom()
-            .scaleExtent([0.2, 4])
-            .on("zoom", (event) => {
-                g.attr("transform", event.transform);
-            });
-        
-        svg.call(zoom);
-        
-        // Управление кнопками
-        d3.select("#btn-zoom-in").on("click", () => zoom.scaleBy(svg.transition().duration(300), 1.3));
-        d3.select("#btn-zoom-out").on("click", () => zoom.scaleBy(svg.transition().duration(300), 1 / 1.3));
-        d3.select("#btn-reset").on("click", () => {
-            svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity.translate(width/2, height/2).scale(0.8));
-        });
-
-        // Маркеры-стрелочки для связей
-        svg.append("defs").selectAll("marker")
-            .data(["end", "end-highlight"])
-            .enter().append("marker")
-            .attr("id", String)
-            .attr("viewBox", "0 -5 10 10")
-            .attr("refX", 25) // Сдвиг стрелки от центра узла
-            .attr("refY", 0)
-            .attr("markerWidth", 6)
-            .attr("markerHeight", 6)
-            .attr("orient", "auto")
-            .append("path")
-            .attr("fill", d => d === "end-highlight" ? "var(--primary-color)" : "var(--text-muted)")
-            .attr("d", "M0,-5L10,0L0,5");
-
-        // Настройка физики
-        const simulation = d3.forceSimulation(nodes)
-            .force("link", d3.forceLink(links).id(d => d.id).distance(150)) // Длина связей
-            .force("charge", d3.forceManyBody().strength(-800)) // Отталкивание (расправляет граф)
-            .force("collide", d3.forceCollide().radius(40)) // Предотвращение наложений
-            .force("center", d3.forceCenter(0, 0)); // Центр координат (сдвинем ниже)
-
-        // Центрируем граф изначально
-        svg.call(zoom.transform, d3.zoomIdentity.translate(width/2, height/2).scale(0.8));
-
-        // Линии связей
-        const link = g.append("g")
-            .attr("class", "links")
-            .selectAll("line")
-            .data(links)
-            .enter().append("line")
-            .attr("class", "link")
-            .attr("marker-end", "url(#end)");
-
-        // Текст на связях (как в Protege)
-        const linkText = g.append("g")
-            .attr("class", "link-labels")
-            .selectAll("text")
-            .data(links)
-            .enter().append("text")
-            .attr("class", "link-label")
-            .text(d => d.type);
-
-        // Группы узлов
-        const node = g.append("g")
-            .attr("class", "nodes")
-            .selectAll("g")
-            .data(nodes)
-            .enter().append("g")
-            .attr("class", "node")
-            .call(d3.drag()
-                .on("start", dragstarted)
-                .on("drag", dragged)
-                .on("end", dragended));
-
-        // Круги узлов
-        node.append("circle")
-            .attr("r", 12)
-            .attr("fill", d => colors[d.group] || colors[5]);
-
-        // Текст узлов
-        node.append("text")
-            .attr("dx", 16)
-            .attr("dy", ".35em")
-            .text(d => d.title);
-
-        // Интерактивность (Hover эффекты)
-        const tooltip = d3.select("#graph-tooltip");
-
-        node.on("mouseover", function(event, d) {
-            // Подсветка узла
-            d3.select(this).select("circle")
-                .attr("r", 16)
-                .attr("stroke", "var(--text-color)");
-            
-            // Подсветка связанных линий
-            link.style("stroke-opacity", l => (l.source.id === d.id || l.target.id === d.id) ? 1 : 0.1)
-                .style("stroke", l => (l.source.id === d.id || l.target.id === d.id) ? "var(--primary-color)" : "var(--text-muted)")
-                .attr("marker-end", l => (l.source.id === d.id || l.target.id === d.id) ? "url(#end-highlight)" : "url(#end)");
-            
-            // Подсветка текста связей
-            linkText.style("opacity", l => (l.source.id === d.id || l.target.id === d.id) ? 1 : 0.1)
-                    .style("fill", l => (l.source.id === d.id || l.target.id === d.id) ? "var(--primary-color)" : "var(--text-muted)")
-                    .style("font-weight", l => (l.source.id === d.id || l.target.id === d.id) ? "bold" : "normal");
-
-            // Подсветка связанных узлов
-            node.style("opacity", n => {
-                if (n.id === d.id) return 1;
-                const isConnected = links.some(l => 
-                    (l.source.id === d.id && l.target.id === n.id) || 
-                    (l.target.id === d.id && l.source.id === n.id)
-                );
-                return isConnected ? 1 : 0.2;
-            });
-
-            // Tooltip
-            tooltip.transition().duration(200).style("opacity", 1);
-            tooltip.html(
-                `<div style="font-weight:bold; margin-bottom:5px; color:${colors[d.group]}">${d.title}</div>` +
-                `<div style="font-size:11px; margin-bottom:5px; opacity:0.7;">URI: ${d.uri.split('#').pop()}</div>` +
-                `<div>${d.desc}</div>`
-            )
-            .style("left", (event.pageX + 15) + "px")
-            .style("top", (event.pageY - 15) + "px");
-        })
-        .on("mouseout", function(d) {
-            // Возврат к норме
-            d3.select(this).select("circle")
-                .attr("r", 12)
-                .attr("stroke", "var(--bg-color)");
-            
-            link.style("stroke-opacity", 0.4)
-                .style("stroke", "var(--text-muted)")
-                .attr("marker-end", "url(#end)");
-                
-            linkText.style("opacity", 1)
-                    .style("fill", "var(--text-muted)")
-                    .style("font-weight", "normal");
-                    
-            node.style("opacity", 1);
-
-            tooltip.transition().duration(300).style("opacity", 0);
-        })
-        .on("click", function(event, d) {
-            window.location.href = d.url;
-        });
-
-        // Обновление позиций на каждом тике симуляции
-        simulation.on("tick", () => {
-            link
-                .attr("x1", d => d.source.x)
-                .attr("y1", d => d.source.y)
-                .attr("x2", d => d.target.x)
-                .attr("y2", d => d.target.y);
-
-            // Позиция текста на связи (в центре линии)
-            linkText
-                .attr("x", d => (d.source.x + d.target.x) / 2)
-                .attr("y", d => (d.source.y + d.target.y) / 2 - 5) // Чуть выше линии
-                // Поворот текста вдоль линии
-                .attr("transform", d => {
-                    const angle = Math.atan2(d.target.y - d.source.y, d.target.x - d.source.x) * 180 / Math.PI;
-                    // Если текст перевернут вверх ногами - переворачиваем
-                    const finalAngle = (angle > 90 || angle < -90) ? angle + 180 : angle;
-                    const cx = (d.source.x + d.target.x) / 2;
-                    const cy = (d.source.y + d.target.y) / 2 - 5;
-                    return `rotate(${finalAngle}, ${cx}, ${cy})`;
-                });
-
-            node
-                .attr("transform", d => `translate(${d.x},${d.y})`);
-        });
-
-        function dragstarted(event, d) {
-            if (!event.active) simulation.alphaTarget(0.3).restart();
-            d.fx = d.x;
-            d.fy = d.y;
-        }
-
-        function dragged(event, d) {
-            d.fx = event.x;
-            d.fy = event.y;
-        }
-
-        function dragended(event, d) {
-            if (!event.active) simulation.alphaTarget(0);
-            d.fx = null;
-            d.fy = null;
-        }
+        // 2. Initialize Graph from external JS file
+        initOntologyGraph("ontology-graph", nodesData, linksData);
     });
 </script>
 {% endblock %}

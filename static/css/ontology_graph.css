@@ -26,15 +26,16 @@
     margin: 0;
 }
 
-/* Legend */
+/* Extended Legend Grid */
 .graph-legend {
-    display: flex;
-    gap: 15px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px 20px;
     background: var(--card-bg);
-    padding: 10px 15px;
+    padding: 12px 20px;
     border-radius: 8px;
     border: 1px solid var(--border-color);
-    font-size: 13px;
+    font-size: 12px;
 }
 
 .legend-item {
@@ -45,10 +46,60 @@
 }
 
 .legend-color {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    border-radius: 3px; /* Rectangular legend items */
 }
+
+/* Edge Legend (Protege style lines) */
+.edge-legend {
+    display: flex;
+    gap: 20px;
+    background: var(--card-bg);
+    padding: 8px 20px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    font-size: 11px;
+    margin-top: 10px;
+    justify-content: center;
+}
+
+.edge-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted);
+}
+
+.edge-line {
+    width: 30px;
+    height: 2px;
+    position: relative;
+}
+
+.edge-line::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: -3px;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    border-left: 6px solid;
+}
+
+/* Types of edges in legend */
+.edge-is-a { background: #94a3b8; }
+.edge-is-a::after { border-left-color: #94a3b8; }
+
+.edge-depends { background: #ef4444; border-top: 2px dashed #ef4444; height: 0; }
+.edge-depends::after { border-left-color: #ef4444; top: -4px; }
+
+.edge-uses { background: #3b82f6; border-top: 2px dotted #3b82f6; height: 0; }
+.edge-uses::after { border-left-color: #3b82f6; top: -4px; }
+
+.edge-related { background: #8b5cf6; }
+.edge-related::after { border-left-color: #8b5cf6; }
+
 
 /* 
  * Graph Canvas (Forced Light Theme for better visibility)
@@ -72,50 +123,33 @@
     cursor: grabbing;
 }
 
-/* D3 Nodes */
-.node circle {
-    stroke: #ffffff; /* White border to match background */
+/* D3 Nodes (Rectangles) */
+.node rect {
+    stroke: #ffffff;
     stroke-width: 2px;
+    rx: 6px; /* Rounded corners */
+    ry: 6px;
     transition: all 0.2s;
+    /* Light shadow for 3D effect */
+    filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.1));
 }
 
 /* Node Text (Forced Dark on White) */
 .node text {
-    font-size: 12px;
+    font-size: 11px;
     font-family: 'Inter', sans-serif;
     font-weight: 600;
-    fill: #1e293b !important; /* Slate 800 - dark text */
+    fill: #ffffff !important; /* White text on colored rectangles */
     pointer-events: none;
-    /* White text-shadow for readability over links */
-    text-shadow: 
-        0px 1px 3px #ffffff, 
-        0px -1px 3px #ffffff, 
-        1px 0px 3px #ffffff, 
-        -1px 0px 3px #ffffff;
+    text-anchor: middle;
 }
 
 /* D3 Links */
 .link {
-    stroke: #94a3b8 !important; /* Slate 400 - clean grey line */
-    stroke-opacity: 0.5;
-    stroke-width: 1.5px;
+    stroke-opacity: 0.6;
+    stroke-width: 2px;
     transition: all 0.2s;
-}
-
-/* D3 Link Labels (Text on the lines) */
-.link-label {
-    font-size: 10px;
-    font-family: 'Fira Code', monospace;
-    fill: #64748b !important; /* Slate 500 */
-    pointer-events: none;
-    text-anchor: middle;
-    /* Clean white outline/background for the text */
-    text-shadow: 
-        0px 1px 2px #ffffff, 
-        0px -1px 2px #ffffff, 
-        1px 0px 2px #ffffff, 
-        -1px 0px 2px #ffffff;
-    transition: all 0.2s;
+    fill: none;
 }
 
 /* Tooltip */

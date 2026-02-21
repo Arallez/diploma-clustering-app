@@ -3,7 +3,7 @@
  * Renders nodes (Concepts) and links (ConceptRelations) resembling Protege
  */
 
-function initOntologyGraph(containerId, nodesData, linksData, urls) {
+function initOntologyGraph(containerId, nodesData, linksData) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
@@ -19,6 +19,38 @@ function initOntologyGraph(containerId, nodesData, linksData, urls) {
         5: '#64748b'  // Others (Grey)
     };
 
+    // 1. Calculate Hierarchical Depth (for Tree/Radial Layouts)
+    // Initialize depth
+    nodesData.forEach(n => n.depth = 0);
+    // Iterative relaxation to calculate topological depth
+    for (let i = 0; i < 15; i++) {
+        linksData.forEach(l => {
+            // Pre-process safe lookup since D3 might change strings to objects later
+            let s = typeof l.source === 'object' ? l.source : nodesData.find(n => n.id === l.source);
+            let t = typeof l.target === 'object' ? l.target : nodesData.find(n => n.id === l.target);
+            
+            if (!s || !t) return;
+
+            // IS_A or DEPENDS usually implies the target is the "parent/prerequisite" conceptually.
+            // Target should be higher (lower depth value) than source.
+            if (l.type === 'Является (Is A)' || l.type === 'Зависит от (Пререквизит)') {
+                if (s.depth <= t.depth) {
+                    s.depth = t.depth + 1;
+                }
+            } else {
+                // USES, RELATED: standard flow
+                if (t.depth <= s.depth) {
+                    t.depth = s.depth + 1;
+                }
+            }
+        });
+    }
+    // Normalize depths to start at 0
+    let minDepth = d3.min(nodesData, d => d.depth) || 0;
+    nodesData.forEach(n => n.depth -= minDepth);
+    let maxDepth = d3.max(nodesData, d => d.depth) || 1;
+
+    // 2. Setup D3 Canvas
     const svg = d3.select("#" + containerId)
         .append("svg")
         .attr("width", width)
@@ -28,14 +60,14 @@ function initOntologyGraph(containerId, nodesData, linksData, urls) {
 
     // Setup Zoom
     const zoom = d3.zoom()
-        .scaleExtent([0.2, 4])
+        .scaleExtent([0.1, 4])
         .on("zoom", (event) => {
             g.attr("transform", event.transform);
         });
     
     svg.call(zoom);
     
-    // UI Controls
+    // UI Zoom Controls
     d3.select("#btn-zoom-in").on("click", () => zoom.scaleBy(svg.transition().duration(300), 1.3));
     d3.select("#btn-zoom-out").on("click", () => zoom.scaleBy(svg.transition().duration(300), 1 / 1.3));
     d3.select("#btn-reset").on("click", () => {
@@ -57,15 +89,9 @@ function initOntologyGraph(containerId, nodesData, linksData, urls) {
         .attr("fill", d => d === "end-highlight" ? "#3b82f6" : "#94a3b8")
         .attr("d", "M0,-5L10,0L0,5");
 
-    // Physics Simulation
+    // 3. Initialize Base Simulation
     const simulation = d3.forceSimulation(nodesData)
-        .force("link", d3.forceLink(linksData).id(d => d.id).distance(180)) // Longer links for readability
-        .force("charge", d3.forceManyBody().strength(-1000)) // Strong repel to spread graph
-        .force("collide", d3.forceCollide().radius(50)) // Prevent overlaps
-        .force("center", d3.forceCenter(0, 0));
-
-    // Center graph initially
-    svg.call(zoom.transform, d3.zoomIdentity.translate(width/2, height/2).scale(0.8));
+        .force("link", d3.forceLink(linksData).id(d => d.id).distance(180));
 
     // Lines
     const link = g.append("g")
@@ -108,10 +134,9 @@ function initOntologyGraph(containerId, nodesData, linksData, urls) {
         .attr("dy", ".35em")
         .text(d => d.title);
 
-    // Tooltip
+    // Tooltip Interactions
     const tooltip = d3.select("#graph-tooltip");
 
-    // Smart Hover Interactions
     node.on("mouseover", function(event, d) {
         // Highlight Node
         d3.select(this).select("circle")
@@ -149,33 +174,18 @@ function initOntologyGraph(containerId, nodesData, linksData, urls) {
         .style("top", (event.pageY - 15) + "px");
     })
     .on("mouseout", function(d) {
-        // Reset Node
-        d3.select(this).select("circle")
-            .attr("r", 12)
-            .attr("stroke", "#ffffff");
-        
-        // Reset Links
-        link.style("stroke-opacity", 0.5)
-            .style("stroke", "#94a3b8")
-            .attr("marker-end", "url(#end)");
-            
-        // Reset Link Text
-        linkText.style("opacity", 1)
-                .style("fill", "#64748b")
-                .style("font-weight", "normal");
-                
-        // Reset All Nodes
+        // Reset Style
+        d3.select(this).select("circle").attr("r", 12).attr("stroke", "#ffffff");
+        link.style("stroke-opacity", 0.5).style("stroke", "#94a3b8").attr("marker-end", "url(#end)");
+        linkText.style("opacity", 1).style("fill", "#64748b").style("font-weight", "normal");
         node.style("opacity", 1);
-
-        // Hide Tooltip
         tooltip.transition().duration(300).style("opacity", 0);
     })
     .on("click", function(event, d) {
-        // Navigate to Concept Detail page
         window.location.href = d.url;
     });
 
-    // Update positions on every tick
+    // Tick Update
     simulation.on("tick", () => {
         link
             .attr("x1", d => d.source.x)
@@ -183,36 +193,80 @@ function initOntologyGraph(containerId, nodesData, linksData, urls) {
             .attr("x2", d => d.target.x)
             .attr("y2", d => d.target.y);
 
-        // Position text in the middle of the link
         linkText
             .attr("x", d => (d.source.x + d.target.x) / 2)
-            .attr("y", d => (d.source.y + d.target.y) / 2 - 5) // Slightly above line
-            // Rotate text to follow the line
+            .attr("y", d => (d.source.y + d.target.y) / 2 - 5)
             .attr("transform", d => {
                 const angle = Math.atan2(d.target.y - d.source.y, d.target.x - d.source.x) * 180 / Math.PI;
-                // Keep text readable (don't turn upside down)
                 const finalAngle = (angle > 90 || angle < -90) ? angle + 180 : angle;
                 const cx = (d.source.x + d.target.x) / 2;
                 const cy = (d.source.y + d.target.y) / 2 - 5;
                 return `rotate(${finalAngle}, ${cx}, ${cy})`;
             });
 
-        node
-            .attr("transform", d => `translate(${d.x},${d.y})`);
+        node.attr("transform", d => `translate(${d.x},${d.y})`);
     });
 
-    // Drag functions
+    // 4. Layout Switching Logic
+    window.applyGraphLayout = function(type) {
+        // Clear all forces
+        simulation.force("x", null);
+        simulation.force("y", null);
+        simulation.force("r", null);
+        simulation.force("center", null);
+
+        if (type === 'force') {
+            simulation
+                .force("charge", d3.forceManyBody().strength(-1000))
+                .force("center", d3.forceCenter(0, 0))
+                .force("collide", d3.forceCollide().radius(50));
+        } else if (type === 'tree') {
+            // Tree layout using depth
+            const layerHeight = 150;
+            const yOffset = (maxDepth * layerHeight) / 2;
+            
+            simulation
+                .force("charge", d3.forceManyBody().strength(-800))
+                .force("y", d3.forceY(d => (d.depth * layerHeight) - yOffset).strength(1.5))
+                .force("x", d3.forceX(0).strength(0.2)) // Center horizontally
+                .force("collide", d3.forceCollide().radius(60));
+        } else if (type === 'radial') {
+            // Radial layout using depth as radius
+            const radiusStep = 120;
+            simulation
+                .force("charge", d3.forceManyBody().strength(-800))
+                .force("r", d3.forceRadial(d => d.depth * radiusStep, 0, 0).strength(1.5))
+                .force("collide", d3.forceCollide().radius(50));
+        }
+        
+        // Re-heat simulation
+        simulation.alpha(1).restart();
+        // Recenter view
+        svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity.translate(width/2, height/2).scale(0.7));
+    };
+
+    // Initial Layout Setup
+    window.applyGraphLayout('force');
+
+    // Attach Toolbar Listeners
+    document.querySelectorAll('.toolbar-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.toolbar-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            window.applyGraphLayout(this.getAttribute('data-layout'));
+        });
+    });
+
+    // Drag Functions
     function dragstarted(event, d) {
         if (!event.active) simulation.alphaTarget(0.3).restart();
         d.fx = d.x;
         d.fy = d.y;
     }
-
     function dragged(event, d) {
         d.fx = event.x;
         d.fy = event.y;
     }
-
     function dragended(event, d) {
         if (!event.active) simulation.alphaTarget(0);
         d.fx = null;

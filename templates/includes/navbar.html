@@ -1,55 +1,26 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="{% url 'core:home' %}">Clustering Trainer</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-            aria-controls="navbarNav" aria-expanded="false" aria-label="Переключатель навигации">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav me-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'core:materials_list' %}">Теория</a>
-                </li>
-                <!-- Новая ссылка на адаптивное обучение -->
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'encyclopedia:recommendations' %}">
-                        <i class="bi bi-compass"></i> Путь обучения
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'tasks:task_list' %}">Задачи</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'encyclopedia:graph' %}">Онтология</a>
-                </li>
-            </ul>
-
-            <ul class="navbar-nav">
-                {% if user.is_authenticated %}
-                <li class="nav-item">
-                    <span class="nav-link">Привет, {{ user.username }}!</span>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'core:profile' %}">Профиль</a>
-                </li>
-                <li class="nav-item">
-                    <form action="{% url 'core:logout' %}" method="post" style="display:inline;">
-                        {% csrf_token %}
-                        <button type="submit" class="nav-link btn btn-link" style="border:none; padding:0; padding-top:8px;">
-                            Выйти
-                        </button>
-                    </form>
-                </li>
-                {% else %}
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'core:login' %}">Войти</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'core:register' %}">Регистрация</a>
-                </li>
-                {% endif %}
-            </ul>
-        </div>
+<nav class="navbar">
+    <a href="{% url 'home' %}" class="navbar-brand">
+        <div class="logo-icon"></div>
+        <span class="brand-text">Clustering Trainer</span>
+    </a>
+    <div class="nav-links">
+        <a href="{% url 'simulator:index' %}" class="nav-item {% if request.resolver_match.namespace == 'simulator' %}active{% endif %}">Симулятор</a>
+        <a href="{% url 'tasks:task_list' %}" class="nav-item {% if request.resolver_match.namespace == 'tasks' %}active{% endif %}">Задачи</a>
+        <a href="{% url 'encyclopedia:graph' %}" class="nav-item {% if request.resolver_match.namespace == 'encyclopedia' %}active{% endif %}">База Знаний</a>
+        <a href="{% url 'materials_list' %}" class="nav-item {% if request.resolver_match.url_name == 'materials_list' or request.resolver_match.url_name == 'material_detail' %}active{% endif %}">Материалы</a>
+        {% if user.is_authenticated %}
+        <a href="{% url 'encyclopedia:recommendations' %}" class="nav-item {% if request.resolver_match.url_name == 'recommendations' %}active{% endif %}">🧭 Путь обучения</a>
+        {% endif %}
+        <a href="{% url 'testing:home' %}" class="nav-item {% if request.resolver_match.namespace == 'testing' %}active{% endif %}">Тестирование</a>
+    </div>
+    <div class="nav-auth">
+        {% if user.is_authenticated %}
+            <a href="{% url 'profile' %}" class="btn btn-outline">{{ user.username }}</a>
+            {% if user.is_staff %}
+                <a href="/admin/" class="btn btn-outline" style="margin-left: 10px;">Admin</a>
+            {% endif %}
+        {% else %}
+            <a href="{% url 'login' %}" class="nav-item">Вход</a>
+        {% endif %}
     </div>
 </nav>

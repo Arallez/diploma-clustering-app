@@ -10,13 +10,17 @@ function initOntologyGraph(containerId, nodesData, linksData) {
     const width = container.clientWidth;
     const height = container.clientHeight;
     
-    // Semantic Colors (Matches Protege/Legend)
+    // Semantic Colors (Matches Protege/Legend exact clustering domains)
     const colors = {
         1: '#3b82f6', // Algorithms (Blue)
         2: '#10b981', // Parameters (Green)
         3: '#f59e0b', // Metrics (Yellow)
         4: '#8b5cf6', // Use Cases (Purple)
-        5: '#64748b'  // Others (Grey)
+        5: '#ec4899', // Geometry (Pink)
+        6: '#14b8a6', // Scalability (Teal)
+        7: '#f43f5e', // Cluster Size (Rose)
+        8: '#64748b', // Inference Type (Slate)
+        9: '#cbd5e1'  // Default/Thing (Light Gray)
     };
 
     // 1. Calculate Hierarchical Depth (for Tree/Radial Layouts)
@@ -126,7 +130,7 @@ function initOntologyGraph(containerId, nodesData, linksData) {
     // Node Circles
     node.append("circle")
         .attr("r", 12)
-        .attr("fill", d => colors[d.group] || colors[5]);
+        .attr("fill", d => colors[d.group] || colors[9]);
 
     // Node Text (Titles)
     node.append("text")

@@ -201,8 +201,8 @@ function initOntologyGraph(containerId, nodesData, linksData) {
         tooltip.transition().duration(200).style("opacity", 1);
         
         // Gather connections for tooltip
-        let outgoing = linksData.filter(l => l.source.id === d.id).map(l => `<li><span style="color:${(edgeStyles[l.raw_type]||edgeStyles['default']).color}">▶ ${l.type}</span> ${l.target.title}</li>`).join("");
-        let incoming = linksData.filter(l => l.target.id === d.id).map(l => `<li>${l.source.title} <span style="color:${(edgeStyles[l.raw_type]||edgeStyles['default']).color}">${l.type} ▶</span></li>`).join("");
+        let outgoing = linksData.filter(l => l.source.id === d.id).map(l => `<li><span style="color:${(edgeStyles[l.raw_type]||edgeStyles['default']).color}">▶ ${l.type}</span> ${(l.target.title || l.target.id)}</li>`).join("");
+        let incoming = linksData.filter(l => l.target.id === d.id).map(l => `<li>${(l.source.title || l.source.id)} <span style="color:${(edgeStyles[l.raw_type]||edgeStyles['default']).color}">${l.type} ▶</span></li>`).join("");
         
         let connHtml = "";
         if (outgoing.length > 0) connHtml += `<ul style="margin:5px 0 0 15px; padding:0; list-style:none; font-size:11px">${outgoing}</ul>`;
@@ -212,7 +212,7 @@ function initOntologyGraph(containerId, nodesData, linksData) {
             `<div class="tooltip-title" style="color:${colors[d.group]}">${d.title}</div>` +
             `<div class="tooltip-uri">URI: ${d.uri.split('#').pop()}</div>` +
             `<div class="tooltip-desc">${d.desc}</div>` +
-            (connHtml ? `<div style="margin-top:8px; padding-top:8px; border-top:1px solid #e2e8f0; font-size:11px; font-weight:bold;">Связи:</div>${connHtml}` : '')
+            (connHtml.length > 0 ? `<div style="margin-top:8px; padding-top:8px; border-top:1px solid #e2e8f0; font-size:11px; font-weight:bold;">Связи:</div>${connHtml}` : '')
         )
         .style("left", (event.pageX + 15) + "px")
         .style("top", (event.pageY - 15) + "px");
@@ -235,27 +235,25 @@ function initOntologyGraph(containerId, nodesData, linksData) {
         window.location.href = d.url;
     });
 
-    // Helper to calculate edge intersection with rectangle
-    // Returns the point on the edge of the target rectangle where the arrow should point
+    // Helper to calculate edge intersection with rectangle boundary
+    // Returns the point on the edge of the target rectangle where the line should end
     function getIntersection(sx, sy, tx, ty, tWidth, tHeight) {
         const dx = tx - sx;
         const dy = ty - sy;
         
         if (dx === 0 && dy === 0) return {x: tx, y: ty};
 
-        // Half width/height
         const hw = tWidth / 2;
         const hh = tHeight / 2;
-
-        const slope = dy / dx;
         
         let ix, iy;
-
+        
+        // Find intersection with left/right borders
         if (Math.abs(dx) > 0) {
             ix = dx > 0 ? tx - hw : tx + hw;
             iy = ty - dy * (Math.abs(hw) / Math.abs(dx));
             
-            // Check if it hits the top/bottom instead
+            // If the intersection is above or below the rectangle, use top/bottom borders instead
             if (iy < ty - hh) {
                 iy = ty - hh;
                 ix = tx - dx * (Math.abs(hh) / Math.abs(dy));
@@ -275,9 +273,10 @@ function initOntologyGraph(containerId, nodesData, linksData) {
     simulation.on("tick", () => {
         link.attr("d", d => {
             // Find intersection point with target rectangle boundary so arrow isn't hidden inside
-            const p = getIntersection(d.source.x, d.source.y, d.target.x, d.target.y, d.target.rectWidth, d.target.rectHeight);
+            // Check if source and target are fully initialized objects
+            if (!d.source.x || !d.target.x) return "";
             
-            // Draw straight line path
+            const p = getIntersection(d.source.x, d.source.y, d.target.x, d.target.y, d.target.rectWidth, d.target.rectHeight);
             return `M${d.source.x},${d.source.y} L${p.x},${p.y}`;
         });
 

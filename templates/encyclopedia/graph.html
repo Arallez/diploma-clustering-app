@@ -7,7 +7,7 @@
 <!-- D3.js Library -->
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <!-- Ontology Graph Styles -->
-<link rel="stylesheet" href="{% static 'css/ontology_graph.css' %}?v=1.0">
+<link rel="stylesheet" href="{% static 'css/ontology_graph.css' %}?v=1.1">
 {% endblock %}
 
 {% block content %}
@@ -27,6 +27,20 @@
     </div>
     
     <div style="position: relative;">
+        <!-- Layout Toggle Toolbar (Protege style) -->
+        <div class="layout-toolbar">
+            <span class="toolbar-label">Вид:</span>
+            <button class="toolbar-btn active" data-layout="force">
+                Свободный
+            </button>
+            <button class="toolbar-btn" data-layout="tree">
+                Иерархия (Дерево)
+            </button>
+            <button class="toolbar-btn" data-layout="radial">
+                Радиальный
+            </button>
+        </div>
+
         <!-- Canvas for D3 graph -->
         <div id="ontology-graph"></div>
         
@@ -45,7 +59,7 @@
 
 {% block extra_js %}
 <!-- Graph Visualization Logic -->
-<script src="{% static 'js/ontology_graph.js' %}?v=1.0"></script>
+<script src="{% static 'js/ontology_graph.js' %}?v=1.1"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         // 1. Fetch data from Django context

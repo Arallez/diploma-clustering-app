@@ -4,9 +4,15 @@
  */
 
 .graph-container {
-    max-width: 1400px; /* Restored to normal size */
-    margin: 0 auto;
-    padding: 1rem 2rem;
+    /* 
+     * Shifted to the left and mathematically sized so the 380px side panel 
+     * fits perfectly without causing a horizontal scrollbar (screen stretch) 
+     */
+    width: calc(100% - 420px); 
+    min-width: 800px; /* Don't shrink too much on very small screens */
+    max-width: 1300px; 
+    margin: 0 0 0 2rem; /* Fixed to the left */
+    padding: 1rem 0;
 }
 
 .graph-header {
@@ -126,11 +132,13 @@
     width: 100%;
     height: 100%;
     background-color: transparent !important; 
-    cursor: grab;
+    /* Custom Dark Blue Cursor with White Outline for perfect contrast */
+    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="%231e3a8a" stroke="%23ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13l-1.5-1.5a2.12 2.12 0 0 0-3 3l5.5 5.5a4.24 4.24 0 0 0 6 0l4-4a2.12 2.12 0 0 0-3-3l-1.5 1.5M10 13V4.5a1.5 1.5 0 0 1 3 0V11M13 11V3.5a1.5 1.5 0 0 1 3 0V11M16 11V4.5a1.5 1.5 0 0 1 3 0V11"/></svg>') 14 14, grab;
 }
 
 #ontology-graph:active {
-    cursor: grabbing;
+    /* Custom Dark Blue Grabbing Cursor */
+    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="%231e3a8a" stroke="%23ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13l-1.5-1.5a2.12 2.12 0 0 0-3 3l5.5 5.5a4.24 4.24 0 0 0 6 0l4-4a2.12 2.12 0 0 0-3-3l-1.5 1.5V4.5a1.5 1.5 0 0 0-3 0v6.5a1.5 1.5 0 0 0-3 0v-7a1.5 1.5 0 0 0-3 0V13z"/></svg>') 14 14, grabbing;
 }
 
 /* D3 Nodes (Rectangles) */

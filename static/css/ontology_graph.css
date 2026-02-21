@@ -4,22 +4,17 @@
  */
 
 .graph-container {
-    /* 
-     * Shifted to the left and mathematically sized so the 380px side panel 
-     * fits perfectly without causing a horizontal scrollbar (screen stretch) 
-     */
-    width: calc(100% - 420px); 
-    min-width: 800px; /* Don't shrink too much on very small screens */
-    max-width: 1300px; 
-    margin: 0 0 0 2rem; /* Fixed to the left */
-    padding: 1rem 0;
+    max-width: 1600px; /* Expands to hold graph + side panel side-by-side */
+    margin: 0 auto;
+    padding: 1rem 2rem;
 }
 
 .graph-header {
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
     display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
+    flex-direction: column;
+    align-items: center; /* Center horizontally */
+    text-align: center;
 }
 
 .graph-header h1 {
@@ -32,11 +27,13 @@
     margin: 0;
 }
 
-/* Extended Legend Grid */
+/* Extended Legend Flex Layout (Centered) */
 .graph-legend {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 1100px; /* Keeps the wrap nice and readable */
+    gap: 12px 25px;
     background: var(--card-bg);
     padding: 12px 20px;
     border-radius: 8px;
@@ -60,6 +57,7 @@
 /* Edge Legend (Protege style lines) */
 .edge-legend {
     display: flex;
+    flex-wrap: wrap;
     gap: 20px;
     background: var(--card-bg);
     padding: 8px 20px;
@@ -108,10 +106,11 @@
 
 
 /* 
- * Layout Wrapper (Relative positioning)
+ * Layout Wrapper (Flex Layout for Canvas + Side Panel)
  */
 .graph-layout-wrapper {
-    position: relative;
+    display: flex;
+    gap: 20px;
     margin-top: 15px;
     height: 75vh;
     min-height: 600px;
@@ -119,8 +118,9 @@
 }
 
 .graph-main-area {
-    width: 100%;
-    height: 100%;
+    flex: 1;
+    min-width: 0;
+    position: relative;
     background-color: #ffffff; 
     border: 1px solid var(--border-color);
     border-radius: 8px;
@@ -171,14 +171,11 @@
 }
 
 /* 
- * External Right-side Info Panel 
+ * Side Info Panel 
  */
 .graph-info-panel {
-    position: absolute;
-    top: 0;
-    left: calc(100% + 20px); /* Placed completely outside the graph canvas */
-    width: 380px; /* Made slightly wider as requested */
-    max-height: 100%; /* Prevents stretching past the canvas height */
+    width: 400px; /* Slightly wider */
+    flex-shrink: 0;
     background: #ffffff;
     border: 1px solid var(--border-color);
     border-radius: 8px;
@@ -186,18 +183,9 @@
     overflow-y: auto;
     color: #334155;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-    
-    /* Hide completely until visible */
-    opacity: 0;
-    visibility: hidden;
-    transform: translateX(-10px);
-    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
-}
-
-.graph-info-panel.visible {
+    /* Always visible to keep the structure intact */
     opacity: 1;
     visibility: visible;
-    transform: translateX(0);
 }
 
 /* Panel internals */
@@ -209,6 +197,18 @@
 .panel-connections li { display: flex; flex-direction: column; gap: 2px; background: #f8fafc; padding: 8px; border-radius: 4px; border: 1px solid #e2e8f0; }
 .panel-conn-type { font-size: 10px; font-weight: bold; text-transform: uppercase; }
 .panel-conn-node { font-weight: 600; color: #0f172a; }
+
+/* Placeholder state */
+.panel-placeholder {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 14px;
+    font-style: italic;
+}
 
 /* Zoom Controls */
 .graph-controls {

@@ -8,21 +8,37 @@
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <!-- Ontology Graph Styles -->
 <link rel="stylesheet" href="{% static 'css/ontology_graph.css' %}?v=1.1">
+<style>
+/* Extended Legend Grid to fit more items nicely */
+.graph-legend {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px 20px;
+    background: var(--card-bg);
+    padding: 12px 20px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    font-size: 12px;
+}
+</style>
 {% endblock %}
 
 {% block content %}
 <div class="graph-container">
-    <div class="graph-header">
+    <div class="graph-header" style="flex-direction: column; align-items: stretch; gap: 15px;">
         <div>
             <h1>🌌 Онтология предметной области</h1>
-            <p>Интерактивный граф знаний. Наведите на узел, чтобы увидеть связи, или кликните для перехода к теории.</p>
+            <p>Интерактивный граф знаний. Наведите на узел, чтобы увидеть связи, переключайте вид для анализа иерархии.</p>
         </div>
         <div class="graph-legend">
-            <div class="legend-item"><div class="legend-color" style="background: #3b82f6;"></div>Алгоритмы</div>
+            <div class="legend-item"><div class="legend-color" style="background: #3b82f6;"></div>Алгоритмы кластеризации</div>
             <div class="legend-item"><div class="legend-color" style="background: #10b981;"></div>Параметры</div>
-            <div class="legend-item"><div class="legend-color" style="background: #f59e0b;"></div>Метрики</div>
-            <div class="legend-item"><div class="legend-color" style="background: #8b5cf6;"></div>Задачи (Use Cases)</div>
-            <div class="legend-item"><div class="legend-color" style="background: #64748b;"></div>Остальное</div>
+            <div class="legend-item"><div class="legend-color" style="background: #f59e0b;"></div>Метрики расстояния</div>
+            <div class="legend-item"><div class="legend-color" style="background: #8b5cf6;"></div>Применение (Use cases)</div>
+            <div class="legend-item"><div class="legend-color" style="background: #ec4899;"></div>Геометрия кластеров</div>
+            <div class="legend-item"><div class="legend-color" style="background: #14b8a6;"></div>Масштабируемость</div>
+            <div class="legend-item"><div class="legend-color" style="background: #f43f5e;"></div>Размер кластеров</div>
+            <div class="legend-item"><div class="legend-color" style="background: #64748b;"></div>Тип вывода (Inference)</div>
         </div>
     </div>
     
@@ -30,15 +46,9 @@
         <!-- Layout Toggle Toolbar (Protege style) -->
         <div class="layout-toolbar">
             <span class="toolbar-label">Вид:</span>
-            <button class="toolbar-btn active" data-layout="force">
-                Свободный
-            </button>
-            <button class="toolbar-btn" data-layout="tree">
-                Иерархия (Дерево)
-            </button>
-            <button class="toolbar-btn" data-layout="radial">
-                Радиальный
-            </button>
+            <button class="toolbar-btn active" data-layout="force">Свободный</button>
+            <button class="toolbar-btn" data-layout="tree">Иерархия (Дерево)</button>
+            <button class="toolbar-btn" data-layout="radial">Радиальный</button>
         </div>
 
         <!-- Canvas for D3 graph -->
@@ -59,7 +69,7 @@
 
 {% block extra_js %}
 <!-- Graph Visualization Logic -->
-<script src="{% static 'js/ontology_graph.js' %}?v=1.1"></script>
+<script src="{% static 'js/ontology_graph.js' %}?v=1.2"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         // 1. Fetch data from Django context
@@ -69,11 +79,16 @@
                 id: "{{ concept.id }}", 
                 title: "{{ concept.title|escapejs }}",
                 uri: "{{ concept.uri|escapejs }}",
+                // Расширенный парсинг URI для определения точного класса из онтологии
                 group: {% if 'Algo' in concept.uri %}1
                        {% elif 'Param' in concept.uri %}2
-                       {% elif 'Metric' in concept.uri %}3
-                       {% elif 'UC' in concept.uri %}4
-                       {% else %}5{% endif %},
+                       {% elif 'Metric' in concept.uri or 'Distance' in concept.uri %}3
+                       {% elif 'UC' in concept.uri or 'UseCase' in concept.uri %}4
+                       {% elif 'Geometry' in concept.uri %}5
+                       {% elif 'Scalability' in concept.uri %}6
+                       {% elif 'ClusterSize' in concept.uri or 'Size' in concept.uri %}7
+                       {% elif 'Inference' in concept.uri or 'Inductive' in concept.uri or 'Transductive' in concept.uri %}8
+                       {% else %}9{% endif %},
                 url: "{% url 'encyclopedia:detail' concept.id %}",
                 desc: "{{ concept.description|truncatewords:25|escapejs|default:'Нет описания' }}"
             },

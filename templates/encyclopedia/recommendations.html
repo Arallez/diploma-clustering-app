@@ -116,7 +116,18 @@
 .adaptive-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 2rem;
+    gap: 1.5rem;
+    align-items: stretch; /* stretch forces columns to have same height */
+}
+
+.adaptive-column {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column; /* Allows contents to flex and fill the space properly */
 }
 
 @media (max-width: 768px) {
@@ -133,6 +144,7 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    flex: 1; /* Pushes following items down or allows it to take up remaining space */
 }
 
 .rec-item {
@@ -185,6 +197,7 @@
     border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
+/* Flex-grow allows the alert to stretch and fill the remaining column height beautifully */
 .adaptive-alert {
     padding: 1.25rem;
     border-radius: 8px;
@@ -193,6 +206,10 @@
     color: var(--text-muted);
     font-size: 0.95rem;
     line-height: 1.5;
+    flex: 1; 
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .center-btn {
@@ -244,10 +261,10 @@
     </div>
 
     <div class="adaptive-grid">
-        <!-- Рекомендованные задачи -->
+        <!-- Рекомендованные задачи (Card Tile) -->
         <div class="adaptive-column">
-            <h2 class="adaptive-card-title" style="color: var(--accent-color);">Рекомендуемые задачи</h2>
-            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: -1rem; margin-bottom: 1rem;">Вы уже знаете все пререквизиты для этих задач.</p>
+            <h2 class="adaptive-card-title" style="color: var(--accent-color); margin-bottom: 0.5rem;">Рекомендуемые задачи</h2>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">Вы уже знаете все пререквизиты для этих задач.</p>
             
             {% if recommended_tasks %}
                 <div class="recommendation-list">
@@ -268,10 +285,10 @@
             {% endif %}
         </div>
 
-        <!-- Рекомендованная теория -->
+        <!-- Рекомендованная теория (Card Tile) -->
         <div class="adaptive-column">
-            <h2 class="adaptive-card-title" style="color: #fbbf24;">Рекомендуемая теория</h2>
-            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: -1rem; margin-bottom: 1rem;">Эти материалы откроют вам доступ к новым задач.</p>
+            <h2 class="adaptive-card-title" style="color: #fbbf24; margin-bottom: 0.5rem;">Рекомендуемая теория</h2>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">Эти материалы откроют вам доступ к новым задачам.</p>
             
             {% if recommended_materials %}
                 <div class="recommendation-list">
@@ -287,7 +304,8 @@
                 </div>
             {% else %}
                 <div class="adaptive-alert">
-                    Пока нет новых рекомендаций по теории. Вы можете просто <a href="{% url 'encyclopedia:graph' %}" style="color: var(--accent-color);">исследовать граф знаний</a>.
+                    Пока нет новых рекомендаций по теории. Вы можете просто <br><br>
+                    <a href="{% url 'encyclopedia:graph' %}" style="color: var(--accent-color); text-decoration: none; font-weight: bold;">исследовать граф знаний ➔</a>
                 </div>
             {% endif %}
         </div>

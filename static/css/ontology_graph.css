@@ -102,34 +102,25 @@
 
 
 /* 
- * Layout Wrapper (Canvas + Side Panel)
+ * Layout Wrapper (Canvas + Overlays)
  */
 .graph-layout-wrapper {
-    display: flex;
-    gap: 20px;
+    position: relative;
     margin-top: 15px;
     height: 75vh;
     min-height: 600px;
-}
-
-/* 
- * Graph Canvas Area
- */
-.graph-main-area {
-    flex: 1;
-    position: relative;
-    min-width: 0;
+    width: 100%;
     border: 1px solid var(--border-color);
     border-radius: 8px;
     overflow: hidden;
     box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
+    background-color: #ffffff; /* Force white background for the whole wrapper */
 }
 
 #ontology-graph {
     width: 100%;
     height: 100%;
-    /* Force pure white background for the graph */
-    background-color: #ffffff !important; 
+    background-color: transparent !important; 
     cursor: grab;
 }
 
@@ -167,20 +158,35 @@
 }
 
 /* 
- * Side Info Panel
+ * Overlay Right-side Info Panel 
  */
 .graph-info-panel {
+    position: absolute;
+    top: 20px;
+    right: 20px;
     width: 320px;
-    flex-shrink: 0;
-    background: #ffffff;
+    max-height: calc(100% - 40px);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(4px);
     border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 20px;
     overflow-y: auto;
     color: #334155;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none; /* So mouse passes through when fading */
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    transform: translateX(10px);
 }
 
+.graph-info-panel.visible {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Panel internals */
 .panel-title { font-weight: 700; font-size: 16px; margin-bottom: 5px; }
 .panel-uri { font-size: 11px; margin-bottom: 15px; color: #64748b; font-family: 'Fira Code', monospace; word-break: break-all; }
 .panel-desc { line-height: 1.5; margin-bottom: 20px; font-size: 13px; }
@@ -189,8 +195,6 @@
 .panel-connections li { display: flex; flex-direction: column; gap: 2px; background: #f8fafc; padding: 8px; border-radius: 4px; border: 1px solid #e2e8f0; }
 .panel-conn-type { font-size: 10px; font-weight: bold; text-transform: uppercase; }
 .panel-conn-node { font-weight: 600; color: #0f172a; }
-.panel-placeholder { height: 100%; display: flex; align-items: center; justify-content: center; text-align: center; color: #94a3b8; font-style: italic; font-size: 14px; }
-
 
 /* Zoom Controls */
 .graph-controls {
@@ -200,6 +204,7 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+    z-index: 90;
 }
 
 .graph-btn {
@@ -236,7 +241,7 @@
     display: flex;
     gap: 4px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-    z-index: 10;
+    z-index: 90;
 }
 
 .toolbar-label {

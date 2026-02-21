@@ -111,7 +111,7 @@ function initOntologyGraph(containerId, nodesData, linksData) {
             .attr("markerHeight", 10)
             .attr("orient", "auto")
             .append("path")
-            .attr("fill", "#0f172a") // dark stroke when highlighted
+            .attr("fill", "#ffffff") // bright white marker for dark theme
             .attr("d", "M0,-5L10,0L0,5");
     });
 
@@ -169,14 +169,14 @@ function initOntologyGraph(containerId, nodesData, linksData) {
     node.on("mouseover", function(event, d) {
         // Highlight Node Box
         d3.select(this).select("rect")
-            .attr("stroke", "#0f172a")
+            .attr("stroke", "#ffffff") // bright outline for dark theme
             .attr("stroke-width", "3px");
         
         // Highlight Connected Links
         link.style("stroke-opacity", l => (l.source.id === d.id || l.target.id === d.id) ? 1 : 0.1)
-            // Thicker and darker line when highlighted
+            // Thicker and brighter line when highlighted
             .style("stroke-width", l => (l.source.id === d.id || l.target.id === d.id) ? "3px" : "2px")
-            .style("stroke", l => (l.source.id === d.id || l.target.id === d.id) ? "#0f172a" : (edgeStyles[l.raw_type] || edgeStyles['default']).color)
+            .style("stroke", l => (l.source.id === d.id || l.target.id === d.id) ? "#ffffff" : (edgeStyles[l.raw_type] || edgeStyles['default']).color)
             .attr("marker-end", l => (l.source.id === d.id || l.target.id === d.id) ? `url(#arrow-${l.raw_type || 'default'}-hl)` : `url(#arrow-${l.raw_type || 'default'})`);
         
         // Dim Unconnected Nodes
@@ -216,7 +216,7 @@ function initOntologyGraph(containerId, nodesData, linksData) {
                 ${incoming}
             </ul>
 
-            <div style="margin-top: 25px; padding-top: 15px; border-top: 1px dashed #e2e8f0; text-align: center; color: #64748b; font-size: 11px;">
+            <div style="margin-top: 25px; padding-top: 15px; border-top: 1px dashed rgba(255,255,255,0.1); text-align: center; color: #94a3b8; font-size: 11px;">
                 🖱️ Кликните по узлу, чтобы перейти к теории
             </div>
         `);
@@ -227,7 +227,7 @@ function initOntologyGraph(containerId, nodesData, linksData) {
     .on("mouseout", function(d) {
         // Reset Style
         d3.select(this).select("rect")
-            .attr("stroke", "#ffffff")
+            .attr("stroke", "var(--bg-color)") // revert to dark background stroke
             .attr("stroke-width", "2px");
             
         link.style("stroke-opacity", 0.6)

@@ -23,33 +23,40 @@ function initOntologyGraph(containerId, nodesData, linksData) {
         9: '#cbd5e1'  // Default/Thing (Light Gray)
     };
 
+    // Edge Styles Configuration based on raw relation_type
+    const edgeStyles = {
+        'IS_A': { color: '#94a3b8', dash: null },               // Solid Grey
+        'DEPENDS': { color: '#ef4444', dash: '6, 6' },          // Dashed Red
+        'USES': { color: '#3b82f6', dash: '2, 4' },             // Dotted Blue
+        'RELATED': { color: '#8b5cf6', dash: null },            // Solid Purple
+        'PART_OF': { color: '#10b981', dash: '10, 5' },         // Long-dash Green
+        'default': { color: '#94a3b8', dash: null }
+    };
+
     // 1. Calculate Hierarchical Depth (for Tree/Radial Layouts)
-    // Initialize depth
     nodesData.forEach(n => n.depth = 0);
-    // Iterative relaxation to calculate topological depth
     for (let i = 0; i < 15; i++) {
         linksData.forEach(l => {
-            // Pre-process safe lookup since D3 might change strings to objects later
             let s = typeof l.source === 'object' ? l.source : nodesData.find(n => n.id === l.source);
             let t = typeof l.target === 'object' ? l.target : nodesData.find(n => n.id === l.target);
-            
             if (!s || !t) return;
 
-            // IS_A or DEPENDS usually implies the target is the "parent/prerequisite" conceptually.
-            // Target should be higher (lower depth value) than source.
-            if (l.type === 'Является (Is A)' || l.type === 'Зависит от (Пререквизит)') {
+            // In Protégé, "Is A" arrows point FROM subclass TO superclass (e.g. KMeans -> Algorithm)
+            // But visually in a tree, Superclass is AT TOP (depth 0), subclass is AT BOTTOM (depth 1)
+            // So if S IS_A T, then S.depth should be T.depth + 1
+            if (l.raw_type === 'IS_A' || l.raw_type === 'DEPENDS') {
                 if (s.depth <= t.depth) {
                     s.depth = t.depth + 1;
                 }
             } else {
-                // USES, RELATED: standard flow
+                // USES, RELATED: target is conceptually deeper
                 if (t.depth <= s.depth) {
                     t.depth = s.depth + 1;
                 }
             }
         });
     }
-    // Normalize depths to start at 0
+    
     let minDepth = d3.min(nodesData, d => d.depth) || 0;
     nodesData.forEach(n => n.depth -= minDepth);
     let maxDepth = d3.max(nodesData, d => d.depth) || 1;
@@ -78,42 +85,65 @@ function initOntologyGraph(containerId, nodesData, linksData) {
         svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity.translate(width/2, height/2).scale(0.8));
     });
 
-    // Arrow markers for links
-    svg.append("defs").selectAll("marker")
-        .data(["end", "end-highlight"])
-        .enter().append("marker")
-        .attr("id", String)
-        .attr("viewBox", "0 -5 10 10")
-        .attr("refX", 25) // Offset from node center
-        .attr("refY", 0)
-        .attr("markerWidth", 6)
-        .attr("markerHeight", 6)
-        .attr("orient", "auto")
-        .append("path")
-        .attr("fill", d => d === "end-highlight" ? "#3b82f6" : "#94a3b8")
-        .attr("d", "M0,-5L10,0L0,5");
+    // Generate arrow markers dynamically for each relation type color
+    const defs = svg.append("defs");
+    
+    Object.keys(edgeStyles).forEach(type => {
+        const style = edgeStyles[type];
+        // Normal state marker
+        defs.append("marker")
+            .attr("id", `arrow-${type}`)
+            .attr("viewBox", "0 -5 10 10")
+            // Adjusted refX because we are pointing to rectangles, not small circles
+            .attr("refX", 10) 
+            .attr("refY", 0)
+            .attr("markerWidth", 8)
+            .attr("markerHeight", 8)
+            .attr("orient", "auto")
+            .append("path")
+            .attr("fill", style.color)
+            .attr("d", "M0,-5L10,0L0,5");
+            
+        // Highlight state marker
+        defs.append("marker")
+            .attr("id", `arrow-${type}-hl`)
+            .attr("viewBox", "0 -5 10 10")
+            .attr("refX", 10)
+            .attr("refY", 0)
+            .attr("markerWidth", 10) // slightly larger when highlighted
+            .attr("markerHeight", 10)
+            .attr("orient", "auto")
+            .append("path")
+            .attr("fill", "#0f172a") // dark stroke when highlighted
+            .attr("d", "M0,-5L10,0L0,5");
+    });
 
-    // 3. Initialize Base Simulation
+    // Calculate bounding box approximations based on text length
+    nodesData.forEach(d => {
+        d.rectWidth = Math.max(80, d.title.length * 7 + 20); // 7px per char approx + 20px padding
+        d.rectHeight = 26;
+    });
+
+    // 3. Initialize Base Simulation (Increased spacing)
     const simulation = d3.forceSimulation(nodesData)
-        .force("link", d3.forceLink(linksData).id(d => d.id).distance(180));
+        // Increased distance to prevent overlaps with rectangles
+        .force("link", d3.forceLink(linksData).id(d => d.id).distance(220))
+        // Stronger repulsion
+        .force("charge", d3.forceManyBody().strength(-2000))
+        // Collision using the approximated width
+        .force("collide", d3.forceCollide().radius(d => d.rectWidth / 2 + 20));
 
-    // Lines
+    // Lines (Edges)
     const link = g.append("g")
         .attr("class", "links")
-        .selectAll("line")
+        .selectAll("path")
         .data(linksData)
-        .enter().append("line")
+        .enter().append("path")
         .attr("class", "link")
-        .attr("marker-end", "url(#end)");
-
-    // Text on lines (Relations)
-    const linkText = g.append("g")
-        .attr("class", "link-labels")
-        .selectAll("text")
-        .data(linksData)
-        .enter().append("text")
-        .attr("class", "link-label")
-        .text(d => d.type);
+        .attr("fill", "none")
+        .attr("stroke", d => (edgeStyles[d.raw_type] || edgeStyles['default']).color)
+        .attr("stroke-dasharray", d => (edgeStyles[d.raw_type] || edgeStyles['default']).dash)
+        .attr("marker-end", d => `url(#arrow-${d.raw_type || 'default'})`);
 
     // Nodes container
     const node = g.append("g")
@@ -127,36 +157,36 @@ function initOntologyGraph(containerId, nodesData, linksData) {
             .on("drag", dragged)
             .on("end", dragended));
 
-    // Node Circles
-    node.append("circle")
-        .attr("r", 12)
+    // Node Rectangles (Protege Style)
+    node.append("rect")
+        .attr("width", d => d.rectWidth)
+        .attr("height", d => d.rectHeight)
+        // Center the rectangle around the coordinates
+        .attr("x", d => -d.rectWidth / 2)
+        .attr("y", d => -d.rectHeight / 2)
         .attr("fill", d => colors[d.group] || colors[9]);
 
-    // Node Text (Titles)
+    // Node Text (Centered)
     node.append("text")
-        .attr("dx", 18)
-        .attr("dy", ".35em")
+        .attr("dy", "0.35em") // Vertical center offset
         .text(d => d.title);
 
     // Tooltip Interactions
     const tooltip = d3.select("#graph-tooltip");
 
     node.on("mouseover", function(event, d) {
-        // Highlight Node
-        d3.select(this).select("circle")
-            .attr("r", 16)
-            .attr("stroke", "#0f172a");
+        // Highlight Node Box
+        d3.select(this).select("rect")
+            .attr("stroke", "#0f172a")
+            .attr("stroke-width", "3px");
         
         // Highlight Connected Links
         link.style("stroke-opacity", l => (l.source.id === d.id || l.target.id === d.id) ? 1 : 0.1)
-            .style("stroke", l => (l.source.id === d.id || l.target.id === d.id) ? "#3b82f6" : "#94a3b8")
-            .attr("marker-end", l => (l.source.id === d.id || l.target.id === d.id) ? "url(#end-highlight)" : "url(#end)");
+            // Thicker and darker line when highlighted
+            .style("stroke-width", l => (l.source.id === d.id || l.target.id === d.id) ? "3px" : "2px")
+            .style("stroke", l => (l.source.id === d.id || l.target.id === d.id) ? "#0f172a" : (edgeStyles[l.raw_type] || edgeStyles['default']).color)
+            .attr("marker-end", l => (l.source.id === d.id || l.target.id === d.id) ? `url(#arrow-${l.raw_type || 'default'}-hl)` : `url(#arrow-${l.raw_type || 'default'})`);
         
-        // Highlight Connected Link Text
-        linkText.style("opacity", l => (l.source.id === d.id || l.target.id === d.id) ? 1 : 0)
-                .style("fill", l => (l.source.id === d.id || l.target.id === d.id) ? "#3b82f6" : "#64748b")
-                .style("font-weight", l => (l.source.id === d.id || l.target.id === d.id) ? "bold" : "normal");
-
         // Dim Unconnected Nodes
         node.style("opacity", n => {
             if (n.id === d.id) return 1;
@@ -167,21 +197,37 @@ function initOntologyGraph(containerId, nodesData, linksData) {
             return isConnected ? 1 : 0.15;
         });
 
-        // Show Tooltip
+        // Show Tooltip with connection info
         tooltip.transition().duration(200).style("opacity", 1);
+        
+        // Gather connections for tooltip
+        let outgoing = linksData.filter(l => l.source.id === d.id).map(l => `<li><span style="color:${(edgeStyles[l.raw_type]||edgeStyles['default']).color}">▶ ${l.type}</span> ${l.target.title}</li>`).join("");
+        let incoming = linksData.filter(l => l.target.id === d.id).map(l => `<li>${l.source.title} <span style="color:${(edgeStyles[l.raw_type]||edgeStyles['default']).color}">${l.type} ▶</span></li>`).join("");
+        
+        let connHtml = "";
+        if (outgoing.length > 0) connHtml += `<ul style="margin:5px 0 0 15px; padding:0; list-style:none; font-size:11px">${outgoing}</ul>`;
+        if (incoming.length > 0) connHtml += `<ul style="margin:5px 0 0 15px; padding:0; list-style:none; font-size:11px">${incoming}</ul>`;
+
         tooltip.html(
             `<div class="tooltip-title" style="color:${colors[d.group]}">${d.title}</div>` +
             `<div class="tooltip-uri">URI: ${d.uri.split('#').pop()}</div>` +
-            `<div class="tooltip-desc">${d.desc}</div>`
+            `<div class="tooltip-desc">${d.desc}</div>` +
+            (connHtml ? `<div style="margin-top:8px; padding-top:8px; border-top:1px solid #e2e8f0; font-size:11px; font-weight:bold;">Связи:</div>${connHtml}` : '')
         )
         .style("left", (event.pageX + 15) + "px")
         .style("top", (event.pageY - 15) + "px");
     })
     .on("mouseout", function(d) {
         // Reset Style
-        d3.select(this).select("circle").attr("r", 12).attr("stroke", "#ffffff");
-        link.style("stroke-opacity", 0.5).style("stroke", "#94a3b8").attr("marker-end", "url(#end)");
-        linkText.style("opacity", 1).style("fill", "#64748b").style("font-weight", "normal");
+        d3.select(this).select("rect")
+            .attr("stroke", "#ffffff")
+            .attr("stroke-width", "2px");
+            
+        link.style("stroke-opacity", 0.6)
+            .style("stroke-width", "2px")
+            .style("stroke", l => (edgeStyles[l.raw_type] || edgeStyles['default']).color)
+            .attr("marker-end", l => `url(#arrow-${l.raw_type || 'default'})`);
+            
         node.style("opacity", 1);
         tooltip.transition().duration(300).style("opacity", 0);
     })
@@ -189,31 +235,57 @@ function initOntologyGraph(containerId, nodesData, linksData) {
         window.location.href = d.url;
     });
 
+    // Helper to calculate edge intersection with rectangle
+    // Returns the point on the edge of the target rectangle where the arrow should point
+    function getIntersection(sx, sy, tx, ty, tWidth, tHeight) {
+        const dx = tx - sx;
+        const dy = ty - sy;
+        
+        if (dx === 0 && dy === 0) return {x: tx, y: ty};
+
+        // Half width/height
+        const hw = tWidth / 2;
+        const hh = tHeight / 2;
+
+        const slope = dy / dx;
+        
+        let ix, iy;
+
+        if (Math.abs(dx) > 0) {
+            ix = dx > 0 ? tx - hw : tx + hw;
+            iy = ty - dy * (Math.abs(hw) / Math.abs(dx));
+            
+            // Check if it hits the top/bottom instead
+            if (iy < ty - hh) {
+                iy = ty - hh;
+                ix = tx - dx * (Math.abs(hh) / Math.abs(dy));
+            } else if (iy > ty + hh) {
+                iy = ty + hh;
+                ix = tx - dx * (Math.abs(hh) / Math.abs(dy));
+            }
+        } else {
+            ix = tx;
+            iy = dy > 0 ? ty - hh : ty + hh;
+        }
+
+        return {x: ix, y: iy};
+    }
+
     // Tick Update
     simulation.on("tick", () => {
-        link
-            .attr("x1", d => d.source.x)
-            .attr("y1", d => d.source.y)
-            .attr("x2", d => d.target.x)
-            .attr("y2", d => d.target.y);
-
-        linkText
-            .attr("x", d => (d.source.x + d.target.x) / 2)
-            .attr("y", d => (d.source.y + d.target.y) / 2 - 5)
-            .attr("transform", d => {
-                const angle = Math.atan2(d.target.y - d.source.y, d.target.x - d.source.x) * 180 / Math.PI;
-                const finalAngle = (angle > 90 || angle < -90) ? angle + 180 : angle;
-                const cx = (d.source.x + d.target.x) / 2;
-                const cy = (d.source.y + d.target.y) / 2 - 5;
-                return `rotate(${finalAngle}, ${cx}, ${cy})`;
-            });
+        link.attr("d", d => {
+            // Find intersection point with target rectangle boundary so arrow isn't hidden inside
+            const p = getIntersection(d.source.x, d.source.y, d.target.x, d.target.y, d.target.rectWidth, d.target.rectHeight);
+            
+            // Draw straight line path
+            return `M${d.source.x},${d.source.y} L${p.x},${p.y}`;
+        });
 
         node.attr("transform", d => `translate(${d.x},${d.y})`);
     });
 
     // 4. Layout Switching Logic
     window.applyGraphLayout = function(type) {
-        // Clear all forces
         simulation.force("x", null);
         simulation.force("y", null);
         simulation.force("r", null);
@@ -221,32 +293,31 @@ function initOntologyGraph(containerId, nodesData, linksData) {
 
         if (type === 'force') {
             simulation
-                .force("charge", d3.forceManyBody().strength(-1000))
+                .force("charge", d3.forceManyBody().strength(-2000))
                 .force("center", d3.forceCenter(0, 0))
-                .force("collide", d3.forceCollide().radius(50));
+                .force("collide", d3.forceCollide().radius(d => d.rectWidth / 2 + 30));
         } else if (type === 'tree') {
-            // Tree layout using depth
-            const layerHeight = 150;
+            // Tree layout using depth. INCREASED layerHeight for better spacing
+            const layerHeight = 180; 
             const yOffset = (maxDepth * layerHeight) / 2;
             
             simulation
-                .force("charge", d3.forceManyBody().strength(-800))
+                .force("charge", d3.forceManyBody().strength(-2500))
                 .force("y", d3.forceY(d => (d.depth * layerHeight) - yOffset).strength(1.5))
-                .force("x", d3.forceX(0).strength(0.2)) // Center horizontally
-                .force("collide", d3.forceCollide().radius(60));
+                .force("x", d3.forceX(0).strength(0.1)) // Less strict horizontal center to spread out
+                .force("collide", d3.forceCollide().radius(d => d.rectWidth / 2 + 20));
         } else if (type === 'radial') {
-            // Radial layout using depth as radius
-            const radiusStep = 120;
+            // Radial layout
+            const radiusStep = 180; // Increased spacing
             simulation
-                .force("charge", d3.forceManyBody().strength(-800))
+                .force("charge", d3.forceManyBody().strength(-2000))
                 .force("r", d3.forceRadial(d => d.depth * radiusStep, 0, 0).strength(1.5))
-                .force("collide", d3.forceCollide().radius(50));
+                .force("collide", d3.forceCollide().radius(d => d.rectWidth / 2 + 20));
         }
         
-        // Re-heat simulation
         simulation.alpha(1).restart();
-        // Recenter view
-        svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity.translate(width/2, height/2).scale(0.7));
+        // Recenter view with a smaller scale to see the wider graph
+        svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity.translate(width/2, height/2).scale(0.6));
     };
 
     // Initial Layout Setup
@@ -261,7 +332,6 @@ function initOntologyGraph(containerId, nodesData, linksData) {
         });
     });
 
-    // Drag Functions
     function dragstarted(event, d) {
         if (!event.active) simulation.alphaTarget(0.3).restart();
         d.fx = d.x;

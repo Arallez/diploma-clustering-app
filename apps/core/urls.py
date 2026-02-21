@@ -2,8 +2,8 @@ from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
 
-# Import recommendation view here to put it in the base namespace
-from apps.encyclopedia.views import get_learning_recommendations
+# Import recommendation view — function is called recommendations_view
+from apps.encyclopedia.views import recommendations_view
 
 urlpatterns = [
     path('', views.home, name='home'),
@@ -14,8 +14,8 @@ urlpatterns = [
     path('materials/', views.materials_list, name='materials_list'),
     path('materials/<slug:slug>/', views.material_detail, name='material_detail'),
     
-    # Learning Path (Recommendations)
-    path('learning-path/', get_learning_recommendations, name='learning_path'),
+    # Learning Path (Recommendations) — standalone, not inside encyclopedia
+    path('learning-path/', recommendations_view, name='learning_path'),
     
     # Secure built-in Django auth views
     path('login/', auth_views.LoginView.as_view(template_name='core/login.html'), name='login'),

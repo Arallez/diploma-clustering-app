@@ -4,7 +4,7 @@
  */
 
 .graph-container {
-    max-width: 98%; /* Expanded to give maximum space to the graph */
+    max-width: 1400px; /* Restored to normal size */
     margin: 0 auto;
     padding: 1rem 2rem;
 }
@@ -102,11 +102,10 @@
 
 
 /* 
- * Layout Wrapper (Flex Layout)
+ * Layout Wrapper (Relative positioning)
  */
 .graph-layout-wrapper {
-    display: flex;
-    gap: 20px;
+    position: relative;
     margin-top: 15px;
     height: 75vh;
     min-height: 600px;
@@ -114,8 +113,8 @@
 }
 
 .graph-main-area {
-    flex: 1;
-    position: relative;
+    width: 100%;
+    height: 100%;
     background-color: #ffffff; 
     border: 1px solid var(--border-color);
     border-radius: 8px;
@@ -164,11 +163,14 @@
 }
 
 /* 
- * Fixed Right-side Info Panel 
+ * External Right-side Info Panel 
  */
 .graph-info-panel {
-    width: 320px;
-    flex-shrink: 0;
+    position: absolute;
+    top: 0;
+    left: calc(100% + 20px); /* Placed completely outside the graph canvas */
+    width: 380px; /* Made slightly wider as requested */
+    max-height: 100%; /* Prevents stretching past the canvas height */
     background: #ffffff;
     border: 1px solid var(--border-color);
     border-radius: 8px;
@@ -177,10 +179,10 @@
     color: #334155;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
     
-    /* Hide completely until visible (no placeholder box!) */
+    /* Hide completely until visible */
     opacity: 0;
     visibility: hidden;
-    transform: translateX(10px);
+    transform: translateX(-10px);
     transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
 }
 

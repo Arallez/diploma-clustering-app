@@ -163,7 +163,7 @@ function initOntologyGraph(containerId, nodesData, linksData) {
         .attr("dy", "0.35em") // Vertical center offset
         .text(d => d.title);
 
-    // Fixed Side Info Panel Element
+    // Overlay Info Panel Element
     const infoPanel = d3.select("#graph-info-panel");
 
     node.on("mouseover", function(event, d) {
@@ -220,6 +220,9 @@ function initOntologyGraph(containerId, nodesData, linksData) {
                 🖱️ Кликните по узлу, чтобы перейти к теории
             </div>
         `);
+        
+        // Make panel visible
+        infoPanel.classed("visible", true);
     })
     .on("mouseout", function(d) {
         // Reset Style
@@ -234,12 +237,8 @@ function initOntologyGraph(containerId, nodesData, linksData) {
             
         node.style("opacity", 1);
         
-        // Restore Placeholder
-        infoPanel.html(`
-            <div class="panel-placeholder">
-                <p>Наведите курсор на узел графа, чтобы увидеть подробную информацию.</p>
-            </div>
-        `);
+        // Hide panel completely instead of rendering placeholder
+        infoPanel.classed("visible", false);
     })
     .on("click", function(event, d) {
         window.location.href = d.url;

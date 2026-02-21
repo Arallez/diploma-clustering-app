@@ -169,6 +169,7 @@
     stroke-width: 2px;
     transition: all 0.2s;
     fill: none;
+    pointer-events: none; /* Prevents edges from stealing mouse hover and causing flicker! */
 }
 
 /* 
@@ -193,7 +194,7 @@
     /* Hidden by default */
     opacity: 0;
     visibility: hidden;
-    pointer-events: none;
+    pointer-events: none; /* Prevents panel from stealing hover if mouse enters it */
     transform: translateX(10px);
     transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
 }
@@ -201,7 +202,7 @@
 .graph-info-panel.visible {
     opacity: 1;
     visibility: visible;
-    pointer-events: auto;
+    pointer-events: none; /* Keep none! If auto, panel steals hover and causes infinite flicker loop */
     transform: translateX(0);
 }
 

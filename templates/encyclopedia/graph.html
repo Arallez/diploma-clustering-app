@@ -7,25 +7,12 @@
 <!-- D3.js Library -->
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <!-- Ontology Graph Styles -->
-<link rel="stylesheet" href="{% static 'css/ontology_graph.css' %}?v=1.6">
-<style>
-/* Extended Legend Grid to fit more items nicely */
-.graph-legend {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px 20px;
-    background: var(--card-bg);
-    padding: 12px 20px;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    font-size: 12px;
-}
-</style>
+<link rel="stylesheet" href="{% static 'css/ontology_graph.css' %}?v=1.7">
 {% endblock %}
 
 {% block content %}
 <div class="graph-container">
-    <div class="graph-header" style="flex-direction: column; align-items: stretch; gap: 15px;">
+    <div class="graph-header" style="flex-direction: column; align-items: center; text-align: center; gap: 15px;">
         <div>
             <h1>🌌 Онтология предметной области</h1>
             <p>Интерактивный граф знаний. Наведите на узел, чтобы увидеть детали в панели справа.</p>
@@ -91,9 +78,11 @@
             </div>
         </div>
         
-        <!-- Fixed Right-side Info Panel (Hidden initially) -->
+        <!-- Fixed Right-side Info Panel (White placeholder) -->
         <div id="graph-info-panel" class="graph-info-panel">
-            <!-- Content injected dynamically via JS on hover -->
+            <div class="panel-placeholder">
+                <p>Наведите курсор на узел графа, чтобы увидеть подробную информацию.</p>
+            </div>
         </div>
 
     </div>
@@ -102,7 +91,7 @@
 
 {% block extra_js %}
 <!-- Graph Visualization Logic -->
-<script src="{% static 'js/ontology_graph.js' %}?v=1.6"></script>
+<script src="{% static 'js/ontology_graph.js' %}?v=1.7"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         // 1. Fetch data from Django context

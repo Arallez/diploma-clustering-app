@@ -106,11 +106,10 @@
 
 
 /* 
- * Layout Wrapper (Flex Layout for Canvas + Side Panel)
+ * Layout Wrapper (Relative positioning for Overlays)
  */
 .graph-layout-wrapper {
-    display: flex;
-    gap: 20px;
+    position: relative;
     margin-top: 15px;
     height: 85vh; /* Dramatically increased height */
     min-height: 700px;
@@ -118,9 +117,11 @@
 }
 
 .graph-main-area {
-    flex: 1; /* This makes the graph take ALL available remaining space */
-    min-width: 0;
-    position: relative;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
     background-color: #ffffff; 
     border: 1px solid var(--border-color);
     border-radius: 8px;
@@ -171,21 +172,37 @@
 }
 
 /* 
- * Side Info Panel 
+ * Overlay Info Panel (Appears on top right over the graph)
  */
 .graph-info-panel {
-    width: 380px; /* Locked width for info panel */
-    flex-shrink: 0; /* Prevents panel from shrinking, forcing the graph to take the rest */
-    background: #ffffff;
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 380px; 
+    max-height: calc(100% - 40px);
+    background: rgba(255, 255, 255, 0.95); /* Slight transparency */
+    backdrop-filter: blur(5px);
     border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 20px;
     overflow-y: auto;
     color: #334155;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-    /* Always visible to keep the structure intact */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); /* Stronger shadow to pop over graph */
+    z-index: 100;
+    
+    /* Hidden by default */
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateX(10px);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+}
+
+.graph-info-panel.visible {
     opacity: 1;
     visibility: visible;
+    pointer-events: auto;
+    transform: translateX(0);
 }
 
 /* Panel internals */
@@ -197,18 +214,6 @@
 .panel-connections li { display: flex; flex-direction: column; gap: 2px; background: #f8fafc; padding: 8px; border-radius: 4px; border: 1px solid #e2e8f0; }
 .panel-conn-type { font-size: 10px; font-weight: bold; text-transform: uppercase; }
 .panel-conn-node { font-weight: 600; color: #0f172a; }
-
-/* Placeholder state */
-.panel-placeholder {
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    color: #94a3b8;
-    font-size: 14px;
-    font-style: italic;
-}
 
 /* Zoom Controls */
 .graph-controls {

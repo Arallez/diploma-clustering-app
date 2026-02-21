@@ -3,7 +3,7 @@ from django.contrib.auth import views as auth_views
 from . import views
 
 # Import recommendation view here to put it in the base namespace
-from encyclopedia.views import get_learning_recommendations
+from apps.encyclopedia.views import get_learning_recommendations
 
 urlpatterns = [
     path('', views.home, name='home'),
